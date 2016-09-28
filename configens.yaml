@@ -1,0 +1,61 @@
+nginx:
+  extension: conf
+  templates:
+    uwsgi: |
+      {{ this.configens.nginx.prepend | recurse }}
+      server {
+        listen {{ this.configens.nginx.port }};
+        rewrite_log on;
+        access_log {{ deployment.base_dir }}/logs/{{ this.name }}-access.log;
+        error_log  {{ deployment.base_dir }}/logs/{{ this.name }}-error.log;
+
+        location / {
+          uwsgi_cache_bypass 1;
+          uwsgi_no_cache 1;
+          include uwsgi_params;
+          uwsgi_pass unix://{{ deployment.base_dir }}/uwsgi/{{ this.name }}.uwsgi.sock;
+          uwsgi_buffers 8 128k;
+          uwsgi_read_timeout 300;
+          uwsgi_send_timeout 300;
+        }
+        {{ this.configens.nginx.ext | recurse }}
+      }
+uwsgi:
+  extension: ini
+  templates:
+    basic: |
+      [uwsgi]
+      plugin = python
+      virtualenv={{ deployment.base_dir }}/venv
+
+      vacuum
+      reaper
+
+      env=TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+
+      chdir     = {{ deployment.base_dir }}
+      socket    = {{ deployment.base_dir }}/uwsgi/{{ this.name }}.uwsgi.sock
+      pidfile2  = {{ deployment.base_dir }}/uwsgi/{{ this.name }}.pid
+      logto     = {{ deployment.base_dir }}/logs/{{ this.name }}-uwsgi.log
+      daemonize = {{ deployment.base_dir }}/logs/{{ this.name }}-uwsgi.log
+
+      max-requests = 5000
+      buffer-size = 32768
+      harakiri = 120
+
+      # set mode of created UNIX socket
+      chmod-socket = 660
+
+      # place timestamps into log
+      log-date = true
+      logfile-chown
+
+      # user identifier of uWSGI processes
+      uid = {{ common.system_user.uid }}
+      gid = {{ common.system_user.gid }}
+
+      {{ this.configens.uwsgi.ext | recurse }}
+supervisor:
+  extension: conf
+crontab:
+  extension: cron
