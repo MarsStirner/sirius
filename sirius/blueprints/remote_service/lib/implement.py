@@ -16,17 +16,11 @@ class Implementation(object):
     def get_reformer(self, rmt_sys_code):
         if rmt_sys_code == '':
             reformer = TambovReformer()
-        elif rmt_sys_code == '':
-            reformer = TulaReformer()
-        else:
-            raise Exception('Unknown remote code')
-        return reformer
-
-    def get_transfer(self, rmt_sys_code):
-        if rmt_sys_code == '':
             transfer = TambovTransfer()
         elif rmt_sys_code == '':
+            reformer = TulaReformer()
             transfer = TulaTransfer()
         else:
             raise Exception('Unknown remote code')
-        return transfer
+        reformer.set_transfer(transfer)
+        return reformer

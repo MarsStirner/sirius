@@ -23,14 +23,10 @@ class Transfer(object):
     def requests(self, session, reformed_data):
         # todo: вынести работу с запросами в request.py, обеспечив общую сессию
 
-        res_param = None
-        result = []
-        for req in reformed_data:
-            url = req.url
-            if res_param:
-                url = url.replace(req.url_param, res_param)
-            req_result = self.api_request(req.method, url, session, req.data)
-            data = self.answer.process(req_result)
-            res_param = data.get(req.res_param)
-            result.append(data)
-        return result
+        meta = reformed_data['meta']
+        url = meta['remote_url']
+        method = meta['remote_method']
+        body = meta['body']
+        req_result = self.api_request(method, url, session, body)
+        res = self.answer.process(req_result)
+        return res

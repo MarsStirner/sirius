@@ -27,6 +27,12 @@ class Header(object):
     method = None
     url = None
     source_data = None
+    is_immediate_answer = False
+    meta = {
+        'local_service_code': None,
+        'local_main_id': None,
+        'local_operation_code': None,
+    }
 
     # todo: по реализации Reformer станет ясно что еще сюда добавить
     # (ID/params, entity_code)
@@ -68,6 +74,9 @@ class Message(object):
         self.header.method = method
         self.header.url = url
 
+    def set_immediate_answer(self):
+        self.header.is_immediate_answer = True
+
     def set_source_data(self, data):
         self.header.source_data = data
 
@@ -97,3 +106,7 @@ class Message(object):
     @property
     def is_result(self):
         return self.header.type_ == Type.RESULT
+
+    @property
+    def is_immediate_answer(self):
+        return self.header.is_immediate_answer

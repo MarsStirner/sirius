@@ -18,7 +18,6 @@ class Scheduler(object):
         rmt_sys_code = remote_system.get_master_system_code()
         implement = Implementation()
         reformer = implement.get_reformer(rmt_sys_code)
-        transfer = implement.get_transfer(rmt_sys_code)
         data_store = DataStore()
         for ent in self.get_entities_list():
             msg = self.create_entity_data_request_msg(ent)

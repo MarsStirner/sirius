@@ -13,7 +13,7 @@ from sirius.extensions import celery
 def local_task(msg):
     from sirius.blueprints.local_service.lib.consumer import LocalConsumer
     receiver = LocalConsumer()
-    receiver.process(msg)
+    return receiver.process(msg)
 
 
 @celery.task

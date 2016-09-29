@@ -14,7 +14,7 @@ from sirius.blueprints.local_service.lib.producer import LocalProducer
 class LocalConsumer(object):
     def process(self, msg):
         assert isinstance(msg, Message)
-        res = True
+        res = None
         hdr = msg.get_header()
         # сценарий обработки сообщения
         if msg.is_request:
@@ -24,8 +24,12 @@ class LocalConsumer(object):
             next_msg.to_remote_service()
             next_msg.set_send_data_type()
             next_msg.set_method(hdr.method, hdr.url)
-            prod = LocalProducer()
-            res = prod.send(next_msg)
+
+            if msg.is_immediate_answer:
+                res = next_msg
+            else:
+                prod = LocalProducer()
+                prod.send(next_msg)
         elif msg.is_result:
             req_res = request_by_url(hdr.method, hdr.url, msg.get_data())
         elif msg.is_send_data:
@@ -37,7 +41,7 @@ class LocalConsumer(object):
             next_msg.set_result_type()
             next_msg.set_source_data(remote_data)
             prod = LocalProducer()
-            res = prod.send(next_msg)
+            prod.send(next_msg)
         else:
             raise Exception('Message has not type')
 

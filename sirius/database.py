@@ -38,7 +38,7 @@ class CRUDMixin(object):
         return commit and db.session.commit()
 
 
-class Model(CRUDMixin, db.Model):
+class BaseModel(CRUDMixin, db.Model):
     """Base model class that includes CRUD convenience methods."""
 
     __abstract__ = True
@@ -64,7 +64,7 @@ class SurrogatePK(object):
         return None
 
 
-def reference_col(tablename, nullable=False, pk_name='id', **kwargs):
+def reference_col(tablename, nullable=False, pk_name='id', ondelete=None, **kwargs):
     """Column that adds primary key foreign key reference.
 
     Usage: ::
@@ -73,5 +73,18 @@ def reference_col(tablename, nullable=False, pk_name='id', **kwargs):
         category = relationship('Category', backref='categories')
     """
     return db.Column(
-        db.ForeignKey('{0}.{1}'.format(tablename, pk_name)),
+        db.ForeignKey('{0}.{1}'.format(tablename, pk_name), ondelete=ondelete),
         nullable=nullable, **kwargs)
+
+
+class Model(SurrogatePK, BaseModel):
+    """Common model of project."""
+
+    # __tablename__ = 'roles'
+
+    def __repr__(self):
+        """Represent instance as a unique string."""
+        return '<{class_n}({id})>'.format(
+            class_n=self.__class__.__name__,
+            id=self.id,
+        )

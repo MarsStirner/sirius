@@ -20,25 +20,21 @@ class RemoteConsumer(object):
         res = True
         implement = Implementation()
         reformer = implement.get_reformer(rmt_sys_code)
-        transfer = implement.get_transfer(rmt_sys_code)
 
         # сценарий обработки сообщения
         if msg.is_to_remote:
             if remote_system.is_passive(rmt_sys_code):
                 if msg.is_send_data:
-                    remote_reformed_data = reformer.to_remote(msg)
-                    trans_res = transfer.execute(remote_reformed_data)
-                    reformer.remote_conformity(msg, trans_res)
+                    miss_req_msgs = reformer.get_missing_requests(msg)
+                    miss_data_msgs = self.send_msgs(miss_req_msgs)
+                    reformer.to_remote(msg, miss_data_msgs)
                     hdr = msg.get_header()
                     op_res = OperationResult()
-                    next_msg = op_res.check(hdr.method, hdr.url)
-                    if next_msg:
-                        producer = RemoteProducer()
-                        producer.send(next_msg, async=False)
+                    result_msg = op_res.check(hdr.method, hdr.url)
+                    if result_msg:
+                        self.send_msgs([result_msg])
                 elif msg.is_send_event:
-                    remote_reformed_data = reformer.to_remote(msg)
-                    trans_res = transfer.execute(remote_reformed_data)
-                    reformer.remote_conformity(msg, trans_res)
+                    reformer.to_remote(msg)
                 elif msg.is_result:
                     remote_data = msg.get_source_data()
                     reformer.local_conformity(remote_data, msg)
@@ -46,7 +42,7 @@ class RemoteConsumer(object):
                     raise Exception('Unexpected message type')
             elif remote_system.is_active(rmt_sys_code):
                 if msg.is_send_data:
-                    remote_reformed_data = reformer.to_remote(msg)
+                    remote_reformed_data = reformer.get_reformed_data(msg)
                     data_store = DataStore()
                     data_store.place(remote_reformed_data)
                     data_store.commit_all_changes()
@@ -61,4 +57,9 @@ class RemoteConsumer(object):
             raise Exception('Wrong message direct')
         else:
             raise Exception('Message direct is not define')
+        return res
+
+    def send_msgs(self, msgs, async=False):
+        producer = RemoteProducer()
+        res = [producer.send(msg, async=async) for msg in msgs]
         return res
