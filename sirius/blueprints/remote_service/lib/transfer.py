@@ -24,8 +24,8 @@ class Transfer(object):
         # todo: вынести работу с запросами в request.py, обеспечив общую сессию
 
         meta = reformed_data['meta']
-        url = meta['remote_url']
-        method = meta['remote_method']
+        url = meta['dst_url']
+        method = meta['dst_method']
         body = meta['body']
         req_result = self.api_request(method, url, session, body)
         res = self.answer.process(req_result)

@@ -50,3 +50,6 @@ uwsgidecorators>=1.1.0
 # Async tasks
 celery>=3.1.23
 Flask-Celery-Helper>=1.1.0
+
+# JSON Schema
+jsonschema>=2.5.1

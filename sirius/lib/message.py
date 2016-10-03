@@ -29,9 +29,16 @@ class Header(object):
     source_data = None
     is_immediate_answer = False
     meta = {
+        'local_entity_code': None,
         'local_service_code': None,
         'local_main_id': None,
         'local_operation_code': None,
+
+        'remote_system_code': None,
+        'remote_entity_code': None,
+        'remote_service_code': None,
+        'remote_main_id': None,
+        'remote_operation_code': None,
     }
 
     # todo: по реализации Reformer станет ясно что еще сюда добавить
@@ -49,6 +56,9 @@ class Message(object):
 
     def get_header(self):
         return self.header
+
+    def set_header(self, header):
+        self.header = header
 
     def get_data(self):
         return self.body

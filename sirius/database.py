@@ -79,6 +79,7 @@ def reference_col(tablename, nullable=False, pk_name='id', ondelete=None, **kwar
 
 class Model(SurrogatePK, BaseModel):
     """Common model of project."""
+    __abstract__ = True
 
     # __tablename__ = 'roles'
 

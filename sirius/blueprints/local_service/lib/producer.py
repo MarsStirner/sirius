@@ -38,6 +38,9 @@ class LocalProducer(object):
                 # todo: rmt_sys_code
                 rmt_sys_code = remote_system.get_system_code(msg)
                 remote_task(msg, rmt_sys_code)
+            elif msg.is_result:
+                rmt_sys_code = msg.get_header().meta['remote_system_code']
+                remote_task(msg, rmt_sys_code)
             else:
                 raise Exception('Unexpected message type')
         else:

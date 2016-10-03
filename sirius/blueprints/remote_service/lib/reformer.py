@@ -6,12 +6,18 @@
 @date: 23.09.2016
 
 """
+from abc import ABCMeta, abstractmethod
+from hitsl_utils.enum import Enum
+from sirius.blueprints.remote_service.models.matching import MatchingId
+from sirius.blueprints.remote_service.models.method import ApiMethod
+
 from sirius.lib.message import Message
 
 
-class RemoteEntity(Enum):
-    CHECKUP = 1
-    CHECKUP_FETUS = 2
+class LocalEntity(Enum):
+    CLIENT = 1
+    CHECKUP = 2
+    CHECKUP_FETUS = 3
 
 
 class Operation(Enum):
@@ -21,6 +27,8 @@ class Operation(Enum):
 
 
 class Reformer(object):
+    __metaclass__ = ABCMeta
+
     orig_msg = None
     # direct = None
     transfer = None
@@ -29,33 +37,49 @@ class Reformer(object):
     def set_transfer(self, transfer):
         self.transfer = transfer
 
-    def to_local(self, msg):
-        # todo:
-        self.orig_msg = msg
-        # self.direct = 'local'
-        # res = self.reform_msg()
-        return res
-
-    def reform_msg(self):
-        pass
-
-    def local_conformity(self, remote_data, local_data):
-        # сопоставление ID в БД при добавлении данных
-        # todo:
-        pass
-
-    def remote_conformity(self, local_data, remote_data):
-        # сопоставление ID в БД при добавлении данных
-        # todo:
-        pass
-
-    def to_remote(self, msg):
+    def reform_msg(self, msg):
         addition_data = msg.get_missing_data()
-        params = msg.get_header().meta
-        entities = self.get_entities(params, msg.get_data(), addition_data)
-        for record in self.set_operation(params, entities):
-            self.set_service(record)
+        header_meta = msg.get_header().meta
+        if msg.is_to_local:
+            entities = self.get_local_entities(header_meta, msg.get_data(), addition_data)
+        elif msg.is_to_remote:
+            entities = self.get_remote_entities(header_meta, msg.get_data(), addition_data)
+        else:
+            raise RuntimeError('Undefined direct')
+        for record in self.set_operation(header_meta, entities, msg.is_to_local):
+            self.set_service(record, msg.is_to_local)
+        # res = []
+        # for entity in entities:
+        #     rfrm_meta = entity['meta']
+        #     reformed_msg = Message(entity['body'])
+        #     reformed_msg.set_header(msg.get_header())
+        #     reformed_msg.set_method(rfrm_meta['dst_method'], rfrm_meta['dst_url'])
+        #     res.append(reformed_msg)
         return entities
+
+    @abstractmethod
+    def get_local_entities(self, header_meta, data, addition_data):
+        # реализация в регионе
+        return {}
+
+    def conformity_local(self, remote_data, local_data):
+        # сопоставление ID в БД при добавлении данных
+        # todo:
+        remote_data
+        MatchingId.add_matching(
+            local_data
+        )
+
+    def conformity_remote(self, local_data, remote_data):
+        # сопоставление ID в БД при добавлении данных
+        # todo:
+        # в record так же пишем полученное ID
+        pass
+
+    @abstractmethod
+    def get_remote_entities(self, params, data, addition_data):
+        # реализация в регионе
+        return {}
 
     def get_missing_requests(self, msg):
         # формируются сообщения в локальную систему для запроса
@@ -67,95 +91,59 @@ class Reformer(object):
         req_msg.set_immediate_answer()
         return []
 
-    def get_entities(self, params, data, addition_data):
-        local_entity_code = db_get_local_entity_code(params['local_service_code'])
-        res = {
-            'operation_order': {},
-            RemoteEntity.CHECKUP: [{
-                'meta': {
-                    'local_entity_code': local_entity_code,
-                    'local_id': params['local_main_id'],
-                    'remote_entity_code': RemoteEntity.CHECKUP,
-                },
-            }],
-        }
-        main_item = res[RemoteEntity.CHECKUP][0]
-        if params['local_operation_code'] != Operation.DELETE:
-            self.set_operation_order(res, RemoteEntity.CHECKUP, 1)
-            main_item['body'] = {
-                'code_1': data['code_1'],
-                'code_2': addition_data['local_service_code']['code_2'],
-            }
-        else:
-            self.set_operation_order(res, RemoteEntity.CHECKUP, 2)
-
-        def set_parent_id(record):
-            meta = record['meta']
-            parent_meta = meta['parent_entity']['meta']
-            meta['remote_url'] = meta['remote_url'].replace(
-                parent_meta['remote_id_url_param_name'], parent_meta['remote_id']
-            )
-            record['body'] = {
-                'parent_id': parent_meta['meta']['remote_id'],
-            }
-        for record in data['fetuses']:
-            item = {
-                'meta': {
-                    'local_entity_code': local_entity_code,
-                    'local_id': record['fetus_id'],
-                    'remote_entity_code': RemoteEntity.CHECKUP_FETUS,
-                    'set_parent_id_func': set_parent_id,
-                    'parent_entity': main_item,
-                },
-            }
-            res.setdefault(RemoteEntity.CHECKUP_FETUS, []).append(item)
-            if params['local_operation_code'] != Operation.DELETE:
-                self.set_operation_order(res, RemoteEntity.CHECKUP_FETUS, 2)
-                item['body'] = {
-                    'code_1': record['code_1'],
-                    'code_2': addition_data['local_service_code']['code_2'],
-                }
-            else:
-                self.set_operation_order(res, RemoteEntity.CHECKUP_FETUS, 1)
-        return res
-
-    def set_operation(self, params, entities):
+    def set_operation(self, params, entities, is_to_local):
         for pk, entity in entities.iteritems():
             for rk, record in entity.iteritems():
                 meta = record['meta']
-                entity_id_data = db_get_entity_id(
-                    meta['local_entity_code'],
-                    meta['local_id'],
-                    meta['remote_entity_code'],
-                    self.remote_sys_code,
-                )
-                if params['local_operation_code'] == Operation.ADD:
-                    if entity_id_data['remote_id']:
+                if is_to_local:
+                    entity_id_data = MatchingId.first_local_id(
+                        meta['src_entity_code'],
+                        meta['src_id'],
+                        meta['dst_entity_code'],
+                        self.remote_sys_code,
+                    )
+                else:
+                    entity_id_data = MatchingId.first_remote_id(
+                        meta['src_entity_code'],
+                        meta['src_id'],
+                        meta['dst_entity_code'],
+                        self.remote_sys_code,
+                    )
+                if params['src_operation_code'] == Operation.ADD:
+                    if entity_id_data['dst_id']:
                         # ситуация переотправки сообщений
-                        meta['skip_remote_send'] = True
-                    meta['remote_id'] = entity_id_data['remote_id']
-                    meta['remote_operation_code'] = Operation.ADD
+                        meta['skip_resend'] = True
+                    meta['dst_id'] = entity_id_data['dst_id']
+                    meta['dst_operation_code'] = Operation.ADD
                 else:  # (Operation.CHANGE, Operation.DELETE)
-                    meta['remote_id'] = entity_id_data['remote_id']
-                    meta['remote_id_url_param_name'] = entity_id_data['remote_id_url_param_name']
-                    if params['local_operation_code'] == Operation.DELETE:
-                        meta['remote_operation_code'] = Operation.DELETE
+                    meta['dst_id'] = entity_id_data['dst_id']
+                    meta['dst_id_url_param_name'] = entity_id_data['dst_id_url_param_name']
+                    if params['src_operation_code'] == Operation.DELETE:
+                        meta['dst_operation_code'] = Operation.DELETE
                     else:
                         # todo: контролировать ли это?
                         # если изменяем первый уровень, но передаем первый раз, то будет добавление
-                        meta['remote_operation_code'] = Operation.CHANGE if entity_id_data['remote_id'] else Operation.ADD
+                        meta['dst_operation_code'] = Operation.CHANGE if entity_id_data['dst_id'] else Operation.ADD
                 yield record
 
-    def set_service(self, record):
+    def set_service(self, record, is_to_local):
         meta = record['meta']
-        res = db_get_remote_service(
-            meta['remote_entity_code'],
-            meta['remote_operation_code'],
-            self.remote_sys_code,
-        )
-        meta['remote_method'] = res['method']
-        meta['remote_url'] = res['template_url'].replace(
-            meta['remote_id_url_param_name'], meta['remote_id']
+        if is_to_local:
+            method = ApiMethod.get_method(
+                meta['src_entity_code'],
+                meta['src_operation_code'],
+                'local_system',
+            )
+        else:
+            method = ApiMethod.get_method(
+                meta['dst_entity_code'],
+                meta['dst_operation_code'],
+                self.remote_sys_code,
+            )
+        meta['dst_method'] = method['method']
+        meta['dst_url'] = method['template_url'].replace(
+            meta['dst_id_url_param_name'].join(('<int:', '>')),
+            meta['dst_id']
         )
 
     def get_addition_data(self, missing_msgs):
@@ -181,15 +169,26 @@ class Reformer(object):
                 if set_parent_id_func:
                     set_parent_id_func(record)
                 trans_res = self.transfer.execute(record)
-                self.remote_conformity(record, trans_res)
+                self.conformity_remote(record, trans_res)
+
+    def get_operation_code_by_method(self, method_code):
+        if method_code.upper == 'POST':
+            res = Operation.ADD
+        elif method_code.upper == 'PUT':
+            res = Operation.CHANGE
+        elif method_code.upper == 'DELETE':
+            res = Operation.DELETE
+        else:
+            raise Exception('Unexpected method')
+        return res
 
     def create_local_msgs(self, data, method):
         if method.upper == 'POST':
-            res = self.create_local_post_msgs({'added': data})
+            res = self.create_local_post_msgs({'added': [data]})
         elif method.upper == 'PUT':
-            res = self.create_local_put_msgs({'changed': data})
+            res = self.create_local_put_msgs({'changed': [data]})
         elif method.upper == 'DELETE':
-            res = self.create_local_del_msgs({'deleted': data})
+            res = self.create_local_del_msgs({'deleted': [data]})
         else:
             raise Exception('Unexpected method')
         return res
@@ -198,11 +197,16 @@ class Reformer(object):
         # создание списка сообщений для добавления в локальную систему
         # сущностей, описанных в diff_data
         # todo:
+        res = []
         for remote_data in diff_data.get('added'):
-            local_data = self.to_local(remote_data)
-            msg = Message(local_data)
-            msg.set_source_data(remote_data)
-        return []
+            entities = self.reform_msg(remote_data)
+            for entity in entities:
+                msg = Message(entity['body'])
+                msg.set_source_data(entity['meta'])
+                msg.to_local_service()
+                msg.set_send_data_type()
+                res.append(msg)
+        return res
 
     def create_local_put_msgs(self, diff_data):
         # создание списка сообщений для изменения в локальную систему
@@ -216,6 +220,7 @@ class Reformer(object):
         # сущностей, описанных в diff_data
         diff_data.get('deleted')
         # todo:
+        msg.set_send_event_type()
         return []
 
     def from_remote(self, req_msg):

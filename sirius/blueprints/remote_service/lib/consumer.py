@@ -25,7 +25,7 @@ class RemoteConsumer(object):
         if msg.is_to_remote:
             if remote_system.is_passive(rmt_sys_code):
                 if msg.is_send_data:
-                    reformed_data = reformer.to_remote(msg)
+                    reformed_data = reformer.reform_msg(msg)
                     reformer.transfer_send_data(reformed_data)
                     hdr = msg.get_header()
                     op_res = OperationResult()
@@ -33,13 +33,13 @@ class RemoteConsumer(object):
                     if result_msg:
                         self.producer_send_msgs([result_msg])
                 elif msg.is_send_event:
-                    reformed_data = reformer.to_remote(msg)
+                    reformed_data = reformer.reform_msg(msg)
                     reformer.transfer_send_data(reformed_data)
                 elif msg.is_result:
                     remote_data = msg.get_source_data()
-                    reformer.local_conformity(remote_data, msg)
+                    reformer.conformity_local(remote_data, msg)
                 elif msg.is_request:
-                    reformed_req = reformer.to_remote(msg)
+                    reformed_req = reformer.reform_msg(msg)
                     remote_data = reformer.transfer_give_data(reformed_req)
 
                     # todo: цикл вложенных дозапросов и связывание ответов
@@ -60,7 +60,7 @@ class RemoteConsumer(object):
                     data_store.commit_all_changes()
                 elif msg.is_result:
                     remote_data = msg.get_source_data()
-                    reformer.local_conformity(remote_data, msg)
+                    reformer.conformity_local(remote_data, msg)
                 else:
                     raise Exception('Unexpected message type')
             else:

@@ -40,6 +40,7 @@ class LocalConsumer(object):
             next_msg.to_remote_service()
             next_msg.set_result_type()
             next_msg.set_source_data(remote_data)
+            next_msg.get_header().meta = msg.get_header().meta
             prod = LocalProducer()
             prod.send(next_msg)
         else:
