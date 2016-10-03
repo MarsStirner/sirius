@@ -49,8 +49,8 @@ class Reformer(object):
         # todo:
         pass
 
-    def to_remote(self, msg, miss_msgs):
-        addition_data = self.get_addition_data(miss_msgs)
+    def to_remote(self, msg):
+        addition_data = msg.get_missing_data()
         params = msg.get_header().meta
         entities = self.get_entities(params, msg.get_data(), addition_data)
         for record in self.set_operation(params, entities):
@@ -225,3 +225,8 @@ class Reformer(object):
         trans_res = self.transfer.execute(reform_data)
         for msg in trans_res:
             miss_req_msgs = self.get_missing_requests(msg)
+
+    def get_local_missing_requests(self, msg):
+        # todo:
+        # дозапросы в локальную систему
+        return missing_requests

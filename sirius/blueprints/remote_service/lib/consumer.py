@@ -6,7 +6,7 @@
 @date: 23.09.2016
 
 """
-from sirius.blueprints.remote_service.lib.implement import Implementation
+from sirius.lib.implement import Implementation
 from sirius.blueprints.remote_service.lib.producer import RemoteProducer
 from sirius.blueprints.remote_service.lib.result import OperationResult
 from sirius.blueprints.remote_service.lib.store import DataStore
@@ -25,12 +25,7 @@ class RemoteConsumer(object):
         if msg.is_to_remote:
             if remote_system.is_passive(rmt_sys_code):
                 if msg.is_send_data:
-
-                    # todo: цикл вложенных дозапросов и связывание ответов
-                    rmt_miss_req_msgs = reformer.get_missing_requests(msg)
-                    rmt_miss_data_msgs = self.producer_send_msgs(rmt_miss_req_msgs)
-
-                    reformed_data = reformer.to_remote(msg, rmt_miss_data_msgs)
+                    reformed_data = reformer.to_remote(msg)
                     reformer.transfer_send_data(reformed_data)
                     hdr = msg.get_header()
                     op_res = OperationResult()

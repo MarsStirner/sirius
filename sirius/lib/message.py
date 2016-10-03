@@ -45,6 +45,7 @@ class Message(object):
     def __init__(self, data):
         self.header = Header()
         self.body = data
+        self.missing = None
 
     def get_header(self):
         return self.header
@@ -82,6 +83,12 @@ class Message(object):
 
     def get_source_data(self):
         return self.header.source_data
+
+    def add_missing_data(self, miss_data):
+        self.missing = miss_data
+
+    def get_missing_data(self):
+        return self.missing
 
     @property
     def is_to_local(self):
