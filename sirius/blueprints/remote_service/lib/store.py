@@ -6,6 +6,7 @@
 @date: 26.09.2016
 
 """
+from cPickle import Pickler
 
 
 class DataStore(object):
@@ -44,3 +45,4 @@ class DataStore(object):
         # размещает в хранилище данные
         # todo:
         pass
+        Pickler

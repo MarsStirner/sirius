@@ -24,6 +24,7 @@ class Reformer(object):
     orig_msg = None
     # direct = None
     transfer = None
+    remote_sys_code = 'remote_sys_code'
 
     def set_transfer(self, transfer):
         self.transfer = transfer
@@ -49,13 +50,12 @@ class Reformer(object):
         pass
 
     def to_remote(self, msg, miss_msgs):
-        self.remote_sys_code = 'remote_sys_code'
         addition_data = self.get_addition_data(miss_msgs)
         params = msg.get_header().meta
         entities = self.get_entities(params, msg.get_data(), addition_data)
         for record in self.set_operation(params, entities):
             self.set_service(record)
-        self.send_entities(entities)
+        return entities
 
     def get_missing_requests(self, msg):
         # формируются сообщения в локальную систему для запроса
@@ -172,14 +172,14 @@ class Reformer(object):
     def set_operation_order(self, dict_, entity, order):
         dict_['operation_order'].setdefault(order, []).append(entity)
 
-    def send_entities(self, entities):
+    def transfer_send_data(self, entities):
         soo = sorted(entities['operation_order'].items(), key=lambda x: x[0])
         for entity_code in soo:
             entity = entities[entity_code]
             for rk, record in entity.iteritems():
-                set_parent_id = record['meta'].get('set_parent_id_func')
-                if set_parent_id:
-                    set_parent_id(record)
+                set_parent_id_func = record['meta'].get('set_parent_id_func')
+                if set_parent_id_func:
+                    set_parent_id_func(record)
                 trans_res = self.transfer.execute(record)
                 self.remote_conformity(record, trans_res)
 
@@ -218,5 +218,10 @@ class Reformer(object):
         # todo:
         return []
 
-    def get_reformed_data(self, msg):
-        return res
+    def from_remote(self, req_msg):
+        reform_data = self.get_reformed_data(req_msg)
+        miss_req_msgs = self.get_missing_requests(reform_data)
+
+        trans_res = self.transfer.execute(reform_data)
+        for msg in trans_res:
+            miss_req_msgs = self.get_missing_requests(msg)
