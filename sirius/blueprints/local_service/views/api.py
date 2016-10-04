@@ -7,7 +7,7 @@
 
 """
 from sirius.blueprints.local_service.app import module
-from sirius.blueprints.local_service.lib.parsing import RequestLocalData
+from sirius.blueprints.local_service.lib.parser import RequestLocalData
 from sirius.blueprints.local_service.lib.producer import LocalProducer
 from sirius.lib.message import Message
 from flask import request
@@ -16,7 +16,7 @@ from hitsl_utils.api import api_method
 
 @module.route('/api/request/local/', methods=["POST"])
 @api_method
-def api_local_message_direct():
+def api_request_local():
     data = request.get_json()
     rld = RequestLocalData(data)
     msg = Message(None)
@@ -30,7 +30,7 @@ def api_local_message_direct():
 
 @module.route('/api/send/remote/', methods=["POST"])
 @api_method
-def api_local_message_direct():
+def api_send_remote():
     data = request.get_json()
     msg = Message(data)
     msg.to_remote_service()

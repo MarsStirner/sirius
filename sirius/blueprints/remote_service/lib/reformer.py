@@ -14,12 +14,6 @@ from sirius.blueprints.remote_service.models.method import ApiMethod
 from sirius.lib.message import Message
 
 
-class LocalEntity(Enum):
-    CLIENT = 1
-    CHECKUP = 2
-    CHECKUP_FETUS = 3
-
-
 class Operation(Enum):
     ADD = 'add'
     CHANGE = 'change'
@@ -29,6 +23,7 @@ class Operation(Enum):
 class Reformer(object):
     __metaclass__ = ABCMeta
 
+    LocalEntity = None
     orig_msg = None
     # direct = None
     transfer = None
@@ -37,16 +32,20 @@ class Reformer(object):
     def set_transfer(self, transfer):
         self.transfer = transfer
 
+    def set_local_entity_enum(self, local_entity_enum):
+        self.LocalEntity = local_entity_enum
+
     def reform_msg(self, msg):
         addition_data = msg.get_missing_data()
         header_meta = msg.get_header().meta
+        self.check_sys_code(msg)
         if msg.is_to_local:
             entities = self.get_local_entities(header_meta, msg.get_data(), addition_data)
         elif msg.is_to_remote:
             entities = self.get_remote_entities(header_meta, msg.get_data(), addition_data)
         else:
             raise RuntimeError('Undefined direct')
-        for record in self.set_operation(header_meta, entities, msg.is_to_local):
+        for record in self.set_operation(entities, msg.is_to_local):
             self.set_service(record, msg.is_to_local)
         # res = []
         # for entity in entities:
@@ -62,13 +61,31 @@ class Reformer(object):
         # реализация в регионе
         return {}
 
-    def conformity_local(self, remote_data, local_data):
+    def conformity_local(self, record, answer_res):
         # сопоставление ID в БД при добавлении данных
-        # todo:
-        remote_data
-        MatchingId.add_matching(
-            local_data
-        )
+        # в record пишем полученное ID для дочерних запросов
+
+        rec_meta = record['meta']
+        if rec_meta['dst_operation_code'] == Operation.ADD:
+            rec_meta['dst_id'] = answer_res['main_id']
+            rec_meta['dst_id_url_param_name'] = answer_res['param_name']
+            MatchingId.add(
+                local_entity_code=rec_meta['dst_entity_code'],
+                local_id=rec_meta['dst_id'],
+                local_param_name=rec_meta['dst_id_url_param_name'],
+                remote_sys_code=self.remote_sys_code,
+                remote_entity_code=rec_meta['src_entity_code'],
+                remote_id=rec_meta['src_id'],
+                remote_param_name=rec_meta['src_id_url_param_name'],
+            )
+        elif rec_meta['dst_operation_code'] == Operation.DELETE:
+            MatchingId.remove(
+                remote_sys_code=self.remote_sys_code,
+                remote_entity_code=rec_meta['src_entity_code'],
+                remote_id=rec_meta['src_id'],
+                local_entity_code=rec_meta['dst_entity_code'],
+                local_id=rec_meta['dst_id'],
+            )
 
     def conformity_remote(self, local_data, remote_data):
         # сопоставление ID в БД при добавлении данных
@@ -77,11 +94,12 @@ class Reformer(object):
         pass
 
     @abstractmethod
-    def get_remote_entities(self, params, data, addition_data):
+    def get_remote_entities(self, header_meta, data, addition_data):
         # реализация в регионе
         return {}
 
     def get_missing_requests(self, msg):
+        # дозапросы в удаленную систему
         # формируются сообщения в локальную систему для запроса
         # дополнительных данных
         req_msg = Message(None)
@@ -91,7 +109,7 @@ class Reformer(object):
         req_msg.set_immediate_answer()
         return []
 
-    def set_operation(self, params, entities, is_to_local):
+    def set_operation(self, entities, is_to_local):
         for pk, entity in entities.iteritems():
             for rk, record in entity.iteritems():
                 meta = record['meta']
@@ -109,7 +127,7 @@ class Reformer(object):
                         meta['dst_entity_code'],
                         self.remote_sys_code,
                     )
-                if params['src_operation_code'] == Operation.ADD:
+                if meta['src_operation_code'] == Operation.ADD:
                     if entity_id_data['dst_id']:
                         # ситуация переотправки сообщений
                         meta['skip_resend'] = True
@@ -118,7 +136,7 @@ class Reformer(object):
                 else:  # (Operation.CHANGE, Operation.DELETE)
                     meta['dst_id'] = entity_id_data['dst_id']
                     meta['dst_id_url_param_name'] = entity_id_data['dst_id_url_param_name']
-                    if params['src_operation_code'] == Operation.DELETE:
+                    if meta['src_operation_code'] == Operation.DELETE:
                         meta['dst_operation_code'] = Operation.DELETE
                     else:
                         # todo: контролировать ли это?
@@ -170,6 +188,22 @@ class Reformer(object):
                     set_parent_id_func(record)
                 trans_res = self.transfer.execute(record)
                 self.conformity_remote(record, trans_res)
+
+    def send_local_data(self, entities, request_by_url, answer):
+        soo = sorted(entities['operation_order'].items(), key=lambda x: x[0])
+        for entity_code in soo:
+            entity = entities[entity_code]
+            for rk, record in entity.iteritems():
+                rec_meta = record['meta']
+                set_parent_id_func = rec_meta.get('set_parent_id_func')
+                if set_parent_id_func:
+                    set_parent_id_func(record)
+                url = rec_meta['dst_url']
+                method = rec_meta['dst_method']
+                body = rec_meta['body']
+                answer_data = request_by_url(method, url, body)
+                answer_res = answer.process(rec_meta['dst_entity_code'], answer_data)
+                self.conformity_local(record, answer_res)
 
     def get_operation_code_by_method(self, method_code):
         if method_code.upper == 'POST':
@@ -235,3 +269,7 @@ class Reformer(object):
         # todo:
         # дозапросы в локальную систему
         return missing_requests
+
+    def check_sys_code(self, msg):
+        if msg.get_header().meta['remote_system_code'] != self.remote_sys_code:
+            raise RuntimeError('Does not match remote_system_code')

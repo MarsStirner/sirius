@@ -7,8 +7,8 @@
 
 """
 from hitsl_utils.enum import Enum
-from sirius.blueprints.remote_service.lib.reformer import Reformer, LocalEntity, \
-    Operation
+from sirius.blueprints.remote_service.lib.reformer import Reformer, Operation
+from sirius.lib.remote_system import RemoteSystemCode
 
 
 class RemoteEntity(Enum):
@@ -17,10 +17,15 @@ class RemoteEntity(Enum):
 
 
 class TambovReformer(Reformer):
+    remote_sys_code = RemoteSystemCode.TAMBOV
+
+    def get_local_entities(self, header_meta, data, addition_data):
+        # реализация в регионе
+        return {}
 
     def get_remote_entities(self, header_meta, data, addition_data):
         local_entity_code = header_meta['local_entity_code']
-        if local_entity_code == LocalEntity.CHECKUP:
+        if local_entity_code == self.LocalEntity.CHECKUP:
             res = self.build_remote_checkup(header_meta, data, addition_data)
         else:
             raise RuntimeError('Unexpected local_entity_code')
@@ -28,6 +33,7 @@ class TambovReformer(Reformer):
 
     def build_remote_checkup(self, header_meta, data, addition_data):
         local_entity_code = db_get_local_entity_code(header_meta['local_service_code'])
+        src_operation_code = self.get_operation_code_by_method(header_meta['local_method'])
         res = {
             'operation_order': {},
             RemoteEntity.CHECKUP: [{
@@ -39,7 +45,7 @@ class TambovReformer(Reformer):
             }],
         }
         main_item = res[RemoteEntity.CHECKUP][0]
-        if header_meta['local_operation_code'] != Operation.DELETE:
+        if src_operation_code != Operation.DELETE:
             self.set_operation_order(res, RemoteEntity.CHECKUP, 1)
             main_item['body'] = {
                 'code_1': data['code_1'],
@@ -68,7 +74,7 @@ class TambovReformer(Reformer):
                 },
             }
             res.setdefault(RemoteEntity.CHECKUP_FETUS, []).append(item)
-            if header_meta['local_operation_code'] != Operation.DELETE:
+            if src_operation_code != Operation.DELETE:
                 self.set_operation_order(res, RemoteEntity.CHECKUP_FETUS, 2)
                 item['body'] = {
                     'code_1': record['code_1'],

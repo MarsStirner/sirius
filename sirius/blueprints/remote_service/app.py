@@ -10,3 +10,5 @@ from .config import MODULE_NAME
 from flask import Blueprint
 
 module = Blueprint(MODULE_NAME, __name__)
+
+from .views import *

@@ -1,14 +1,14 @@
 configens: !include configens.yaml
 common:
-  bi_database: &SQLALCHEMY postgresql://postgres:postgres@localhost/bi_risar
-  celery_broker: &CELERY_BROKER_URL amqp://bars:bi@localhost:5672/bi//  # transport://userid:password@hostname:port/virtual_host
+  sirius_database: &SQLALCHEMY postgresql://postgres:postgres@localhost/sirius
+  celery_broker: &CELERY_BROKER_URL amqp://bars:sirius@localhost:5672/sirius  # transport://userid:password@hostname:port/virtual_host
   # celery_result_backend: &CELERY_RESULT_BACKEND redis://localhost:6379/1
   # sql database for celery application task (CAT) info and results
-  cat_database: &SQLALCHEMY_CAT postgresql://postgres:postgres@localhost/bi_risar
+  cat_database: &SQLALCHEMY_CAT postgresql://postgres:postgres@localhost/sirius
 
   uwsgi_apps: &UWSGI_APPS
 #    CASTIEL_AUTH_TOKEN: &CASTIEL_AUTH_TOKEN CastielAuthToken # authToken
-    BI_URL: &BI_URL http://127.0.0.1:6700/
+    SIRIUS_URL: &SIRIUS_URL http://127.0.0.1:6700/
     TSUKINO_USAGI_URL: &TSUKINO_USAGI_URL http://127.0.0.1:6602/
 #    SIMPLELOGS_URL: &SIMPLELOGS_URL http://10.1.2.11:6603/
 
@@ -23,7 +23,7 @@ common:
 
     DEBUG: True
     PROFILE: False
-    TITLE: BI
+    TITLE: SIRIUS
     COPYRIGHT_COMPANY: БАРС Груп
     BABEL_DEFAULT_LOCALE: ru_RU
     TIME_ZONE: Europe/Moscow
@@ -56,14 +56,14 @@ common:
 
 deployment:
   base_dir: .
-  prefix: sirius
+  postfix: infra
 
 
 subsystems:
 
   # Пользовательские подсистемы
 
-  bi: # шина интеграции
+  sirius: # шина интеграции
     configens:
       uwsgi:
         template: "{{ configens.uwsgi.templates.basic | recurse }}"
@@ -73,7 +73,7 @@ subsystems:
 
           mule
           mule
-          pythonpath={{ deployment.base_dir }}/code/bi
+          pythonpath={{ deployment.base_dir }}/code/sirius
 
           module=wsgi_risar
           callable=app
@@ -81,14 +81,14 @@ subsystems:
         port: 6700
         template: "{{ configens.nginx.templates.uwsgi | recurse }}"
         prepend: |
-          uwsgi_cache_path /var/cache/nginx/{{ deployment.prefix }}/ levels=1:2 keys_zone={{ deployment.prefix }}_bi:100m inactive=120m max_size=200M;
+          uwsgi_cache_path /var/cache/nginx/{{ deployment.postfix }}/ levels=1:2 keys_zone=sirius_{{ deployment.postfix }}:100m inactive=120m max_size=200M;
         ext: |
           location /static/ {
             alias {{ deployment.base_dir }}/venv/src/nemesis/nemesis/static/;
           }
 
           location /api/rb/ {
-              uwsgi_cache {{ deployment.prefix }}_bi;
+              uwsgi_cache sirius_{{ deployment.postfix }};
               uwsgi_cache_bypass $http_pragma;
               uwsgi_cache_valid 200 301 302 304 5m;
               uwsgi_cache_key "$request_method|$http_if_modified_since|$http_if_none_match|$host|$request_uri";
@@ -116,7 +116,7 @@ subsystems:
       SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
       PROJECT_NAME: BusIntegration
       TITLE: "ИШ"
-      INDEX_HTML: bi_index.html
+      INDEX_HTML: sirius_index.html
       DEFAULT_ENDPOINT: sirius.index_html
       BEAKER_SESSION:
         session.type: file
@@ -132,7 +132,7 @@ subsystems:
       DEBUG_TB_INTERCEPT_REDIRECTS: False
       CACHE_TYPE: 'simple'  # Can be "memcached", "redis", etc.
 #      CACHE_TYPE: filesystem
-#      CACHE_DIR: /tmp/cache/bi
+#      CACHE_DIR: /tmp/cache/sirius
 
       prod:
         ENV: 'prod'
@@ -156,7 +156,7 @@ subsystems:
         BCRYPT_LOG_ROUNDS: 4  # For faster tests; needs at least 4 to avoid "ValueError: Invalid rounds"
         WTF_CSRF_ENABLED: False  # Allows form testing
 
-    url: *BI_URL
+    url: *SIRIUS_URL
 
   # Внутренние подсистемы
 
@@ -248,21 +248,21 @@ subsystems:
 #      FILE_STORAGE_PATH: *FILE_STORAGE_PATH
 #      FILE_MAX_SIZE: 10M
 #      CORS_ORIGINS:
-#        - *BI_URL
+#        - *SIRIUS_URL
 #
 #    url: *DEVOURER_URL
 
   celery_queue:
     risar_main:
-      name: "{{ deployment.prefix }}_{{ this.name }}_queue"
+      name: "sirius_{{ deployment.postfix }}_{{ this.name }}_queue"
     risar_error_1:
-      name: "{{ deployment.prefix }}_{{ this.name }}_queue"
+      name: "sirius_{{ deployment.postfix }}_{{ this.name }}_queue"
     risar_error_2:
-      name: "{{ deployment.prefix }}_{{ this.name }}_queue"
+      name: "sirius_{{ deployment.postfix }}_{{ this.name }}_queue"
     mis_tula:
-      name: "{{ deployment.prefix }}_{{ this.name }}_queue"
+      name: "sirius_{{ deployment.postfix }}_{{ this.name }}_queue"
     mis_tambov:
-      name: "{{ deployment.prefix }}_{{ this.name }}_queue"
+      name: "sirius_{{ deployment.postfix }}_{{ this.name }}_queue"
   celery_worker:
     configens:
       supervisor:
@@ -272,9 +272,9 @@ subsystems:
             ;  celery worker supervisor example for local main queue
             ; =================================================================
 
-            [program:{{ deployment.prefix }}_{{ this.name }}]
-            environment=PYTHONPATH={{ deployment.base_dir }}/code/bi;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
-            command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.risar_main.name }}
+            [program:sirius_{{ deployment.postfix }}_{{ this.name }}]
+            environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+            command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n sirius_{{ deployment.postfix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.risar_main.name }}
 
             directory={{ deployment.base_dir }}
 
@@ -309,9 +309,9 @@ subsystems:
             ;  celery worker supervisor example for local error queue 1
             ; =================================================================
 
-            [program:{{ deployment.prefix }}_{{ this.name }}]
-            environment=PYTHONPATH={{ deployment.base_dir }}/code/bi;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
-            command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.risar_error_1.name }}
+            [program:sirius_{{ deployment.postfix }}_{{ this.name }}]
+            environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+            command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n sirius_{{ deployment.postfix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.risar_error_1.name }}
             directory={{ deployment.base_dir }}
 
             ;numprocs=1
@@ -344,9 +344,9 @@ subsystems:
             ;  celery worker supervisor example for local error queue 1
             ; =================================================================
 
-            [program:{{ deployment.prefix }}_{{ this.name }}]
-            environment=PYTHONPATH={{ deployment.base_dir }}/code/bi;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
-            command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.risar_error_2.name }}
+            [program:sirius_{{ deployment.postfix }}_{{ this.name }}]
+            environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+            command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n sirius_{{ deployment.postfix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.risar_error_2.name }}
             directory={{ deployment.base_dir }}
 
             ;numprocs=1
@@ -380,9 +380,9 @@ subsystems:
             ;  celery worker supervisor example for local main queue
             ; =================================================================
 
-            [program:{{ deployment.prefix }}_{{ this.name }}]
-            environment=PYTHONPATH={{ deployment.base_dir }}/code/bi;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
-            command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.mis_tula.name }}
+            [program:sirius_{{ deployment.postfix }}_{{ this.name }}]
+            environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+            command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n sirius_{{ deployment.postfix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.mis_tula.name }}
 
             directory={{ deployment.base_dir }}
 
@@ -417,9 +417,9 @@ subsystems:
             ;  celery worker supervisor example for local main queue
             ; =================================================================
 
-            [program:{{ deployment.prefix }}_{{ this.name }}]
-            environment=PYTHONPATH={{ deployment.base_dir }}/code/bi;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
-            command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.mis_tambov.name }}
+            [program:sirius_{{ deployment.postfix }}_{{ this.name }}]
+            environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+            command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n sirius_{{ deployment.postfix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.mis_tambov.name }}
 
             directory={{ deployment.base_dir }}
 
@@ -457,9 +457,9 @@ subsystems:
           ;  celery beat supervisor example
           ; =================================================================
 
-          [program:{{ deployment.prefix }}_{{ this.name }}]
-          environment=PYTHONPATH={{ deployment.base_dir }}/code/bi;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
-          ;command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ deployment.prefix }}_{{ this.name }}_queue
+          [program:sirius_{{ deployment.postfix }}_{{ this.name }}]
+          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+          ;command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n sirius_{{ deployment.postfix }}_{{ this.name }}_worker -l INFO -c 1 -Q sirius_{{ deployment.postfix }}_{{ this.name }}_queue
           command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker beat -l INFO
           directory={{ deployment.base_dir }}
 

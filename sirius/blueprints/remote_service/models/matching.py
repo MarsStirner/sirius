@@ -7,7 +7,7 @@
 
 """
 from sirius.database import Column, Model, db, reference_col, relationship
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, CheckConstraint
 
 
 class MatchingId(Model):
@@ -17,16 +17,17 @@ class MatchingId(Model):
 
     local_entity_code = Column(db.String(80), unique=False, nullable=False)
     local_id = Column(db.Integer, unique=False, nullable=False)
-    local_param_name = Column(db.String(80), unique=False, nullable=False)
+    local_param_name = Column(db.String(80), unique=False, nullable=True)
 
     remote_sys_code = Column(db.String(80), unique=False, nullable=False)
     remote_entity_code = Column(db.String(80), unique=False, nullable=False)
     remote_id = Column(db.Integer, unique=False, nullable=False)
-    remote_param_name = Column(db.String(80), unique=False, nullable=False)
+    remote_param_name = Column(db.String(80), unique=False, nullable=True)
 
     __table_args__ = (
         UniqueConstraint('local_entity_code', 'local_id', name='_local_entity_id_uc'),
         UniqueConstraint('remote_sys_code', 'remote_entity_code', 'remote_id', name='_remote_sys_entity_id_uc'),
+        CheckConstraint("local_param_name > '' OR remote_param_name > ''", name='_param_name_chk'),
     )
 
     @classmethod
@@ -68,25 +69,40 @@ class MatchingId(Model):
         return res
 
     @classmethod
-    def add_matching(
+    def add(
         cls,
-        local_entity_code,
-        local_id,
-        local_param_name,
-        remote_sys_code,
-        remote_entity_code,
-        remote_id,
-        remote_param_name,
+        local_entity_code=None,
+        local_id=None,
+        local_param_name=None,
+        remote_sys_code=None,
+        remote_entity_code=None,
+        remote_id=None,
+        remote_param_name=None,
     ):
-        matching = cls(
+        cls.create(
             local_entity_code=local_entity_code,
             local_id=local_id,
             local_param_name=local_param_name,
-
             remote_sys_code=remote_sys_code,
             remote_entity_code=remote_entity_code,
             remote_id=remote_id,
             remote_param_name=remote_param_name,
         )
-        db.session.add(matching)
-        db.session.commit()
+
+    @classmethod
+    def remove(
+        cls,
+        remote_sys_code=None,
+        remote_entity_code=None,
+        remote_id=None,
+        local_entity_code=None,
+        local_id=None,
+    ):
+        rec = cls.query.filter(
+            remote_sys_code=remote_sys_code,
+            remote_entity_code=remote_entity_code,
+            remote_id=remote_id,
+            local_entity_code=local_entity_code,
+            local_id=local_id,
+        ).first()
+        rec.delete()

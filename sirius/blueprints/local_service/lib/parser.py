@@ -6,6 +6,7 @@
 @date: 26.09.2016
 
 """
+from sirius.blueprints.local_service.lib.entities import LocalEntity
 
 
 class RequestLocalData(object):
@@ -24,3 +25,15 @@ class RequestLocalData(object):
     def get_params(self, data):
         self.url = data.get('url')
         self.method = data.get('method')
+
+
+class LocalAnswer(object):
+    def process(self, entity_code, result):
+        # разбирает ответ локальной системы и достает полезные данные
+        res = None
+        if entity_code == LocalEntity.CLIENT:
+            res = {
+                'main_id': result['client_id'],
+                'param_name': 'client_id',
+            }
+        return res

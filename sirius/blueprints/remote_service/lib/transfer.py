@@ -6,7 +6,6 @@
 @date: 23.09.2016
 
 """
-from sirius.app import app
 
 
 class Transfer(object):
@@ -15,6 +14,7 @@ class Transfer(object):
     answer = None
 
     def execute(self, reformed_data):
+        from sirius.app import app
         with app.app_context():
             with self.login() as session:
                 result = self.requests(session, reformed_data)

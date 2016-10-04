@@ -17,7 +17,7 @@ def create_wsgi_app():
     app = Flask(__name__)
 
     conf_url = os.getenv('TSUKINO_USAGI_URL', 'http://127.0.0.1:6602')
-    usagi = BIUsagiClient(app, app.wsgi_app, conf_url, 'bi')
+    usagi = BIUsagiClient(app, app.wsgi_app, conf_url, 'sirius')
     app.wsgi_app = usagi.app
     usagi()
 
@@ -46,9 +46,11 @@ def register_extensions(app):
 
 def register_blueprints(app):
     """Register Flask blueprints."""
-    from sirius.blueprints import public, user
+    from sirius.blueprints import public, user, local_service, remote_service
     app.register_blueprint(public.views.blueprint)
     app.register_blueprint(user.views.blueprint)
+    app.register_blueprint(remote_service.app.module)
+    app.register_blueprint(local_service.app.module)
     return None
 
 

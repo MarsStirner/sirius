@@ -6,6 +6,12 @@
 @date: 27.09.2016
 
 """
+from hitsl_utils.enum import Enum
+
+
+class RemoteSystemCode(Enum):
+    TAMBOV = 'tambov'
+    TULA = 'tula'
 
 
 class RemoteSystem(object):
@@ -41,12 +47,12 @@ class RemoteSystem(object):
         # код пассивной системы с мастер-данными
         self.initialise()
         # todo:
-        return 'tambov'
+        return RemoteSystemCode.TAMBOV
 
     def get_event_system_code(self):
         # код пассивной системы, работающей с событиями
         self.initialise()
         # todo:
-        return 'tambov'
+        return RemoteSystemCode.TAMBOV
 
 remote_system = RemoteSystem()

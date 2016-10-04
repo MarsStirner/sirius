@@ -32,12 +32,14 @@ class Header(object):
         'local_entity_code': None,
         'local_service_code': None,
         'local_main_id': None,
+        'local_main_param_name': None,
         'local_operation_code': None,
 
         'remote_system_code': None,
         'remote_entity_code': None,
         'remote_service_code': None,
         'remote_main_id': None,
+        'remote_main_param_name': None,
         'remote_operation_code': None,
     }
 
