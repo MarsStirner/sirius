@@ -27,13 +27,13 @@ class ApiMethod(Model):
 
     @classmethod
     def get_method(cls, entity_code, operation_code, system_code):
-        method = cls.query.filter(
-            cls.entity_code == entity_code,
-            cls.operation_code == operation_code,
-            cls.system_code == system_code,
+        method = cls.query.filter_by(
+            entity_code=entity_code,
+            operation_code=operation_code,
+            system_code=system_code,
         ).first()
         if not method:
-            raise RuntimeError('Service not found')
+            raise RuntimeError('Service not registered in %s' % cls.__name__)
         res = {
             'method': method.method,
             'template_url': method.template_url,

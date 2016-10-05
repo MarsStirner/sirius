@@ -34,11 +34,11 @@ class MatchingId(Model):
     def first_local_id(cls, src_entity_code, src_id, dst_entity_code, remote_sys_code):
         dst_id = None
         dst_param_name = None
-        res = cls.query.filter(
-            cls.remote_entity_code == src_entity_code,
-            cls.remote_id == src_id,
-            cls.local_entity_code == dst_entity_code,
-            cls.remote_sys_code == remote_sys_code,
+        res = cls.query.filter_by(
+            remote_entity_code=src_entity_code,
+            remote_id=src_id,
+            local_entity_code=dst_entity_code,
+            remote_sys_code=remote_sys_code,
         ).first()
         if res:
             dst_id = res.local_id
@@ -53,11 +53,11 @@ class MatchingId(Model):
     def first_remote_id(cls, src_entity_code, src_id, dst_entity_code, remote_sys_code):
         dst_id = None
         dst_param_name = None
-        res = cls.query.filter(
-            cls.local_entity_code == src_entity_code,
-            cls.local_id == src_id,
-            cls.remote_entity_code == dst_entity_code,
-            cls.remote_sys_code == remote_sys_code,
+        res = cls.query.filter_by(
+            local_entity_code=src_entity_code,
+            local_id=src_id,
+            remote_entity_code=dst_entity_code,
+            remote_sys_code=remote_sys_code,
         ).first()
         if res:
             dst_id = res.remote_id
@@ -98,7 +98,7 @@ class MatchingId(Model):
         local_entity_code=None,
         local_id=None,
     ):
-        rec = cls.query.filter(
+        rec = cls.query.filter_by(
             remote_sys_code=remote_sys_code,
             remote_entity_code=remote_entity_code,
             remote_id=remote_id,

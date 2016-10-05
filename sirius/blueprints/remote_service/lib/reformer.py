@@ -61,12 +61,16 @@ class Reformer(object):
         # реализация в регионе
         return {}
 
-    def conformity_local(self, record, answer_res):
+    def conformity_local(self, record, answer, answer_data):
         # сопоставление ID в БД при добавлении данных
         # в record пишем полученное ID для дочерних запросов
 
         rec_meta = record['meta']
         if rec_meta['dst_operation_code'] == Operation.ADD:
+            answer_res = answer.process(
+                rec_meta['dst_entity_code'],
+                answer_data,
+            )
             rec_meta['dst_id'] = answer_res['main_id']
             rec_meta['dst_id_url_param_name'] = answer_res['param_name']
             MatchingId.add(
@@ -110,38 +114,42 @@ class Reformer(object):
         return []
 
     def set_operation(self, entities, is_to_local):
-        for pk, entity in entities.iteritems():
-            for rk, record in entity.iteritems():
+        for pk, records in entities.iteritems():
+            if pk == 'operation_order':
+                continue
+            for record in records:
                 meta = record['meta']
                 if is_to_local:
-                    entity_id_data = MatchingId.first_local_id(
+                    matching_id_data = MatchingId.first_local_id(
                         meta['src_entity_code'],
                         meta['src_id'],
                         meta['dst_entity_code'],
                         self.remote_sys_code,
                     )
                 else:
-                    entity_id_data = MatchingId.first_remote_id(
+                    matching_id_data = MatchingId.first_remote_id(
                         meta['src_entity_code'],
                         meta['src_id'],
                         meta['dst_entity_code'],
                         self.remote_sys_code,
                     )
+                meta['skip_resend'] = False
                 if meta['src_operation_code'] == Operation.ADD:
-                    if entity_id_data['dst_id']:
+                    if matching_id_data['dst_id']:
                         # ситуация переотправки сообщений
                         meta['skip_resend'] = True
-                    meta['dst_id'] = entity_id_data['dst_id']
+                    meta['dst_id'] = matching_id_data['dst_id']
+                    meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
                     meta['dst_operation_code'] = Operation.ADD
                 else:  # (Operation.CHANGE, Operation.DELETE)
-                    meta['dst_id'] = entity_id_data['dst_id']
-                    meta['dst_id_url_param_name'] = entity_id_data['dst_id_url_param_name']
+                    meta['dst_id'] = matching_id_data['dst_id']
+                    meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
                     if meta['src_operation_code'] == Operation.DELETE:
                         meta['dst_operation_code'] = Operation.DELETE
                     else:
                         # todo: контролировать ли это?
-                        # если изменяем первый уровень, но передаем первый раз, то будет добавление
-                        meta['dst_operation_code'] = Operation.CHANGE if entity_id_data['dst_id'] else Operation.ADD
+                        # если изменяем, но передаем первый раз, то будет добавление
+                        meta['dst_operation_code'] = Operation.CHANGE if matching_id_data['dst_id'] else Operation.ADD
                 yield record
 
     def set_service(self, record, is_to_local):
@@ -160,9 +168,14 @@ class Reformer(object):
             )
         meta['dst_method'] = method['method']
         meta['dst_url'] = method['template_url'].replace(
-            meta['dst_id_url_param_name'].join(('<int:', '>')),
-            meta['dst_id']
+            'api_version'.join(('<int:', '>')),
+            '0'
         )
+        if meta['src_operation_code'] != Operation.ADD:
+            meta['dst_url'] = meta['dst_url'].replace(
+                meta['dst_id_url_param_name'].join(('<int:', '>')),
+                str(meta['dst_id'])
+            )
 
     def get_addition_data(self, missing_msgs):
         # пока считаем, что конвертировать локальные ID не придется
@@ -191,37 +204,39 @@ class Reformer(object):
 
     def send_local_data(self, entities, request_by_url, answer):
         soo = sorted(entities['operation_order'].items(), key=lambda x: x[0])
-        for entity_code in soo:
-            entity = entities[entity_code]
-            for rk, record in entity.iteritems():
-                rec_meta = record['meta']
-                set_parent_id_func = rec_meta.get('set_parent_id_func')
-                if set_parent_id_func:
-                    set_parent_id_func(record)
-                url = rec_meta['dst_url']
-                method = rec_meta['dst_method']
-                body = rec_meta['body']
-                answer_data = request_by_url(method, url, body)
-                answer_res = answer.process(rec_meta['dst_entity_code'], answer_data)
-                self.conformity_local(record, answer_res)
+        for order, entity_codes in soo:
+            for entity_code in entity_codes:
+                records = entities[entity_code]
+                for record in records:
+                    rec_meta = record['meta']
+                    set_parent_id_func = rec_meta.get('set_parent_id_func')
+                    if set_parent_id_func:
+                        set_parent_id_func(record)
+                    if rec_meta['skip_resend']:
+                        continue
+                    url = rec_meta['dst_url']
+                    method = rec_meta['dst_method']
+                    body = record.get('body')
+                    answer_data = request_by_url(method, url, body)
+                    self.conformity_local(record, answer, answer_data)
 
     def get_operation_code_by_method(self, method_code):
-        if method_code.upper == 'POST':
+        if method_code.upper() == 'POST':
             res = Operation.ADD
-        elif method_code.upper == 'PUT':
+        elif method_code.upper() == 'PUT':
             res = Operation.CHANGE
-        elif method_code.upper == 'DELETE':
+        elif method_code.upper() == 'DELETE':
             res = Operation.DELETE
         else:
             raise Exception('Unexpected method')
         return res
 
     def create_local_msgs(self, data, method):
-        if method.upper == 'POST':
+        if method.upper() == 'POST':
             res = self.create_local_post_msgs({'added': [data]})
-        elif method.upper == 'PUT':
+        elif method.upper() == 'PUT':
             res = self.create_local_put_msgs({'changed': [data]})
-        elif method.upper == 'DELETE':
+        elif method.upper() == 'DELETE':
             res = self.create_local_del_msgs({'deleted': [data]})
         else:
             raise Exception('Unexpected method')

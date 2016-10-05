@@ -9,6 +9,6 @@
 from .config import MODULE_NAME
 from flask import Blueprint
 
-module = Blueprint(MODULE_NAME, __name__)
+module = Blueprint(MODULE_NAME, __name__, url_prefix='/local')
 
 from .views import *

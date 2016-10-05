@@ -13,7 +13,7 @@ from celeryusagicompat import BICeleryUsagiClient
 
 logger = get_task_logger(__name__)
 
-usagi = BICeleryUsagiClient(flask_app.wsgi_app, os.getenv('TSUKINO_USAGI_URL', 'http://127.0.0.1:6602'), 'bi')
+usagi = BICeleryUsagiClient(flask_app.wsgi_app, os.getenv('TSUKINO_USAGI_URL', 'http://127.0.0.1:6602'), 'sirius')
 flask_app.wsgi_app = usagi.app
 usagi()
 

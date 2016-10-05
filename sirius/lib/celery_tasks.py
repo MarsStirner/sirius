@@ -6,6 +6,10 @@
 @date: 23.09.2016
 
 """
+import traceback
+
+import sys
+
 from sirius.extensions import celery
 
 
@@ -13,7 +17,13 @@ from sirius.extensions import celery
 def local_task(msg):
     from sirius.blueprints.local_service.lib.consumer import LocalConsumer
     receiver = LocalConsumer()
-    return receiver.process(msg)
+    try:
+        res = receiver.process(msg)
+    except Exception as exc:
+        traceback.print_exc()
+        # j, code, headers = jsonify_api_exception(e, traceback.extract_tb(sys.exc_info()[2]))
+        raise
+    return res
 
 
 @celery.task

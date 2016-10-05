@@ -13,17 +13,27 @@ import requests
 from contextlib import contextmanager
 
 
-coldstar_url = os.getenv('TEST_COLDSTAR_URL', 'http://127.0.0.1:6098')
-mis_url = os.getenv('TEST_MIS_URL', 'http://127.0.0.1:6600')
 auth_token_name = 'CastielAuthToken'
 session_token_name = 'hippocrates.session.id'
 
 login = os.getenv('TEST_LOGIN', u'ВнешСис')
-password = os.getenv('TEST_PASSWORD', '')
+password = os.getenv('TEST_PASSWORD', '0909')
+
+
+def get_hippo_url():
+    from sirius.app import app
+    mis_url = app.config.get('HIPPOCRATE_URL', 'http://127.0.0.1:6600/')
+    return mis_url.rstrip('/')
+
+
+def get_coldstar_url():
+    from sirius.app import app
+    cs_url = app.config.get('COLDSTAR_URL', 'http://127.0.0.1:6605/')
+    return cs_url.rstrip('/')
 
 
 def get_token(login, password):
-    url = u'%s/cas/api/acquire' % coldstar_url
+    url = u'%s/cas/api/acquire' % get_coldstar_url()
     result = requests.post(
         url,
         {
@@ -39,7 +49,7 @@ def get_token(login, password):
 
 
 def release_token(token):
-    url = u'%s/cas/api/release' % coldstar_url
+    url = u'%s/cas/api/release' % get_coldstar_url()
     result = requests.post(
         url,
         {
@@ -53,7 +63,7 @@ def release_token(token):
 
 
 def get_role(token, role_code=''):
-    url = u'%s/chose_role/' % mis_url
+    url = u'%s/chose_role/' % get_hippo_url()
     if role_code:
         url += role_code
     result = requests.post(
@@ -83,7 +93,7 @@ def make_login():
 def make_api_request(method, url, session, json_data=None, url_args=None):
     token, session_token = session
     result = getattr(requests, method)(
-        mis_url + url,
+        get_hippo_url() + url,
         json=json_data,
         params=url_args,
         cookies={auth_token_name: token,
@@ -101,7 +111,7 @@ def make_api_request(method, url, session, json_data=None, url_args=None):
 
 
 def test_auth(login, password):
-    print 'Coldstar: ', coldstar_url, ', Risar: ', mis_url
+    print 'Coldstar: ', get_coldstar_url(), ', Risar: ', get_hippo_url()
     token = get_token(login, password)
     print ' > auth token: ', token
     session_token = get_role(token)

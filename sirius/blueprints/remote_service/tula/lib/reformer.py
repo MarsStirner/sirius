@@ -12,7 +12,7 @@ from sirius.lib.remote_system import RemoteSystemCode
 
 
 class RemoteEntity(Enum):
-    CLIENT = 1
+    CLIENT = 'client'
 
 
 class TulaReformer(Reformer):

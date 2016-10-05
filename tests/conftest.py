@@ -4,9 +4,8 @@
 import pytest
 from webtest import TestApp
 
-from sirius.app import create_app
+from sirius.app import create_wsgi_app
 from sirius.database import db as _db
-from sirius.settings import TestConfig
 
 from .factories import UserFactory
 
@@ -14,7 +13,7 @@ from .factories import UserFactory
 @pytest.yield_fixture(scope='function')
 def app():
     """An application for the tests."""
-    _app = create_app(TestConfig)
+    _app = create_wsgi_app()
     ctx = _app.test_request_context()
     ctx.push()
 

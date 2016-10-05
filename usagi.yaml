@@ -9,8 +9,10 @@ common:
   uwsgi_apps: &UWSGI_APPS
 #    CASTIEL_AUTH_TOKEN: &CASTIEL_AUTH_TOKEN CastielAuthToken # authToken
     SIRIUS_URL: &SIRIUS_URL http://127.0.0.1:6700/
-    TSUKINO_USAGI_URL: &TSUKINO_USAGI_URL http://127.0.0.1:6602/
+    TSUKINO_USAGI_URL: &TSUKINO_USAGI_URL http://127.0.0.1:6702/
 #    SIMPLELOGS_URL: &SIMPLELOGS_URL http://10.1.2.11:6603/
+    HIPPOCRATE_URL: &HIPPOCRATE_URL http://127.0.0.1:6600/
+    COLDSTAR_URL: &COLDSTAR_URL http://127.0.0.1:6098/
 
     SQLALCHEMY_TRACK_MODIFICATIONS: false
     SQLALCHEMY_ECHO: false
@@ -44,7 +46,6 @@ common:
     # CELERY_TASK_RESULT_EXPIRES: 60 * 60 * 24 * 3  # in seconds, default 1 day
     CELERY_ACKS_LATE: true
     # CELERYD_PREFETCH_MULTIPLIER: 1
-    # CELERY_ALWAYS_EAGER: true
     CELERY_IGNORE_RESULT: true
     CELERY_DEFAULT_QUEUE: default_queue
     CELERY_DEFAULT_EXCHANGE: default_exchange
@@ -147,12 +148,12 @@ subsystems:
         DEBUG_TB_ENABLED: True
         ASSETS_DEBUG: True  # Don't bundle/minify static assets
         CACHE_TYPE: 'simple'  # Can be "memcached", "redis", etc.
+        CELERY_ALWAYS_EAGER: true
 
       test:
         TESTING: True
         DEBUG: True
-#        SQLALCHEMY_DATABASE_URI = 'sqlite://'
-        SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
+        SQLALCHEMY_DATABASE_URI: sqlite:///..\..\test.db
         BCRYPT_LOG_ROUNDS: 4  # For faster tests; needs at least 4 to avoid "ValueError: Invalid rounds"
         WTF_CSRF_ENABLED: False  # Allows form testing
 
@@ -172,7 +173,7 @@ subsystems:
           module=tsukino_usagi.wsgi
           callable=app
       nginx:
-        port: 6602
+        port: 6702
         template: "{{ configens.nginx.templates.uwsgi | recurse }}"
         ext:
     app: !inherit

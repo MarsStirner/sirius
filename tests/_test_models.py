@@ -4,7 +4,7 @@ import datetime as dt
 
 import pytest
 
-from sirius.user.models import Role, User
+from sirius.blueprints.user.models import Role, User
 
 from .factories import UserFactory
 

@@ -7,10 +7,10 @@
 
 """
 from sirius.blueprints.local_service.lib.entities import LocalEntity
-from sirius.blueprints.remote_service.lib.tambov.reformer import TambovReformer
-from sirius.blueprints.remote_service.lib.tambov.transfer import TambovTransfer
-from sirius.blueprints.remote_service.lib.tula.reformer import TulaReformer
-from sirius.blueprints.remote_service.lib.tula.transfer import TulaTransfer
+from sirius.blueprints.remote_service.tambov.lib.reformer import TambovReformer
+from sirius.blueprints.remote_service.tambov.lib.transfer import TambovTransfer
+from sirius.blueprints.remote_service.tula.lib.reformer import TulaReformer
+from sirius.blueprints.remote_service.tula.lib.transfer import TulaTransfer
 
 
 implements = (

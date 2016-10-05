@@ -10,6 +10,6 @@ from hitsl_utils.enum import Enum
 
 
 class LocalEntity(Enum):
-    CLIENT = 1
-    CHECKUP = 2
-    CHECKUP_FETUS = 3
+    CLIENT = 'client'
+    CHECKUP = 'checkup'
+    CHECKUP_FETUS = 'checkup_fetus'

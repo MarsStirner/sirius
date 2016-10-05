@@ -31,9 +31,10 @@ class LocalAnswer(object):
     def process(self, entity_code, result):
         # разбирает ответ локальной системы и достает полезные данные
         res = None
+        data = result['result']
         if entity_code == LocalEntity.CLIENT:
             res = {
-                'main_id': result['client_id'],
+                'main_id': data['client_id'],
                 'param_name': 'client_id',
             }
         return res

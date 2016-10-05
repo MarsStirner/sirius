@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from flask.helpers import get_debug_flag
 
 from tsukino_usagi.client import TsukinoUsagiClient
@@ -15,7 +16,11 @@ class BIUsagiClient(TsukinoUsagiClient):
     def on_configuration(self, configuration):
         configuration['APP_VERSION'] = app_version
         is_dev = get_debug_flag()
-        env_conf_name = 'dev' if is_dev else 'prod'
+        is_test = os.environ.get('TESTING') == '1'
+        if is_test:
+            env_conf_name = 'test'
+        else:
+            env_conf_name = 'dev' if is_dev else 'prod'
 
         env_conf = configuration.get(env_conf_name, {})
         configuration.update(env_conf)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sirius.blueprints.remote_service.views.schemas import Schema
+from sirius.blueprints.remote_service.lib.schemas import Schema
 
 
 class ClientSchema(Schema):

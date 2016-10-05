@@ -4,7 +4,7 @@ from factory import PostGenerationMethodCall, Sequence
 from factory.alchemy import SQLAlchemyModelFactory
 
 from sirius.database import db
-from sirius.user.models import User
+from sirius.blueprints.user.models import User
 
 
 class BaseFactory(SQLAlchemyModelFactory):

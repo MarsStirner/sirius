@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Test forms."""
 
-from sirius.public.forms import LoginForm
-from sirius.user.forms import RegisterForm
+from sirius.blueprints.public.forms import LoginForm
+from sirius.blueprints.user.forms import RegisterForm
 
 
 class TestRegisterForm:

@@ -35,7 +35,7 @@ def register_extensions(app):
     bcrypt.init_app(app)
     cache.init_app(app)
     db.init_app(app)
-    csrf_protect.init_app(app)
+    # csrf_protect.init_app(app)
     login_manager.init_app(app)
     debug_toolbar.init_app(app)
     migrate.init_app(app, db)
@@ -46,11 +46,12 @@ def register_extensions(app):
 
 def register_blueprints(app):
     """Register Flask blueprints."""
-    from sirius.blueprints import public, user, local_service, remote_service
+    from sirius.blueprints import public, user, local_service
+    from sirius.blueprints.remote_service import tula
     app.register_blueprint(public.views.blueprint)
     app.register_blueprint(user.views.blueprint)
-    app.register_blueprint(remote_service.app.module)
     app.register_blueprint(local_service.app.module)
+    app.register_blueprint(tula.app.module)
     return None
 
 
