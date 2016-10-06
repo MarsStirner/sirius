@@ -24,7 +24,7 @@ Flask-WTF==0.12
 WTForms==2.1
 
 # Deployment
-gunicorn>=19.1.1
+# gunicorn>=19.1.1
 
 # Assets
 Flask-Assets==0.12
@@ -40,12 +40,6 @@ Flask-Caching>=1.0.0
 
 # Debug toolbar
 Flask-DebugToolbar==0.10.0
-
-# tsukino_usagi
-PyYAML>=3.12
-requests>=2.11.1
-uwsgidecorators>=1.1.0
--e git+https://stash.bars-open.ru/scm/medvtr/hitsl.utils.git@develop#egg=hitsl_utils
 
 # Async tasks
 celery>=3.1.23

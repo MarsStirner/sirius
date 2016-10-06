@@ -1,0 +1,7 @@
+# tsukino_usagi
+flask
+# flask-cache -> Flask-Caching
+simplejson
+PyYAML>=3.12
+requests>=2.11.1
+uwsgidecorators>=1.1.0

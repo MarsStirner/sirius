@@ -5,6 +5,7 @@
 @author: BARS Group
 @date: 06.10.2016
 
+Для запуска под отладкой модуля flask. Например для flask test
 """
 
 import sys

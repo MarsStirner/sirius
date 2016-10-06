@@ -1,0 +1,461 @@
+configens: !include install/configens.yaml
+common:
+  sirius_database: &SQLALCHEMY postgresql://postgres:postgres@localhost/sirius
+  celery_broker: &CELERY_BROKER_URL amqp://bars:sirius@localhost:5672/sirius  # transport://userid:password@hostname:port/virtual_host
+  # celery_result_backend: &CELERY_RESULT_BACKEND redis://localhost:6379/1
+  # sql database for celery application task (CAT) info and results
+  cat_database: &SQLALCHEMY_CAT postgresql://postgres:postgres@localhost/sirius
+
+  uwsgi_apps: &UWSGI_APPS
+    SIRIUS_URL: &SIRIUS_URL http://127.0.0.1:8600/
+    TSUKINO_USAGI_URL: &TSUKINO_USAGI_URL http://127.0.0.1:8602/
+#    SIMPLELOGS_URL: &SIMPLELOGS_URL http://10.1.2.11:6603/
+    HIPPOCRATE_URL: &HIPPOCRATE_URL http://127.0.0.1:6600/
+    COLDSTAR_URL: &COLDSTAR_URL http://127.0.0.1:6605/
+    CASTIEL_AUTH_TOKEN: &CASTIEL_AUTH_TOKEN CastielAuthToken # authToken
+
+    SQLALCHEMY_TRACK_MODIFICATIONS: false
+    SQLALCHEMY_ECHO: false
+
+  system_user:
+    uid: bars
+    gid: www-data
+
+  user_apps: &USER_APPS
+
+    DEBUG: True
+    PROFILE: False
+    TITLE: SIRIUS
+    COPYRIGHT_COMPANY: БАРС Груп
+    BABEL_DEFAULT_LOCALE: ru_RU
+    TIME_ZONE: Europe/Moscow
+    SQLALCHEMY_BINDS:
+      celery_tasks: *SQLALCHEMY_CAT
+
+    HIPPOCRATE_API_LOGIN: ВнешСис
+    HIPPOCRATE_API_PASSWORD: 0909
+    HIPPOCRATE_SESSION_KEY: hippocrates.session.id
+
+    CELERY_ENABLED: true
+    # CELERYD_LOG_FILE = {{ deployment.base_dir }}/logs/celery.log
+    # CELERYD_LOG_FORMAT = [%(asctime)s] %(message)s
+    CELERY_BROKER_URL: *CELERY_BROKER_URL
+    # CELERY_RESULT_BACKEND: *CELERY_RESULT_BACKEND
+    # CELERY_RESULT_SERIALIZER: json
+    CELERY_ENABLE_UTC: true
+    CELERY_TIMEZONE: Europe/Moscow
+    CELERY_ACCEPT_CONTENT: ['json']
+    # CELERYD_CONCURRENCY: 2
+    # CELERY_TASK_RESULT_EXPIRES: 60 * 60 * 24 * 3  # in seconds, default 1 day
+    CELERY_ACKS_LATE: true
+    # CELERYD_PREFETCH_MULTIPLIER: 1
+    CELERY_IGNORE_RESULT: true
+    CELERY_DEFAULT_QUEUE: default_queue
+    CELERY_DEFAULT_EXCHANGE: default_exchange
+    CELERY_DEFAULT_EXCHANGE_TYPE: direct
+    CELERY_DEFAULT_ROUTING_KEY: default_key
+
+    FILE_STORAGE_PATH: &FILE_STORAGE_PATH '/tmp'
+
+
+deployment:
+  base_dir: .
+  prefix: ibus
+
+
+subsystems:
+
+  # Пользовательские подсистемы
+
+  sirius: # шина интеграции
+    configens:
+      uwsgi:
+        template: "{{ configens.uwsgi.templates.basic | recurse }}"
+        ext: |
+          processes=2
+          lazy-apps=true
+
+          mule
+          mule
+          pythonpath={{ deployment.base_dir }}/code/sirius
+
+          module=sirius.wsgi
+          callable=app
+      nginx:
+        port: 8600
+        template: "{{ configens.nginx.templates.uwsgi | recurse }}"
+        prepend: |
+          uwsgi_cache_path /var/cache/nginx/{{ deployment.prefix }}/ levels=1:2 keys_zone={{ deployment.prefix }}_sirius:100m inactive=120m max_size=200M;
+        ext: |
+          location /static/ {
+            alias {{ deployment.base_dir }}/code/sirius/sirius/static/;
+          }
+
+    app: !inherit
+      ancestors:
+        - *UWSGI_APPS
+        - *USER_APPS
+
+      SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
+      PROJECT_NAME: BusIntegration
+      TITLE: "ИШ"
+      INDEX_HTML: sirius_index.html
+      DEFAULT_ENDPOINT: sirius.index_html
+      WSF_CSRF_ENABLED: True
+      SECRET_KEY: "Жил бы цитрус в чаще юга? Да! Но фальшивый экземпляр."
+
+      BCRYPT_LOG_ROUNDS: 13
+      ASSETS_DEBUG: False
+      DEBUG_TB_ENABLED: False  # Disable Debug toolbar
+      DEBUG_TB_INTERCEPT_REDIRECTS: False
+      CACHE_TYPE: 'simple'  # Can be "memcached", "redis", etc.
+#      CACHE_TYPE: filesystem
+#      CACHE_DIR: /tmp/cache/sirius
+
+      prod:
+        ENV: 'prod'
+        DEBUG: False
+        SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
+        DEBUG_TB_ENABLED: False  # Disable Debug toolbar
+
+      dev:
+        ENV: 'dev'
+        DEBUG: True
+        SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
+        DEBUG_TB_ENABLED: True
+        ASSETS_DEBUG: True  # Don't bundle/minify static assets
+        CACHE_TYPE: 'simple'  # Can be "memcached", "redis", etc.
+        CELERY_ALWAYS_EAGER: true
+
+      test:
+        TESTING: True
+        DEBUG: True
+        SQLALCHEMY_DATABASE_URI: sqlite:///..\..\test.db
+        BCRYPT_LOG_ROUNDS: 4  # For faster tests; needs at least 4 to avoid "ValueError: Invalid rounds"
+        WTF_CSRF_ENABLED: False  # Allows form testing
+        CELERY_ALWAYS_EAGER: true  # dev testing
+
+    url: *SIRIUS_URL
+
+  # Внутренние подсистемы
+
+  tsukino_usagi: # Подсистема конфигурирования подсистем
+    configens:
+      uwsgi:
+        template: "{{ configens.uwsgi.templates.basic | recurse }}"
+        ext: |
+          processes=1
+
+          env=TSUKINO_USAGI_CONFIG={{ deployment.config_path }}
+
+          module=tsukino_usagi.wsgi
+          callable=app
+      nginx:
+        port: 8602
+        template: "{{ configens.nginx.templates.uwsgi | recurse }}"
+        ext:
+    app: !inherit
+      ancestors:
+        - *UWSGI_APPS
+      DEBUG: True
+      CACHE_TYPE: simple
+    url: *TSUKINO_USAGI_URL
+
+#  simplelogs: # Подсистема журналирования
+#    configens:
+#      uwsgi:
+#        template: "{{ configens.uwsgi.templates.basic | recurse}}"
+#        ext: |
+#          processes=2
+#          lazy-apps=true
+#
+#          module=simplelogs.wsgi
+#          callable=app
+#
+#      nginx:
+#        port: 6604
+#        template: "{{ configens.nginx.templates.uwsgi | recurse }}"
+#        ext:
+#
+#    app: !inherit
+#      ancestors:
+#        - *UWSGI_APPS
+#
+#      MONGO_URI: mongodb://localhost/simplelogs
+#      SIMPLELOGS_COLLECTION: simplelogs
+#      SIMPLELOGS_LEVELS:
+#        - critical
+#        - error
+#        - warning
+#        - notice
+#        - info
+#        - debug
+#
+#    url: *SIMPLELOGS_URL
+#
+#  devourer: # Подсистема работы с файлами
+#    configens:
+#      uwsgi:
+#        template: "{{ configens.uwsgi.templates.basic | recurse }}"
+#        ext: |
+#          processes=2
+#
+#          env=TSUKINO_USAGI_CONFIG={{ deployment.config_path }}
+#
+#          module=devourer.wsgi
+#          callable=app
+#      nginx:
+#        port: 6606
+#        template: "{{ configens.nginx.templates.uwsgi | recurse }}"
+#        ext: |
+#          location /protected_files {
+#              internal;
+#              alias {{ this.app.FILE_STORAGE_PATH }};
+#          }
+#
+#          client_max_body_size {{ this.app.FILE_MAX_SIZE }};
+#
+#    app: !inherit
+#      ancestors:
+#        - *UWSGI_APPS
+#      DEBUG: True
+#      SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
+#      PROJECT_NAME: Devourer
+#      TITLE: Подсистема работы с файлами
+#      WSF_CSRF_ENABLED: True
+#      SECRET_KEY: "Жил бы цитрус в чаще юга? Да! Но фальшивый экземпляррр."
+#      FILE_STORAGE_PATH: *FILE_STORAGE_PATH
+#      FILE_MAX_SIZE: 10M
+#      CORS_ORIGINS:
+#        - *SIRIUS_URL
+#
+#    url: *DEVOURER_URL
+
+  celery_queue:
+    risar_main: ibus_sirius_risar_main_queue
+    risar_error_1: ibus_sirius_risar_error_1_queue
+    risar_error_2: ibus_sirius_risar_error_2_queue
+    mis_tula: ibus_sirius_mis_tula_queue
+    mis_tambov: ibus_sirius_mis_tambov_queue
+  risar_main:
+    configens:
+      supervisor:
+        template: |
+          ; =================================================================
+          ;  celery worker supervisor example for local main queue
+          ; =================================================================
+
+          [program:{{ deployment.prefix }}_sirius_{{ this.name }}]
+          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_sirius_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.risar_main }}
+
+          directory={{ deployment.base_dir }}
+
+          ;numprocs=1
+          stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          redirect_stderr=True
+          autostart=false
+          autorestart=true
+          startsecs=10
+          daemon=true
+          debug={{ common.user_apps.DEBUG }}
+
+          ; Need to wait for currently executing tasks to finish at shutdown.
+          ; Increase this if you have very long running tasks.
+          stopwaitsecs=300
+
+          ; When resorting to send SIGKILL to the program to terminate it
+          ; send SIGKILL to its whole process group instead,
+          ; taking care of its children as well.
+          killasgroup=true
+
+          ; Set Celery priority higher than default (999)
+          ; so, if rabbitmq (or other broker) is supervised, it will start first.
+          priority=1000
+
+          user={{ common.system_user.uid }}
+          group={{ common.system_user.gid }}
+  risar_error_1:
+    configens:
+      supervisor:
+        template: |
+          ; =================================================================
+          ;  celery worker supervisor example for local error queue 1
+          ; =================================================================
+
+          [program:{{ deployment.prefix }}_sirius_{{ this.name }}]
+          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_sirius_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.risar_error_1 }}
+          directory={{ deployment.base_dir }}
+
+          ;numprocs=1
+          stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          autostart=true
+          autorestart=true
+          startsecs=10
+          daemon=true
+          debug={{ common.user_apps.DEBUG }}
+
+          ; Need to wait for currently executing tasks to finish at shutdown.
+          ; Increase this if you have very long running tasks.
+          stopwaitsecs=300
+
+          ; When resorting to send SIGKILL to the program to terminate it
+          ; send SIGKILL to its whole process group instead,
+          ; taking care of its children as well.
+          killasgroup=true
+
+          ; Set Celery priority higher than default (999)
+          ; so, if rabbitmq (or other broker) is supervised, it will start first.
+          priority=1000
+
+          user={{ common.system_user.uid }}
+          group={{ common.system_user.gid }}
+  risar_error_2:
+    configens:
+      supervisor:
+        template: |
+          ; =================================================================
+          ;  celery worker supervisor example for local error queue 1
+          ; =================================================================
+
+          [program:{{ deployment.prefix }}_sirius_{{ this.name }}]
+          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_sirius_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.risar_error_2 }}
+          directory={{ deployment.base_dir }}
+
+          ;numprocs=1
+          stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          autostart=true
+          autorestart=true
+          startsecs=10
+          daemon=true
+          debug={{ common.user_apps.DEBUG }}
+
+          ; Need to wait for currently executing tasks to finish at shutdown.
+          ; Increase this if you have very long running tasks.
+          stopwaitsecs=300
+
+          ; When resorting to send SIGKILL to the program to terminate it
+          ; send SIGKILL to its whole process group instead,
+          ; taking care of its children as well.
+          killasgroup=true
+
+          ; Set Celery priority higher than default (999)
+          ; so, if rabbitmq (or other broker) is supervised, it will start first.
+          priority=1000
+
+          user={{ common.system_user.uid }}
+          group={{ common.system_user.gid }}
+
+  mis_tula:
+    configens:
+      supervisor:
+        template: |
+          ; =================================================================
+          ;  celery worker supervisor example for local main queue
+          ; =================================================================
+
+          [program:{{ deployment.prefix }}_sirius_{{ this.name }}]
+          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_sirius_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.mis_tula }}
+
+          directory={{ deployment.base_dir }}
+
+          ;numprocs=1
+          stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          redirect_stderr=True
+          autostart=false
+          autorestart=true
+          startsecs=10
+          daemon=true
+          debug={{ common.user_apps.DEBUG }}
+
+          ; Need to wait for currently executing tasks to finish at shutdown.
+          ; Increase this if you have very long running tasks.
+          stopwaitsecs=300
+
+          ; When resorting to send SIGKILL to the program to terminate it
+          ; send SIGKILL to its whole process group instead,
+          ; taking care of its children as well.
+          killasgroup=true
+
+          ; Set Celery priority higher than default (999)
+          ; so, if rabbitmq (or other broker) is supervised, it will start first.
+          priority=1000
+
+          user={{ common.system_user.uid }}
+          group={{ common.system_user.gid }}
+  mis_tambov:
+    configens:
+      supervisor:
+        template: |
+          ; =================================================================
+          ;  celery worker supervisor example for local main queue
+          ; =================================================================
+
+          [program:{{ deployment.prefix }}_sirius_{{ this.name }}]
+          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_sirius_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.mis_tambov }}
+
+          directory={{ deployment.base_dir }}
+
+          ;numprocs=1
+          stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          redirect_stderr=True
+          autostart=false
+          autorestart=true
+          startsecs=10
+          daemon=true
+          debug={{ common.user_apps.DEBUG }}
+
+          ; Need to wait for currently executing tasks to finish at shutdown.
+          ; Increase this if you have very long running tasks.
+          stopwaitsecs=300
+
+          ; When resorting to send SIGKILL to the program to terminate it
+          ; send SIGKILL to its whole process group instead,
+          ; taking care of its children as well.
+          killasgroup=true
+
+          ; Set Celery priority higher than default (999)
+          ; so, if rabbitmq (or other broker) is supervised, it will start first.
+          priority=1000
+
+          user={{ common.system_user.uid }}
+          group={{ common.system_user.gid }}
+
+  celerybeat:
+    configens:
+      supervisor:
+        template: |
+          ; =================================================================
+          ;  celery beat supervisor example
+          ; =================================================================
+
+          [program:{{ deployment.prefix }}_sirius_{{ this.name }}]
+          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+          ;command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n {{ deployment.prefix }}_sirius_{{ this.name }}_worker -l INFO -c 1 -Q {{ deployment.prefix }}_sirius_{{ this.name }}_queue
+          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker beat -l INFO
+          directory={{ deployment.base_dir }}
+
+          ;numprocs=1
+          stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          autostart=true
+          autorestart=true
+          startsecs=10
+          daemon=true
+          debug={{ common.user_apps.DEBUG }}
+
+          ; if rabbitmq (or other broker) is supervised, set its priority higher
+          ; so it starts first
+          priority=1001
+
+          user={{ common.system_user.uid }}
+          group={{ common.system_user.gid }}
