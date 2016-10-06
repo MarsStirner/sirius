@@ -3,11 +3,13 @@
 # from flask import url_for
 
 # from nemesis.lib.frontend import frontend_config
-from sirius.app import app
+from sirius.app import init_sirius_app
 from version import version as app_version
 
+sirius_app = init_sirius_app()
 
-@app.context_processor
+
+@sirius_app.context_processor
 def app_enum():
     return {
         'app_version': app_version,
@@ -27,4 +29,4 @@ def app_enum():
 #     }
 
 if __name__ == "__main__":
-    app.run(port=app.config.get('SERVER_PORT', 6700))
+    sirius_app.run(port=sirius_app.config.get('SERVER_PORT', 6700))

@@ -7,12 +7,12 @@ common:
   cat_database: &SQLALCHEMY_CAT postgresql://postgres:postgres@localhost/sirius
 
   uwsgi_apps: &UWSGI_APPS
-#    CASTIEL_AUTH_TOKEN: &CASTIEL_AUTH_TOKEN CastielAuthToken # authToken
     SIRIUS_URL: &SIRIUS_URL http://127.0.0.1:6700/
     TSUKINO_USAGI_URL: &TSUKINO_USAGI_URL http://127.0.0.1:6702/
 #    SIMPLELOGS_URL: &SIMPLELOGS_URL http://10.1.2.11:6603/
     HIPPOCRATE_URL: &HIPPOCRATE_URL http://127.0.0.1:6600/
     COLDSTAR_URL: &COLDSTAR_URL http://127.0.0.1:6098/
+    CASTIEL_AUTH_TOKEN: &CASTIEL_AUTH_TOKEN CastielAuthToken # authToken
 
     SQLALCHEMY_TRACK_MODIFICATIONS: false
     SQLALCHEMY_ECHO: false
@@ -32,8 +32,11 @@ common:
     SQLALCHEMY_BINDS:
       celery_tasks: *SQLALCHEMY_CAT
 
-    CELERY_ENABLED: true
+    HIPPOCRATE_API_LOGIN: ВнешСис
+    HIPPOCRATE_API_PASSWORD: 0909
+    HIPPOCRATE_SESSION_KEY: hippocrates.session.id
 
+    CELERY_ENABLED: true
     # CELERYD_LOG_FILE = {{ deployment.base_dir }}/logs/celery.log
     # CELERYD_LOG_FORMAT = [%(asctime)s] %(message)s
     CELERY_BROKER_URL: *CELERY_BROKER_URL
@@ -156,6 +159,7 @@ subsystems:
         SQLALCHEMY_DATABASE_URI: sqlite:///..\..\test.db
         BCRYPT_LOG_ROUNDS: 4  # For faster tests; needs at least 4 to avoid "ValueError: Invalid rounds"
         WTF_CSRF_ENABLED: False  # Allows form testing
+        CELERY_ALWAYS_EAGER: true  # dev testing
 
     url: *SIRIUS_URL
 

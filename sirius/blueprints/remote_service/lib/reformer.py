@@ -10,6 +10,7 @@ from abc import ABCMeta, abstractmethod
 from hitsl_utils.enum import Enum
 from sirius.blueprints.remote_service.models.matching import MatchingId
 from sirius.blueprints.remote_service.models.method import ApiMethod
+from sirius.lib.apiutils import ApiException
 
 from sirius.lib.message import Message
 
@@ -146,6 +147,9 @@ class Reformer(object):
                     meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
                     if meta['src_operation_code'] == Operation.DELETE:
                         meta['dst_operation_code'] = Operation.DELETE
+                        if not matching_id_data['dst_id']:
+                            # если удаляем, но еще не передавали
+                            raise ApiException(400, 'Nothing to delete')
                     else:
                         # todo: контролировать ли это?
                         # если изменяем, но передаем первый раз, то будет добавление

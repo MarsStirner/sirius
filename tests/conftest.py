@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Defines fixtures available to all tests."""
-
+import os
 import pytest
 from webtest import TestApp
 
-from sirius.app import create_wsgi_app
+from sirius.app import create_sirius_app
 from sirius.database import db as _db
 
 from .factories import UserFactory
@@ -13,7 +13,8 @@ from .factories import UserFactory
 @pytest.yield_fixture(scope='function')
 def app():
     """An application for the tests."""
-    _app = create_wsgi_app()
+    os.environ['TESTING'] = '1'
+    _app = create_sirius_app()
     ctx = _app.test_request_context()
     ctx.push()
 

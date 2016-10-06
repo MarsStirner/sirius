@@ -6,6 +6,7 @@
 @date: 23.09.2016
 
 """
+import os
 from sirius.blueprints.local_service.lib.client.request import request_by_url
 from sirius.celery_queue import remote_queue_name_list, main_queue_name
 from sirius.lib.implement import Implementation
@@ -29,8 +30,12 @@ class LocalProducer(object):
                     missing_requests = reformer.get_local_missing_requests(msg)
                     miss_data = self.request_data(missing_requests)
                     msg.add_missing_data(miss_data)
-                    remote_task.apply_async(args=(msg, rmt_sys_code),
-                                            queue=queue_name)
+                    # todo: на время тестирования без обработки исключений
+                    if os.environ['TESTING'] == '1':
+                        remote_task(msg, rmt_sys_code)
+                    else:
+                        remote_task.apply_async(args=(msg, rmt_sys_code),
+                                                queue=queue_name)
             elif msg.is_send_event:
                 rmt_sys_code = remote_system.get_event_system_code()
                 remote_task(msg, rmt_sys_code)

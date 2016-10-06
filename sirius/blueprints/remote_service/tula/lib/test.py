@@ -75,6 +75,17 @@ def make_login():
         # release_token(token)
 
 
+def get_req_method(testapp, method):
+    res = None
+    if method == 'post':
+        res = testapp.post_json
+    elif method == 'put':
+        res = testapp.put_json
+    elif method == 'delete':
+        res = testapp.delete_json
+    return res
+
+
 def make_api_request(method, url, session, json_data=None, url_args=None):
     token, session_token = session
     print sirius_url + url
@@ -94,6 +105,29 @@ def make_api_request(method, url, session, json_data=None, url_args=None):
             message = u'Unknown ({0})({1})'.format(unicode(result), unicode(e))
         raise Exception(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
     return result.json()
+
+
+def make_test_api_request(testapp, method, url, session, json_data=None, url_args=None):
+    token, session_token = session
+    result = get_req_method(testapp, method)(
+        sirius_url + url,
+        json_data,
+        # params=url_args,
+        # cookies={auth_token_name: token,
+        #          session_token_name: session_token}
+    )
+    if result.status_code != 200:
+        try:
+            j = result.json()
+            message = u'{0}: {1}'.format(j['meta']['code'], j['meta']['name'])
+        except Exception, e:
+            # raise e
+            message = u'Unknown ({0})({1})'.format(unicode(result), unicode(e))
+        raise Exception(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
+    res = result.json
+    if callable(res):
+        res = res()
+    return res
 
 
 def test_auth(login, password):

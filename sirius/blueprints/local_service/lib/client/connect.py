@@ -5,35 +5,25 @@
 @author: BARS Group
 @date: 23.09.2016
 
+Соединение и отправка запроса в API РИСАР (hippocrate)
 """
 
-import os
 import requests
+from sirius.app import app
 
 from contextlib import contextmanager
 
-
-auth_token_name = 'CastielAuthToken'
-session_token_name = 'hippocrates.session.id'
-
-login = os.getenv('TEST_LOGIN', u'ВнешСис')
-password = os.getenv('TEST_PASSWORD', '0909')
-
-
-def get_hippo_url():
-    from sirius.app import app
-    mis_url = app.config.get('HIPPOCRATE_URL', 'http://127.0.0.1:6600/')
-    return mis_url.rstrip('/')
-
-
-def get_coldstar_url():
-    from sirius.app import app
-    cs_url = app.config.get('COLDSTAR_URL', 'http://127.0.0.1:6605/')
-    return cs_url.rstrip('/')
+config = app.config
+hippo_url = config.get('HIPPOCRATE_URL', 'http://127.0.0.1:6600/').rstrip('/')
+coldstar_url = config.get('COLDSTAR_URL', 'http://127.0.0.1:6605/').rstrip('/')
+api_login = config.get('HIPPOCRATE_API_LOGIN', u'ВнешСис')
+api_password = config.get('HIPPOCRATE_API_PASSWORD', '')
+api_auth_token_name = config.get('CASTIEL_AUTH_TOKEN', 'CastielAuthToken')
+api_session_token_name = config.get('HIPPOCRATE_SESSION_KEY', 'hippocrates.session.id')
 
 
 def get_token(login, password):
-    url = u'%s/cas/api/acquire' % get_coldstar_url()
+    url = u'%s/cas/api/acquire' % coldstar_url
     result = requests.post(
         url,
         {
@@ -49,7 +39,7 @@ def get_token(login, password):
 
 
 def release_token(token):
-    url = u'%s/cas/api/release' % get_coldstar_url()
+    url = u'%s/cas/api/release' % coldstar_url
     result = requests.post(
         url,
         {
@@ -63,22 +53,22 @@ def release_token(token):
 
 
 def get_role(token, role_code=''):
-    url = u'%s/chose_role/' % get_hippo_url()
+    url = u'%s/chose_role/' % hippo_url
     if role_code:
         url += role_code
     result = requests.post(
         url,
-        cookies={auth_token_name: token}
+        cookies={api_auth_token_name: token}
     )
     j = result.json()
     if not result.status_code == 200:
         raise Exception('Ошибка авторизации')
-    return result.cookies['hippocrates.session.id']
+    return result.cookies[api_session_token_name]
 
 
 @contextmanager
 def make_login():
-    token = get_token(login, password)
+    token = get_token(api_login, api_password)
     print ' > auth token: ', token
     session_token = get_role(token)
     print ' > session token: ', session_token
@@ -92,12 +82,13 @@ def make_login():
 
 def make_api_request(method, url, session, json_data=None, url_args=None):
     token, session_token = session
+    print hippo_url + url
     result = getattr(requests, method)(
-        get_hippo_url() + url,
+        hippo_url + url,
         json=json_data,
         params=url_args,
-        cookies={auth_token_name: token,
-                 session_token_name: session_token}
+        cookies={api_auth_token_name: token,
+                 api_session_token_name: session_token}
     )
     if result.status_code != 200:
         try:
@@ -111,8 +102,9 @@ def make_api_request(method, url, session, json_data=None, url_args=None):
 
 
 def test_auth(login, password):
-    print 'Coldstar: ', get_coldstar_url(), ', Risar: ', get_hippo_url()
+    print 'Coldstar: ', coldstar_url, ', Risar: ', hippo_url
     token = get_token(login, password)
     print ' > auth token: ', token
     session_token = get_role(token)
     print ' > session token: ', session_token
+    release_token(token)

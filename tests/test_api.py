@@ -14,30 +14,30 @@ from sirius.blueprints.remote_service.tula.views.client.test_data import \
 
 class TestClient:
 
-    def test_create(self):
+    def test_create(self, testapp):
         session = (None, None)
         remote_client_id = 324
-        result = create_client(session, remote_client_id, test_client_data_1)
+        result = create_client(testapp, session, remote_client_id, test_client_data_1)
         code = result['meta']['code']
         assert code == 200
 
-    def test_resend(self):
+    def test_resend(self, testapp):
         session = (None, None)
         remote_client_id = 324
-        result = create_client(session, remote_client_id, test_client_data_1)
+        result = create_client(testapp, session, remote_client_id, test_client_data_1)
         code = result['meta']['code']
         assert code == 200
 
-    def test_edit(self):
+    def test_edit(self, testapp):
         session = (None, None)
         remote_client_id = 324
-        result = edit_client(session, remote_client_id, test_client_data_2)
+        result = edit_client(testapp, session, remote_client_id, test_client_data_2)
         code = result['meta']['code']
         assert code == 200
 
-    def test_delete(self):
+    def test_delete(self, testapp):
         session = (None, None)
         remote_client_id = 324
-        result = delete_client(session, remote_client_id)
+        result = delete_client(testapp, session, remote_client_id)
         code = result['meta']['code']
         assert code == 200

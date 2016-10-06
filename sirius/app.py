@@ -8,25 +8,31 @@ from sirius import commands
 from sirius.assets import assets
 from sirius.extensions import bcrypt, cache, csrf_protect, db, debug_toolbar, login_manager, migrate, celery
 
+app = Flask(__name__)
 
-def create_wsgi_app():
+
+def create_sirius_app():
+    return init_sirius_app(True)
+
+
+def init_sirius_app(new_app=False):
     """An application factory, as explained here: http://flask.pocoo.org/docs/patterns/appfactories/.
 
-    :param config_object: The configuration object to use.
+    :param new_app: The configuration object to use.
     """
-    app = Flask(__name__)
+    ini_app = Flask(__name__) if new_app else app
 
     conf_url = os.getenv('TSUKINO_USAGI_URL', 'http://127.0.0.1:6602')
-    usagi = BIUsagiClient(app, app.wsgi_app, conf_url, 'sirius')
-    app.wsgi_app = usagi.app
+    usagi = BIUsagiClient(ini_app, ini_app.wsgi_app, conf_url, 'sirius')
+    ini_app.wsgi_app = usagi.app
     usagi()
 
-    register_extensions(app)
-    register_blueprints(app)
-    register_errorhandlers(app)
-    register_shellcontext(app)
-    register_commands(app)
-    return app
+    register_extensions(ini_app)
+    register_blueprints(ini_app)
+    register_errorhandlers(ini_app)
+    register_shellcontext(ini_app)
+    register_commands(ini_app)
+    return ini_app
 
 
 def register_extensions(app):
@@ -35,6 +41,7 @@ def register_extensions(app):
     bcrypt.init_app(app)
     cache.init_app(app)
     db.init_app(app)
+    # todo:
     # csrf_protect.init_app(app)
     login_manager.init_app(app)
     debug_toolbar.init_app(app)
@@ -86,6 +93,3 @@ def register_commands(app):
     app.cli.add_command(commands.lint)
     app.cli.add_command(commands.clean)
     app.cli.add_command(commands.urls)
-
-
-app = create_wsgi_app()

@@ -9,7 +9,6 @@
 import sys
 
 from flask import request
-from hitsl_utils.api import api_method
 from sirius.blueprints.remote_service.tula.app import module
 from sirius.blueprints.remote_service.lib.producer import RemoteProducer
 from sirius.blueprints.remote_service.tula.lib.reformer import RemoteEntity
@@ -17,6 +16,7 @@ from sirius.blueprints.remote_service.tula.views import remote_system_code
 from sirius.blueprints.remote_service.tula.views.client.schemas import \
     ClientSchema
 from sirius.blueprints.remote_service.lib.xform import XForm
+from sirius.lib.apiutils import api_method
 from sirius.lib.message import Message
 
 

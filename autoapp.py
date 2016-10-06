@@ -6,4 +6,4 @@
 @date: 04.10.2016
 
 """
-from sirius.wsgi import app
+from sirius.wsgi import sirius_app
