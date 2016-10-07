@@ -60,7 +60,7 @@ common:
 
 deployment:
   base_dir: .
-  prefix: ibus
+  prefix: sirius_test
 
 
 subsystems:
@@ -85,7 +85,7 @@ subsystems:
         port: 8600
         template: "{{ configens.nginx.templates.uwsgi | recurse }}"
         prepend: |
-          uwsgi_cache_path /var/cache/nginx/{{ deployment.prefix }}/ levels=1:2 keys_zone={{ deployment.prefix }}_sirius:100m inactive=120m max_size=200M;
+          uwsgi_cache_path /var/cache/nginx/{{ deployment.prefix }}/ levels=1:2 keys_zone={{ deployment.prefix }}:100m inactive=120m max_size=200M;
         ext: |
           location /static/ {
             alias {{ deployment.base_dir }}/code/sirius/sirius/static/;
@@ -97,7 +97,7 @@ subsystems:
         - *USER_APPS
 
       SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
-      PROJECT_NAME: BusIntegration
+      PROJECT_NAME: IntegrationBus
       TITLE: "ИШ"
       INDEX_HTML: sirius_index.html
       DEFAULT_ENDPOINT: sirius.index_html
@@ -233,203 +233,43 @@ subsystems:
 #    url: *DEVOURER_URL
 
   celery_queue:
-    risar_main: ibus_sirius_risar_main_queue
-    risar_error_1: ibus_sirius_risar_error_1_queue
-    risar_error_2: ibus_sirius_risar_error_2_queue
-    mis_tula: ibus_sirius_mis_tula_queue
-    mis_tambov: ibus_sirius_mis_tambov_queue
-  risar_main:
+    risar_main: sirius_test_risar_main_queue
+    risar_error_1: sirius_test_risar_error_1_queue
+    risar_error_2: sirius_test_risar_error_2_queue
+    mis_tula: sirius_test_mis_tula_queue
+    mis_tambov: sirius_test_mis_tambov_queue
+
+  risar_main_worker:
     configens:
       supervisor:
-        template: |
-          ; =================================================================
-          ;  celery worker supervisor example for local main queue
-          ; =================================================================
-
-          [program:{{ deployment.prefix }}_sirius_{{ this.name }}]
-          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
-          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_sirius_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.risar_main }}
-
-          directory={{ deployment.base_dir }}
-
-          ;numprocs=1
-          stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
-          stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
-          redirect_stderr=True
-          autostart=false
-          autorestart=true
-          startsecs=10
-          daemon=true
-          debug={{ common.user_apps.DEBUG }}
-
-          ; Need to wait for currently executing tasks to finish at shutdown.
-          ; Increase this if you have very long running tasks.
-          stopwaitsecs=300
-
-          ; When resorting to send SIGKILL to the program to terminate it
-          ; send SIGKILL to its whole process group instead,
-          ; taking care of its children as well.
-          killasgroup=true
-
-          ; Set Celery priority higher than default (999)
-          ; so, if rabbitmq (or other broker) is supervised, it will start first.
-          priority=1000
-
-          user={{ common.system_user.uid }}
-          group={{ common.system_user.gid }}
-  risar_error_1:
+        template: "{{ configens.supervisor.templates.worker | recurse }}"
+        queue: |
+          {{ subsystems.celery_queue.risar_main }}
+  risar_error_1_worker:
     configens:
       supervisor:
-        template: |
-          ; =================================================================
-          ;  celery worker supervisor example for local error queue 1
-          ; =================================================================
-
-          [program:{{ deployment.prefix }}_sirius_{{ this.name }}]
-          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
-          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_sirius_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.risar_error_1 }}
-          directory={{ deployment.base_dir }}
-
-          ;numprocs=1
-          stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
-          stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
-          autostart=true
-          autorestart=true
-          startsecs=10
-          daemon=true
-          debug={{ common.user_apps.DEBUG }}
-
-          ; Need to wait for currently executing tasks to finish at shutdown.
-          ; Increase this if you have very long running tasks.
-          stopwaitsecs=300
-
-          ; When resorting to send SIGKILL to the program to terminate it
-          ; send SIGKILL to its whole process group instead,
-          ; taking care of its children as well.
-          killasgroup=true
-
-          ; Set Celery priority higher than default (999)
-          ; so, if rabbitmq (or other broker) is supervised, it will start first.
-          priority=1000
-
-          user={{ common.system_user.uid }}
-          group={{ common.system_user.gid }}
-  risar_error_2:
+        template: "{{ configens.supervisor.templates.worker | recurse }}"
+        queue: |
+          {{ subsystems.celery_queue.risar_error_1 }}
+  risar_error_2_worker:
     configens:
       supervisor:
-        template: |
-          ; =================================================================
-          ;  celery worker supervisor example for local error queue 1
-          ; =================================================================
+        template: "{{ configens.supervisor.templates.worker | recurse }}"
+        queue: |
+          {{ subsystems.celery_queue.risar_error_2 }}
 
-          [program:{{ deployment.prefix }}_sirius_{{ this.name }}]
-          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
-          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_sirius_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.risar_error_2 }}
-          directory={{ deployment.base_dir }}
-
-          ;numprocs=1
-          stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
-          stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
-          autostart=true
-          autorestart=true
-          startsecs=10
-          daemon=true
-          debug={{ common.user_apps.DEBUG }}
-
-          ; Need to wait for currently executing tasks to finish at shutdown.
-          ; Increase this if you have very long running tasks.
-          stopwaitsecs=300
-
-          ; When resorting to send SIGKILL to the program to terminate it
-          ; send SIGKILL to its whole process group instead,
-          ; taking care of its children as well.
-          killasgroup=true
-
-          ; Set Celery priority higher than default (999)
-          ; so, if rabbitmq (or other broker) is supervised, it will start first.
-          priority=1000
-
-          user={{ common.system_user.uid }}
-          group={{ common.system_user.gid }}
-
-  mis_tula:
+  mis_tula_worker:
     configens:
       supervisor:
-        template: |
-          ; =================================================================
-          ;  celery worker supervisor example for local main queue
-          ; =================================================================
-
-          [program:{{ deployment.prefix }}_sirius_{{ this.name }}]
-          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
-          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_sirius_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.mis_tula }}
-
-          directory={{ deployment.base_dir }}
-
-          ;numprocs=1
-          stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
-          stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
-          redirect_stderr=True
-          autostart=false
-          autorestart=true
-          startsecs=10
-          daemon=true
-          debug={{ common.user_apps.DEBUG }}
-
-          ; Need to wait for currently executing tasks to finish at shutdown.
-          ; Increase this if you have very long running tasks.
-          stopwaitsecs=300
-
-          ; When resorting to send SIGKILL to the program to terminate it
-          ; send SIGKILL to its whole process group instead,
-          ; taking care of its children as well.
-          killasgroup=true
-
-          ; Set Celery priority higher than default (999)
-          ; so, if rabbitmq (or other broker) is supervised, it will start first.
-          priority=1000
-
-          user={{ common.system_user.uid }}
-          group={{ common.system_user.gid }}
-  mis_tambov:
+        template: "{{ configens.supervisor.templates.worker | recurse }}"
+        queue: |
+          {{ subsystems.celery_queue.mis_tula }}
+  mis_tambov_worker:
     configens:
       supervisor:
-        template: |
-          ; =================================================================
-          ;  celery worker supervisor example for local main queue
-          ; =================================================================
-
-          [program:{{ deployment.prefix }}_sirius_{{ this.name }}]
-          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
-          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_sirius_{{ this.name }}_worker -l INFO -c 1 -Q {{ subsystems.celery_queue.mis_tambov }}
-
-          directory={{ deployment.base_dir }}
-
-          ;numprocs=1
-          stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
-          stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
-          redirect_stderr=True
-          autostart=false
-          autorestart=true
-          startsecs=10
-          daemon=true
-          debug={{ common.user_apps.DEBUG }}
-
-          ; Need to wait for currently executing tasks to finish at shutdown.
-          ; Increase this if you have very long running tasks.
-          stopwaitsecs=300
-
-          ; When resorting to send SIGKILL to the program to terminate it
-          ; send SIGKILL to its whole process group instead,
-          ; taking care of its children as well.
-          killasgroup=true
-
-          ; Set Celery priority higher than default (999)
-          ; so, if rabbitmq (or other broker) is supervised, it will start first.
-          priority=1000
-
-          user={{ common.system_user.uid }}
-          group={{ common.system_user.gid }}
+        template: "{{ configens.supervisor.templates.worker | recurse }}"
+        queue: |
+          {{ subsystems.celery_queue.mis_tambov }}
 
   celerybeat:
     configens:
@@ -439,9 +279,9 @@ subsystems:
           ;  celery beat supervisor example
           ; =================================================================
 
-          [program:{{ deployment.prefix }}_sirius_{{ this.name }}]
+          [program:{{ deployment.prefix }}_{{ this.name }}]
           environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
-          ;command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n {{ deployment.prefix }}_sirius_{{ this.name }}_worker -l INFO -c 1 -Q {{ deployment.prefix }}_sirius_{{ this.name }}_queue
+          ;command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ deployment.prefix }}_{{ this.name }}_queue
           command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker beat -l INFO
           directory={{ deployment.base_dir }}
 

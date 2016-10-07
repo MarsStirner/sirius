@@ -6,8 +6,8 @@ nginx:
       server {
         listen {{ this.configens.nginx.port }};
         rewrite_log on;
-        access_log {{ deployment.base_dir }}/logs/{{ this.name }}-access.log;
-        error_log  {{ deployment.base_dir }}/logs/{{ this.name }}-error.log;
+        access_log {{ deployment.base_dir }}/logs/{{ this.name }}-nginx-access.log;
+        error_log  {{ deployment.base_dir }}/logs/{{ this.name }}-nginx-error.log;
 
         location / {
           uwsgi_cache_bypass 1;
@@ -58,5 +58,43 @@ uwsgi:
       {{ this.configens.uwsgi.ext | recurse }}
 supervisor:
   extension: conf
+  templates:
+    worker: |
+      ; ==========================
+      ;  celery worker supervisor
+      ; ==========================
+
+      [program:{{ deployment.prefix }}_{{ this.name }}]
+      environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+      command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_{{ this.name }} -l INFO -c 1 -Q {{ this.configens.supervisor.queue | recurse }}
+
+      directory={{ deployment.base_dir }}
+
+      ;numprocs=1
+      stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+      stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+      redirect_stderr=True
+      autostart=false
+      autorestart=true
+      startsecs=10
+      daemon=true
+      debug={{ common.user_apps.DEBUG }}
+
+      ; Need to wait for currently executing tasks to finish at shutdown.
+      ; Increase this if you have very long running tasks.
+      stopwaitsecs=300
+
+      ; When resorting to send SIGKILL to the program to terminate it
+      ; send SIGKILL to its whole process group instead,
+      ; taking care of its children as well.
+      killasgroup=true
+
+      ; Set Celery priority higher than default (999)
+      ; so, if rabbitmq (or other broker) is supervised, it will start first.
+      priority=1000
+
+      user={{ common.system_user.uid }}
+      group={{ common.system_user.gid }}
+
 crontab:
   extension: cron
