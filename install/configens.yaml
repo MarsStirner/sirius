@@ -32,6 +32,7 @@ uwsgi:
       reaper
 
       env=TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+      env=FLASK_DEBUG={{ common.user_apps.DEBUG }}
 
       chdir     = {{ deployment.base_dir }}
       socket    = {{ deployment.base_dir }}/uwsgi/{{ this.name }}.uwsgi.sock

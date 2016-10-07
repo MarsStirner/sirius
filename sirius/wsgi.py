@@ -6,10 +6,10 @@
 from sirius.app import init_sirius_app
 from version import version as app_version
 
-sirius_app = init_sirius_app()
+wsgi_app = init_sirius_app()
 
 
-@sirius_app.context_processor
+@wsgi_app.context_processor
 def app_enum():
     return {
         'app_version': app_version,
@@ -29,4 +29,4 @@ def app_enum():
 #     }
 
 if __name__ == "__main__":
-    sirius_app.run(port=sirius_app.config.get('SERVER_PORT', 6700))
+    wsgi_app.run(port=wsgi_app.config.get('SERVER_PORT', 6700))

@@ -1,4 +1,4 @@
-configens: !include install/configens.yaml
+configens: !include code/sirius/install/configens.yaml
 common:
   sirius_database: &SQLALCHEMY postgresql://postgres:postgres@localhost/sirius
   celery_broker: &CELERY_BROKER_URL amqp://bars:sirius@localhost:5672/sirius  # transport://userid:password@hostname:port/virtual_host
@@ -23,8 +23,8 @@ common:
 
   user_apps: &USER_APPS
 
-    DEBUG: True
-    PROFILE: False
+    DEBUG: true
+    PROFILE: false
     TITLE: SIRIUS
     COPYRIGHT_COMPANY: БАРС Груп
     BABEL_DEFAULT_LOCALE: ru_RU
@@ -80,7 +80,7 @@ subsystems:
           pythonpath={{ deployment.base_dir }}/code/sirius
 
           module=sirius.wsgi
-          callable=app
+          callable=wsgi_app
       nginx:
         port: 8600
         template: "{{ configens.nginx.templates.uwsgi | recurse }}"
@@ -126,6 +126,7 @@ subsystems:
         ASSETS_DEBUG: True  # Don't bundle/minify static assets
         CACHE_TYPE: 'simple'  # Can be "memcached", "redis", etc.
         CELERY_ALWAYS_EAGER: true
+#        WTF_CSRF_ENABLED: False  # Allows form testing
 
       test:
         TESTING: True
