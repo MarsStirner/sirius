@@ -6,36 +6,54 @@
 @date: 03.10.2016
 
 """
-from sirius.database import Column, Model, db, reference_col, relationship
-from sqlalchemy import UniqueConstraint
+from sirius.database import Column, Model, db, reference_col, relationship, \
+    XMLType
+from sirius.models.entity import Entity
+from sirius.models.operation import Operation
+from sirius.models.protocol import Protocol
+from sirius.models.system import System
+from sqlalchemy import UniqueConstraint, CheckConstraint
 
 
 class ApiMethod(Model):
-    """Сопоставление ID частей сущности удаленной и локальной систем"""
+    """API метод"""
 
     __tablename__ = 'api_method'
 
-    entity_code = Column(db.String(80), unique=False, nullable=False)
-    operation_code = Column(db.String(80), unique=False, nullable=False)
-    system_code = Column(db.String(80), unique=False, nullable=False)
+    entity_id = reference_col('entity', unique=False, nullable=False)
+    entity = relationship('Entity', backref='set_api_method')
+    operation_id = reference_col('operation', unique=False, nullable=False)
+    operation = relationship('Operation', backref='set_api_method')
+    protocol_id = reference_col('protocol', unique=False, nullable=False)
+    protocol = relationship('Protocol', backref='set_api_method')
     method = Column(db.String(80), unique=False, nullable=False)
     template_url = Column(db.Text(), unique=False, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint('entity_code', 'operation_code', 'system_code', name='_entity_operation_system_uc'),
+        UniqueConstraint('entity_id', 'operation_id', name='_entity_operation_uc'),
+        # CheckConstraint("template_url > '' OR protocol_code != '%s'" % ProtocolCode.REST, name='_template_url_chk'),
     )
 
     @classmethod
     def get_method(cls, entity_code, operation_code, system_code):
-        method = cls.query.filter_by(
-            entity_code=entity_code,
-            operation_code=operation_code,
-            system_code=system_code,
+        method = cls.query.join(
+            Entity, Entity.id == cls.entity_id_id
+        ).join(
+            System, System.id == Entity.system_id
+        ).join(
+            Operation, Operation.id == cls.operation_id
+        ).join(
+            Protocol, Protocol.id == cls.protocol_id
+        ).filter(
+            Entity.code == entity_code,
+            Operation.code == operation_code,
+            System.code == system_code,
         ).first()
         if not method:
             raise RuntimeError('Service not registered in %s' % cls.__name__)
         res = {
+            'protocol': method.protocol.code,
             'method': method.method,
-            'template_url': method.template_url,
+            'template_url': method.entity.system.url.lstrip('/') + method.template_url,
         }
         return res

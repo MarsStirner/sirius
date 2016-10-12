@@ -43,12 +43,6 @@ class RemoteSystem(object):
         # todo:
         return False
 
-    def get_master_system_code(self):
-        # код пассивной системы с мастер-данными
-        self.initialise()
-        # todo:
-        return RemoteSystemCode.TAMBOV
-
     def get_event_system_code(self):
         # код пассивной системы, работающей с событиями
         self.initialise()

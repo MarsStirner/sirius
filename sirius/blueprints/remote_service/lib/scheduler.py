@@ -7,27 +7,30 @@
 
 """
 from sirius.blueprints.remote_service.lib.consumer import RemoteConsumer
+from sirius.blueprints.remote_service.models.schedule import Schedule
 from sirius.lib.message import Message
-from sirius.lib.remote_system import remote_system
+from sirius.models.operation import OperationCode
 
 
 class Scheduler(object):
     def execute(self):
-        rmt_sys_code = remote_system.get_master_system_code()
-        for ent in self.get_entities_list():
-            msg = self.create_entity_data_request_msg(ent)
-            consumer = RemoteConsumer()
-            consumer.process(msg, rmt_sys_code)
+        schedules = Schedule.get_schedules_to_execute()
+        for schedule in schedules:
+            with schedule.acquire_group_lock() as is_success:
+                if is_success:
+                    for req_data in schedule.schedule_group.get_requests():
+                        msg = self.create_message(req_data.entity.code)
+                        consumer = RemoteConsumer()
+                        consumer.process(msg, req_data.system.code)
+                    return
 
-    def create_entity_data_request_msg(self, entity):
+    def create_message(self, entity):
         # создает сообщение с параметрами, по которым сообщение реформируется
         # в данные для правильного запроса сущностей из Удаленной системы
-        # todo:
-        msg = Message()
+        msg = Message(None)
+        msg.to_remote_service()
+        msg.set_request_type()
+        meta = msg.get_header().meta
+        meta['local_entity_code'] = entity
+        meta['local_operation_code'] = OperationCode.READ_ALL
         return msg
-
-    def get_entities_list(self):
-        # список кодов сущностей, которые нужно запрашивать как мастер-данные
-        # из пассивной системы
-        # todo:
-        return []

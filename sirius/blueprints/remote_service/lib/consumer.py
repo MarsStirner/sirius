@@ -26,7 +26,7 @@ class RemoteConsumer(object):
             if remote_system.is_passive(rmt_sys_code):
                 if msg.is_send_data:
                     reformed_data = reformer.reform_msg(msg)
-                    reformer.transfer_send_data(reformed_data)
+                    reformer.transfer__send_data(reformed_data)
                     hdr = msg.get_header()
                     op_res = OperationResult()
                     result_msg = op_res.check(hdr.method, hdr.url)
@@ -34,19 +34,14 @@ class RemoteConsumer(object):
                         self.producer_send_msgs([result_msg])
                 elif msg.is_send_event:
                     reformed_data = reformer.reform_msg(msg)
-                    reformer.transfer_send_data(reformed_data)
+                    reformer.transfer__send_data(reformed_data)
                 elif msg.is_result:
                     remote_data = msg.get_source_data()
                     reformer.conformity_local(remote_data, msg)
                 elif msg.is_request:
-                    reformed_req = reformer.reform_msg(msg)
-                    remote_data = reformer.transfer_give_data(reformed_req)
-
-                    # todo: цикл вложенных дозапросов и связывание ответов
-                    rmt_miss_reqs = reformer.get_missing_requests(remote_data)
-                    rmt_miss_data = reformer.transfer_give_data(rmt_miss_reqs)
-
-                    self.send_diff_data(remote_data, rmt_miss_data, reformer)
+                    reformed_req = reformer.reform_req(msg)
+                    entity_packages = reformer.get_entity_packages(reformed_req)
+                    self.send_diff_data(entity_packages, reformer)
                 else:
                     raise Exception('Unexpected message type')
             elif remote_system.is_active(rmt_sys_code):
@@ -76,12 +71,10 @@ class RemoteConsumer(object):
         res = [producer.send(msg, async=async) for msg in msgs]
         return res
 
-    def send_diff_data(self, entity_data, rmt_miss_data, reformer):
-        data_store = DataStore()
-        data_store.build_diffs(entity_data, rmt_miss_data)
-        data_store.save_all_changes()
-        post_msgs = reformer.create_local_post_msgs(data_store.get_added())
-        put_msgs = reformer.create_local_put_msgs(data_store.get_changed())
-        del_msgs = reformer.create_local_del_msgs(data_store.get_deleted())
-        self.producer_send_msgs((post_msgs + put_msgs + del_msgs))
-        data_store.commit_all_changes()
+    def send_diff_data(self, entity_packages, reformer):
+        # data_store = DataStore()
+        # data_store.check_diffs(entity_packages)
+        # data_store.save_all_changes()
+        msgs = reformer.create_remote_messages(entity_packages)
+        self.producer_send_msgs(msgs)
+        # data_store.commit_all_changes()

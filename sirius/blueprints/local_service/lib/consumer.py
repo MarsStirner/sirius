@@ -20,7 +20,7 @@ class LocalConsumer(object):
         hdr = msg.get_header()
         # сценарий обработки сообщения
         if msg.is_request:
-            local_data = request_by_url(hdr.method, hdr.url, msg.get_data())
+            local_data = request_by_url('get', hdr.url, msg.get_data())
 
             next_msg = Message(local_data)
             next_msg.to_remote_service()

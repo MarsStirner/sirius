@@ -24,23 +24,29 @@ class Type(Enum):
 class Header(object):
     direct = None
     type_ = None
-    method = None
-    url = None
-    source_data = None
+
+    method = None  # deprecated?
+    url = None  # deprecated?
+    source_data = None  # deprecated?
+
+    # признак возврата ответа результатом функции (а не отдельным запросом)
     is_immediate_answer = False
+
+    # информация об исходном запросе
     meta = {
-        'local_entity_code': None,
-        'local_service_code': None,
+        'local_entity_code': None,  # не обязательное
+        'local_service_code': None,  # можем вычислить сущность
         'local_main_id': None,
         'local_main_param_name': None,
-        'local_operation_code': None,
+        'local_method': None,
+        'local_operation_code': None,  # для запроса планировщиком списка
 
         'remote_system_code': None,
         'remote_entity_code': None,
-        'remote_service_code': None,
+        'remote_service_code': None,  # для справки в логах
         'remote_main_id': None,
         'remote_main_param_name': None,
-        'remote_operation_code': None,
+        'remote_method': None,
     }
 
     # todo: по реализации Reformer станет ясно что еще сюда добавить

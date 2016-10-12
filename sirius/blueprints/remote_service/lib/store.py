@@ -21,6 +21,10 @@ class DataStore(object):
             'deleted': self.set_deleted_data_table(),
         }
 
+    def check_diffs(self, package_data):
+        # пометить изменения в Хранилище и в пакете
+        self.set_all_data_table(package_data)
+
     def save_all_changes(self):
         # вносит изменения в таблицу сообщений данных, удаляет временные таблицы
         # todo:

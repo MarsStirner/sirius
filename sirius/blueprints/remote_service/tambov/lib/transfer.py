@@ -7,12 +7,31 @@
 
 """
 from sirius.blueprints.remote_service.tambov.lib.answer import TambovAnswer
-from sirius.blueprints.remote_service.tambov.lib.client.connect import make_login, \
-    make_api_request
+from sirius.blueprints.remote_service.tambov.lib.client.connect import MISClient
 from sirius.blueprints.remote_service.lib.transfer import Transfer
 
 
+key = 'd6ba79b126957042a471f8b9d880c978'
+
+
 class TambovTransfer(Transfer):
-    login = make_login
-    api_request = make_api_request
+    clients = {}
     answer = TambovAnswer()
+
+    def execute(self, reformed_data):
+        meta = reformed_data['meta']
+        method = meta['dst_method']
+        wsdl = meta['dst_url']
+        client = self.get_client(wsdl)
+        req_method = getattr(client, method)
+        kw = {}
+        if meta['dst_id_url_param_name']:
+            kw[meta['dst_id_url_param_name']] = meta['dst_id']
+        req_result = req_method(**kw)
+        res = self.answer.process(req_result)
+        return res
+
+    def get_client(self, wsdl):
+        if wsdl not in self.clients:
+            self.clients[wsdl] = MISClient(wsdl, key)
+        return self.clients[wsdl]

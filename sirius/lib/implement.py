@@ -6,12 +6,10 @@
 @date: 27.09.2016
 
 """
-from sirius.blueprints.local_service.lib.entities import LocalEntity
 from sirius.blueprints.remote_service.tambov.lib.reformer import TambovReformer
 from sirius.blueprints.remote_service.tambov.lib.transfer import TambovTransfer
 from sirius.blueprints.remote_service.tula.lib.reformer import TulaReformer
 from sirius.blueprints.remote_service.tula.lib.transfer import TulaTransfer
-
 
 implements = (
     (TambovReformer, TambovTransfer),
@@ -36,5 +34,4 @@ class Implementation(object):
             raise Exception('Unknown remote code "%s" in implements' % rmt_sys_code)
         reformer = reformer_cls()
         reformer.set_transfer(transfer_cls())
-        reformer.set_local_entity_enum(LocalEntity)
         return reformer

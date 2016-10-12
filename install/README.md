@@ -30,7 +30,7 @@ hitsl.configurations
     * `simplelogs` - внутренняя подсистема логирования
 1. `usagi.local.yaml` - В корне проекта будет этот файл конфигурации, скопированный из install/usagi.yaml
 1. Внести изменения в файл конфига
-1. `. venv/bin/activate`, `./install/install.py usagi.local.yaml` - Сгенерировать конфигурационные файлы для uwsgi, nginx, supervisor через скрипт
+1. `. venv/bin/activate`, `python ./install/install.py usagi.local.yaml` - Сгенерировать конфигурационные файлы для uwsgi, nginx, supervisor через скрипт
 1. Проверить полученные файлы
 1. По необходимости создать директории для системных сервисов и проверить права на доступ к ним
     * /var/cache/nginx

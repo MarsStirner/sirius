@@ -10,13 +10,13 @@ from hitsl_utils.safe import safe_traverse
 from kombu import Queue, Exchange
 
 
-main_queue_name = 'bi_risar_main_queue'
-error_1_queue_name = 'bi_risar_error_1_queue'
-error_2_queue_name = 'bi_risar_error_2_queue'
+main_queue_name = 'sir_test_risar_main_queue'
+error_1_queue_name = 'sir_test_risar_error_1_queue'
+error_2_queue_name = 'sir_test_risar_error_2_queue'
 
 remote_queue_name_list = [
-    'bi_mis_tula_queue',
-    'bi_mis_tambov_queue',
+    'sir_test_mis_tula_queue',
+    'sir_test_mis_tambov_queue',
 ]
 
 

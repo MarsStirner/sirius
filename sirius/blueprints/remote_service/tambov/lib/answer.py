@@ -10,4 +10,10 @@ from sirius.blueprints.remote_service.lib.answer import RemoteAnswer
 
 
 class TambovAnswer(RemoteAnswer):
-    pass
+
+    def process(self, result):
+        return self.xml_to_dict(result)
+
+    def xml_to_dict(self, data):
+        # todo:
+        return data

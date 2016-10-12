@@ -47,3 +47,6 @@ Flask-Celery-Helper>=1.1.0
 
 # JSON Schema
 jsonschema>=2.5.1
+
+# SOAP
+zeep

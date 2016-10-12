@@ -89,3 +89,28 @@ class Model(SurrogatePK, BaseModel):
             class_n=self.__class__.__name__,
             id=self.id,
         )
+
+
+import sqlalchemy
+import xml.etree.ElementTree as etree
+
+class XMLType(sqlalchemy.types.TypeDecorator):
+
+    impl = sqlalchemy.types.UnicodeText
+    type = etree.Element
+
+    def get_col_spec(self):
+        return 'xml'
+
+    def bind_processor(self, dialect):
+        def process(value):
+            if value is not None:
+                return etree.tostring(value)
+            else:
+                return None
+        return process
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            value = etree.fromstring(value)
+        return value

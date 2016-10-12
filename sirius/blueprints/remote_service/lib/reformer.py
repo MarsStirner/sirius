@@ -7,24 +7,17 @@
 
 """
 from abc import ABCMeta, abstractmethod
-from hitsl_utils.enum import Enum
 from sirius.blueprints.remote_service.models.matching import MatchingId
 from sirius.blueprints.remote_service.models.method import ApiMethod
 from sirius.lib.apiutils import ApiException
 
 from sirius.lib.message import Message
-
-
-class Operation(Enum):
-    ADD = 'add'
-    CHANGE = 'change'
-    DELETE = 'delete'
+from sirius.models.operation import OperationCode
 
 
 class Reformer(object):
     __metaclass__ = ABCMeta
 
-    LocalEntity = None
     orig_msg = None
     # direct = None
     transfer = None
@@ -33,14 +26,11 @@ class Reformer(object):
     def set_transfer(self, transfer):
         self.transfer = transfer
 
-    def set_local_entity_enum(self, local_entity_enum):
-        self.LocalEntity = local_entity_enum
-
     def reform_msg(self, msg):
         addition_data = msg.get_missing_data()
         header_meta = msg.get_header().meta
-        self.check_sys_code(msg)
         if msg.is_to_local:
+            self.check_sys_code(msg)
             entities = self.get_local_entities(header_meta, msg.get_data(), addition_data)
         elif msg.is_to_remote:
             entities = self.get_remote_entities(header_meta, msg.get_data(), addition_data)
@@ -57,6 +47,11 @@ class Reformer(object):
         #     res.append(reformed_msg)
         return entities
 
+    def reform_req(self, msg):
+        header_meta = msg.get_header().meta
+        request = self.get_remote_request(header_meta)
+        return request
+
     @abstractmethod
     def get_local_entities(self, header_meta, data, addition_data):
         # реализация в регионе
@@ -67,7 +62,7 @@ class Reformer(object):
         # в record пишем полученное ID для дочерних запросов
 
         rec_meta = record['meta']
-        if rec_meta['dst_operation_code'] == Operation.ADD:
+        if rec_meta['dst_operation_code'] == OperationCode.ADD:
             answer_res = answer.process(
                 rec_meta['dst_entity_code'],
                 answer_data,
@@ -83,7 +78,7 @@ class Reformer(object):
                 remote_id=rec_meta['src_id'],
                 remote_param_name=rec_meta['src_id_url_param_name'],
             )
-        elif rec_meta['dst_operation_code'] == Operation.DELETE:
+        elif rec_meta['dst_operation_code'] == OperationCode.DELETE:
             MatchingId.remove(
                 remote_sys_code=self.remote_sys_code,
                 remote_entity_code=rec_meta['src_entity_code'],
@@ -135,25 +130,30 @@ class Reformer(object):
                         self.remote_sys_code,
                     )
                 meta['skip_resend'] = False
-                if meta['src_operation_code'] == Operation.ADD:
+                if meta['src_operation_code'] == OperationCode.ADD:
                     if matching_id_data['dst_id']:
                         # ситуация переотправки сообщений
                         meta['skip_resend'] = True
                     meta['dst_id'] = matching_id_data['dst_id']
                     meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
-                    meta['dst_operation_code'] = Operation.ADD
-                else:  # (Operation.CHANGE, Operation.DELETE)
+                    meta['dst_operation_code'] = OperationCode.ADD
+                else:  # (OperationCode.CHANGE, OperationCode.DELETE)
                     meta['dst_id'] = matching_id_data['dst_id']
                     meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
-                    if meta['src_operation_code'] == Operation.DELETE:
-                        meta['dst_operation_code'] = Operation.DELETE
+                    if meta['src_operation_code'] == OperationCode.DELETE:
+                        meta['dst_operation_code'] = OperationCode.DELETE
                         if not matching_id_data['dst_id']:
                             # если удаляем, но еще не передавали
                             raise ApiException(400, 'Nothing to delete')
                     else:
                         # todo: контролировать ли это?
                         # если изменяем, но передаем первый раз, то будет добавление
-                        meta['dst_operation_code'] = Operation.CHANGE if matching_id_data['dst_id'] else Operation.ADD
+                        meta['dst_operation_code'] = OperationCode.CHANGE if matching_id_data['dst_id'] else OperationCode.ADD
+
+                set_current_id_func = record['meta'].get('set_current_id_func')
+                if set_current_id_func:
+                    set_current_id_func(record, meta)
+
                 yield record
 
     def set_service(self, record, is_to_local):
@@ -175,7 +175,7 @@ class Reformer(object):
             'api_version'.join(('<int:', '>')),
             '0'
         )
-        if meta['src_operation_code'] != Operation.ADD:
+        if meta['src_operation_code'] != OperationCode.ADD:
             meta['dst_url'] = meta['dst_url'].replace(
                 meta['dst_id_url_param_name'].join(('<int:', '>')),
                 str(meta['dst_id'])
@@ -195,7 +195,7 @@ class Reformer(object):
     def set_operation_order(self, dict_, entity, order):
         dict_['operation_order'].setdefault(order, []).append(entity)
 
-    def transfer_send_data(self, entities):
+    def transfer__send_data(self, entities):
         soo = sorted(entities['operation_order'].items(), key=lambda x: x[0])
         for entity_code in soo:
             entity = entities[entity_code]
@@ -205,6 +205,14 @@ class Reformer(object):
                     set_parent_id_func(record)
                 trans_res = self.transfer.execute(record)
                 self.conformity_remote(record, trans_res)
+
+    def transfer__send_request(self, request):
+        trans_res = self.transfer.execute(request)
+        # if request['dst_protocol_code'] == Protocol.REST:
+        #     trans_res = self.transfer.execute(request)
+        # elif request['dst_protocol_code'] == Protocol.SOAP:
+        #     trans_res = self.transfer.execute(request)
+        return trans_res
 
     def send_local_data(self, entities, request_by_url, answer):
         soo = sorted(entities['operation_order'].items(), key=lambda x: x[0])
@@ -226,11 +234,11 @@ class Reformer(object):
 
     def get_operation_code_by_method(self, method_code):
         if method_code.upper() == 'POST':
-            res = Operation.ADD
+            res = OperationCode.ADD
         elif method_code.upper() == 'PUT':
-            res = Operation.CHANGE
+            res = OperationCode.CHANGE
         elif method_code.upper() == 'DELETE':
-            res = Operation.DELETE
+            res = OperationCode.DELETE
         else:
             raise Exception('Unexpected method')
         return res
@@ -292,3 +300,6 @@ class Reformer(object):
     def check_sys_code(self, msg):
         if msg.get_header().meta['remote_system_code'] != self.remote_sys_code:
             raise RuntimeError('Does not match remote_system_code')
+
+    def get_remote_request(self, header_meta):
+        raise NotImplementedError

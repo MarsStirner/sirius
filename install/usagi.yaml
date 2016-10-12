@@ -50,6 +50,7 @@ common:
     CELERY_ACKS_LATE: true
     # CELERYD_PREFETCH_MULTIPLIER: 1
     CELERY_IGNORE_RESULT: true
+    CELERY_DISABLE_RATE_LIMITS: true
     CELERY_DEFAULT_QUEUE: default_queue
     CELERY_DEFAULT_EXCHANGE: default_exchange
     CELERY_DEFAULT_EXCHANGE_TYPE: direct
@@ -60,7 +61,7 @@ common:
 
 deployment:
   base_dir: .
-  prefix: sirius_test
+  prefix: sir_test
 
 
 subsystems:
@@ -108,7 +109,7 @@ subsystems:
       ASSETS_DEBUG: False
       DEBUG_TB_ENABLED: False  # Disable Debug toolbar
       DEBUG_TB_INTERCEPT_REDIRECTS: False
-      CACHE_TYPE: 'simple'  # Can be "memcached", "redis", etc.
+      CACHE_TYPE: memcached  # Can be "memcached", "redis", etc.
 #      CACHE_TYPE: filesystem
 #      CACHE_DIR: /tmp/cache/sirius
 
@@ -124,7 +125,7 @@ subsystems:
         SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
         DEBUG_TB_ENABLED: True
         ASSETS_DEBUG: True  # Don't bundle/minify static assets
-        CACHE_TYPE: 'simple'  # Can be "memcached", "redis", etc.
+        CACHE_TYPE: simple  # Can be "memcached", "redis", etc.
         CELERY_ALWAYS_EAGER: true
 #        WTF_CSRF_ENABLED: False  # Allows form testing
 
@@ -233,18 +234,19 @@ subsystems:
 #    url: *DEVOURER_URL
 
   celery_queue:
-    risar_main: sirius_test_risar_main_queue
-    risar_error_1: sirius_test_risar_error_1_queue
-    risar_error_2: sirius_test_risar_error_2_queue
-    mis_tula: sirius_test_mis_tula_queue
-    mis_tambov: sirius_test_mis_tambov_queue
+    risar_main: |
+      {{ deployment.prefix }}_risar_main_queue
+    risar_error_1: sir_test_risar_error_1_queue
+    risar_error_2: sir_test_risar_error_2_queue
+    mis_tula: sir_test_mis_tula_queue
+    mis_tambov: sir_test_mis_tambov_queue
 
   risar_main_worker:
     configens:
       supervisor:
         template: "{{ configens.supervisor.templates.worker | recurse }}"
         queue: |
-          {{ subsystems.celery_queue.risar_main }}
+          {{ subsystems.celery_queue.risar_main | recurse }}
   risar_error_1_worker:
     configens:
       supervisor:

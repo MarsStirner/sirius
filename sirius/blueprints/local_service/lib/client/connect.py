@@ -82,9 +82,9 @@ def make_login():
 
 def make_api_request(method, url, session, json_data=None, url_args=None):
     token, session_token = session
-    print hippo_url + url
+    print url
     result = getattr(requests, method)(
-        hippo_url + url,
+        url,
         json=json_data,
         params=url_args,
         cookies={api_auth_token_name: token,
