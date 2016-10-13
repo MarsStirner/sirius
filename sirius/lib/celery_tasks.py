@@ -11,11 +11,12 @@ import traceback
 import sys
 
 from sirius.extensions import celery
+from sirius.blueprints.scheduler.api import Scheduler
 
 
 @celery.task
 def local_task(msg):
-    from sirius.blueprints.local_service.lib.consumer import LocalConsumer
+    from sirius.blueprints.api.local_service.consumer import LocalConsumer
     receiver = LocalConsumer()
     try:
         res = receiver.process(msg)
@@ -28,13 +29,12 @@ def local_task(msg):
 
 @celery.task
 def remote_task(msg, rmt_sys_code):
-    from sirius.blueprints.remote_service.lib.consumer import RemoteConsumer
+    from sirius.blueprints.api.remote_service.consumer import RemoteConsumer
     receiver = RemoteConsumer()
     receiver.process(msg, rmt_sys_code)
 
 
 @celery.task
 def scheduler_task():
-    from sirius.blueprints.remote_service.lib.scheduler import Scheduler
     scheduler = Scheduler()
     scheduler.execute()

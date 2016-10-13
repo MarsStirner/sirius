@@ -54,12 +54,12 @@ def register_extensions(app):
 
 def register_blueprints(app):
     """Register Flask blueprints."""
-    from sirius.blueprints import public, user, local_service
-    from sirius.blueprints.remote_service import tula
+    from sirius.blueprints import public, user, api
     app.register_blueprint(public.views.blueprint)
     app.register_blueprint(user.views.blueprint)
-    app.register_blueprint(local_service.app.module)
-    app.register_blueprint(tula.app.module)
+    app.register_blueprint(api.local_service.risar.app.module)
+    app.register_blueprint(api.remote_service.tula.app.module)
+    app.register_blueprint(api.remote_service.tambov.app.module)
     return None
 
 
@@ -91,6 +91,6 @@ def register_shellcontext(app):
 def register_commands(app):
     """Register Click commands."""
     app.cli.add_command(commands.test)
-    app.cli.add_command(commands.lint)
+    # app.cli.add_command(commands.lint)
     app.cli.add_command(commands.clean)
     app.cli.add_command(commands.urls)

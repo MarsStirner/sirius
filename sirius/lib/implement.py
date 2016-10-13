@@ -6,10 +6,10 @@
 @date: 27.09.2016
 
 """
-from sirius.blueprints.remote_service.tambov.lib.reformer import TambovReformer
-from sirius.blueprints.remote_service.tambov.lib.transfer import TambovTransfer
-from sirius.blueprints.remote_service.tula.lib.reformer import TulaReformer
-from sirius.blueprints.remote_service.tula.lib.transfer import TulaTransfer
+from sirius.blueprints.api.remote_service.tambov.lib.reformer import TambovReformer
+from sirius.blueprints.api.remote_service.tambov.lib.transfer import TambovTransfer
+from sirius.blueprints.api.remote_service.tula.lib.reformer import TulaReformer
+from sirius.blueprints.api.remote_service.tula.lib.transfer import TulaTransfer
 
 implements = (
     (TambovReformer, TambovTransfer),

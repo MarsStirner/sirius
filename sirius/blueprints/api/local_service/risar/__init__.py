@@ -3,6 +3,8 @@
 
 
 @author: BARS Group
-@date: 23.09.2016
+@date: 13.10.2016
 
 """
+
+from . import app  # noqa

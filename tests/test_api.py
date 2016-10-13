@@ -7,10 +7,10 @@
 
 """
 from sirius.app import app
-from sirius.blueprints.remote_service.lib.test.connect import make_login, release_token
-from sirius.blueprints.remote_service.lib.test.request import \
+from sirius.blueprints.api.remote_service.lib.test.connect import make_login, release_token
+from sirius.blueprints.api.remote_service.tula.passive.client.test.request import \
     create_client, edit_client, delete_client
-from sirius.blueprints.remote_service.tula.views.client.test_data import \
+from sirius.blueprints.api.remote_service.tula.passive.client.test.test_data import \
     test_client_data_1, test_client_data_2, test_client_data_error_1
 
 session = None
@@ -50,7 +50,7 @@ class TestClient:
         code = result['meta']['code']
         assert code == 200
 
-    def _test_delete(self, testapp):
+    def test_delete(self, testapp):
         session = (None, None)
         remote_client_id = 324
         result = delete_client(testapp, session, remote_client_id)
