@@ -17,6 +17,23 @@ test_client_data_1 = {
     },
 }
 
+test_client_data_error_1 = {
+    "FIO": {
+        "middlename": u'Интова2',
+        "name": u'Тестовая интеграция',
+        "surname": u'Интегра'
+    },
+    "birthday_date": '2016-01-01',
+    "gender": 333,
+    "document": {
+        "document_type_code": 1,
+        "document_series": '01 01',
+        "document_number": '555000',
+        "document_beg_date": '2016-01-01',
+        "document_issuing_authority": 'UFMS'
+    },
+}
+
 test_client_data_2 = {
     "FIO": {
         "name": u'Тестовая интеграция',

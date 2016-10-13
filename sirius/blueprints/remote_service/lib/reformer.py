@@ -13,6 +13,7 @@ from sirius.lib.apiutils import ApiException
 
 from sirius.lib.message import Message
 from sirius.models.operation import OperationCode
+from sirius.models.system import SystemCode
 
 
 class Reformer(object):
@@ -162,7 +163,7 @@ class Reformer(object):
             method = ApiMethod.get_method(
                 meta['src_entity_code'],
                 meta['src_operation_code'],
-                'local_system',
+                SystemCode.LOCAL,
             )
         else:
             method = ApiMethod.get_method(

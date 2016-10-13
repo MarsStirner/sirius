@@ -112,6 +112,11 @@ subsystems:
       CACHE_TYPE: memcached  # Can be "memcached", "redis", etc.
 #      CACHE_TYPE: filesystem
 #      CACHE_DIR: /tmp/cache/sirius
+      BEAKER_SESSION:
+        session.type: file
+        session.data_dir: /tmp/session/data
+        session.lock_dir: /tmp/session/lock
+        session.key: sirius.session.id
 
       prod:
         ENV: 'prod'
@@ -127,7 +132,6 @@ subsystems:
         ASSETS_DEBUG: True  # Don't bundle/minify static assets
         CACHE_TYPE: simple  # Can be "memcached", "redis", etc.
         CELERY_ALWAYS_EAGER: true
-#        WTF_CSRF_ENABLED: False  # Allows form testing
 
       test:
         TESTING: True

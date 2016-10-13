@@ -16,10 +16,10 @@ from contextlib import contextmanager
 config = app.config
 hippo_url = config.get('HIPPOCRATE_URL', 'http://127.0.0.1:6600/').rstrip('/')
 coldstar_url = config.get('COLDSTAR_URL', 'http://127.0.0.1:6605/').rstrip('/')
-api_login = config.get('HIPPOCRATE_API_LOGIN', u'ВнешСис')
-api_password = config.get('HIPPOCRATE_API_PASSWORD', '')
-api_auth_token_name = config.get('CASTIEL_AUTH_TOKEN', 'CastielAuthToken')
-api_session_token_name = config.get('HIPPOCRATE_SESSION_KEY', 'hippocrates.session.id')
+login = config.get('HIPPOCRATE_API_LOGIN', u'ВнешСис')
+password = config.get('HIPPOCRATE_API_PASSWORD', '')
+authent_token_name = config.get('CASTIEL_AUTH_TOKEN', 'CastielAuthToken')
+authoriz_token_name = config.get('HIPPOCRATE_SESSION_KEY', 'hippocrates.session.id')
 
 
 def get_token(login, password):
@@ -58,17 +58,17 @@ def get_role(token, role_code=''):
         url += role_code
     result = requests.post(
         url,
-        cookies={api_auth_token_name: token}
+        cookies={authent_token_name: token}
     )
     j = result.json()
     if not result.status_code == 200:
         raise Exception('Ошибка авторизации')
-    return result.cookies[api_session_token_name]
+    return result.cookies[authoriz_token_name]
 
 
 @contextmanager
 def make_login():
-    token = get_token(api_login, api_password)
+    token = get_token(login, password)
     print ' > auth token: ', token
     session_token = get_role(token)
     print ' > session token: ', session_token
@@ -81,14 +81,13 @@ def make_login():
 
 
 def make_api_request(method, url, session, json_data=None, url_args=None):
-    token, session_token = session
-    print url
+    authent_token, authoriz_token = session
     result = getattr(requests, method)(
         url,
         json=json_data,
         params=url_args,
-        cookies={api_auth_token_name: token,
-                 api_session_token_name: session_token}
+        cookies={authent_token_name: authent_token,
+                 authoriz_token_name: authoriz_token}
     )
     if result.status_code != 200:
         try:
@@ -96,7 +95,7 @@ def make_api_request(method, url, session, json_data=None, url_args=None):
             message = u'{0}: {1}'.format(j['meta']['code'], j['meta']['name'])
         except Exception, e:
             # raise e
-            message = u'Unknown ({0})'.format(unicode(result))
+            message = u'Unknown ({0})({1})({2})'.format(unicode(result), unicode(result.text)[:300], unicode(e))
         raise Exception(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
     return result.json()
 

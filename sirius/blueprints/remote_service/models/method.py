@@ -10,7 +10,7 @@ from sirius.database import Column, Model, db, reference_col, relationship, \
     XMLType
 from sirius.models.entity import Entity
 from sirius.models.operation import Operation
-from sirius.models.protocol import Protocol
+from sirius.models.protocol import Protocol, ProtocolCode
 from sirius.models.system import System
 from sqlalchemy import UniqueConstraint, CheckConstraint
 
@@ -26,18 +26,18 @@ class ApiMethod(Model):
     operation = relationship('Operation', backref='set_api_method')
     protocol_id = reference_col('protocol', unique=False, nullable=False)
     protocol = relationship('Protocol', backref='set_api_method')
-    method = Column(db.String(80), unique=False, nullable=False)
-    template_url = Column(db.Text(), unique=False, nullable=False)
+    method = Column(db.String(80), unique=False, nullable=False)  # service method/rest method
+    template_url = Column(db.Text(), unique=False, nullable=False)  # wsdl uri/rest url template
 
     __table_args__ = (
         UniqueConstraint('entity_id', 'operation_id', name='_entity_operation_uc'),
-        # CheckConstraint("template_url > '' OR protocol_code != '%s'" % ProtocolCode.REST, name='_template_url_chk'),
+        CheckConstraint("protocol_code = '%s' OR wsdl_uri > ''" % ProtocolCode.REST, name='_wsdl_uri_chk'),
     )
 
     @classmethod
     def get_method(cls, entity_code, operation_code, system_code):
         method = cls.query.join(
-            Entity, Entity.id == cls.entity_id_id
+            Entity, Entity.id == cls.entity_id
         ).join(
             System, System.id == Entity.system_id
         ).join(
@@ -51,9 +51,10 @@ class ApiMethod(Model):
         ).first()
         if not method:
             raise RuntimeError('Service not registered in %s' % cls.__name__)
+        sys_url = method.entity.system.url.rstrip('/')
         res = {
             'protocol': method.protocol.code,
             'method': method.method,
-            'template_url': method.entity.system.url.lstrip('/') + method.template_url,
+            'template_url': sys_url + method.template_url,
         }
         return res

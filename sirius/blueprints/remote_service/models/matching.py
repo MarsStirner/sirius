@@ -19,12 +19,14 @@ class MatchingId(Model):
     __tablename__ = 'matching_id'
 
     local_entity_id = reference_col('entity', unique=False, nullable=False)
-    local_entity = relationship('Entity', backref='set_local_matching_id')
+    local_entity = relationship('Entity', backref='set_local_matching_id',
+                                foreign_keys='MatchingId.local_entity_id')
     local_id = Column(db.Integer, unique=False, nullable=False, index=True)
     local_param_name = Column(db.String(80), unique=False, nullable=True)
 
     remote_entity_id = reference_col('entity', unique=False, nullable=False)
-    remote_entity = relationship('Entity', backref='set_remote_matching_id')
+    remote_entity = relationship('Entity', backref='set_remote_matching_id',
+                                 foreign_keys='MatchingId.remote_entity_id')
     remote_id = Column(db.Integer, unique=False, nullable=False, index=True)
     remote_param_name = Column(db.String(80), unique=False, nullable=True)
 
@@ -168,10 +170,12 @@ class MatchingId(Model):
 #     __tablename__ = 'matching_entity'
 #
 #     local_entity_id = reference_col('entity', unique=False, nullable=False)
-#     local_entity = relationship('Entity', backref='set_local_matching_entity')
+#     local_entity = relationship('Entity', backref='set_local_matching_entity',
+#                                 foreign_keys='MatchingEntity.local_entity_id')
 #
 #     remote_entity_id = reference_col('entity', unique=False, nullable=False)
-#     remote_entity = relationship('Entity', backref='set_remote_matching_entity')
+#     remote_entity = relationship('Entity', backref='set_remote_matching_entity',
+#                                  foreign_keys='MatchingEntity.remote_entity_id')
 #
 #     is_concomitant = Column(db.Boolean(), unique=False, nullable=False, default=False)
 #

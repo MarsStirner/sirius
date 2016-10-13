@@ -10,10 +10,12 @@ from sirius.database import db as _db
 from .factories import UserFactory
 
 
+os.environ['TESTING'] = '1'
+
+
 @pytest.yield_fixture(scope='function')
 def app():
     """An application for the tests."""
-    os.environ['TESTING'] = '1'
     _app = create_sirius_app()
     ctx = _app.test_request_context()
     ctx.push()

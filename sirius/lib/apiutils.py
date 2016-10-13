@@ -122,7 +122,7 @@ def jsonify_exception(exc, tb):
     )
 
 
-def api_method(func=None, hook=None):
+def api_method(func=None, hook=None, authorization=True):
     """Декоратор API-функции. Автомагически оборачивает результат или исключение в jsonify-ответ
     :param func: декорируемая функция
     :type func: callable
@@ -130,7 +130,10 @@ def api_method(func=None, hook=None):
     :type: callable
     """
     def decorator(func):
-        func.is_api = True
+        if authorization:
+            func.is_api = True
+        else:
+            func.is_public_api = True
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):

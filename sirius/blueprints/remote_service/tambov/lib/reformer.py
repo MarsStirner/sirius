@@ -20,9 +20,9 @@ from sirius.models.protocol import ProtocolCode
 
 class RemoteEntityCode(Enum):
     PATIENT = 'Patient'
-    IND_ADDRESS = 'IndividualAddress'
-    IND_DOCUMENTS = 'IndividualDocument'
 
+    # IND_ADDRESS = 'IndividualAddress'
+    # IND_DOCUMENTS = 'IndividualDocument'
     CHECKUP = 'checkup'
     CHECKUP_FETUS = 'checkup_fetus'
 
@@ -143,10 +143,7 @@ class TambovReformer(Reformer):
             # необязательные
             'SNILS': None,  # заполняется в документах
         }
-        childs = entity_package['childs']
-        document_list = childs[RemoteEntityCode.IND_DOCUMENTS]
-        for item in document_list:
-            document_data = item['data']
+        for document_data in patient_data['identifiers']:
             if document_data['type'] == '19':  # SNILS
                 main_item['body']['SNILS'] = document_data['code']
             else:
@@ -159,26 +156,68 @@ class TambovReformer(Reformer):
                     'document_series': document_data['series'],
                     'document_issuing_authority': document_data['issueOrganization'],
                 })
-
-        address_list = childs[RemoteEntityCode.IND_ADDRESS]
-        for item in address_list:
-            address_data = item['data']
+        for address_data in patient_data['addresses']:
             local_addr = {
                 'KLADR_locality': None,  # заполняется в entry
                 'KLADR_street': None,  # заполняется в entry
-                'house': address_data['house'],
-                'locality_type': address_data[''],
+                'house': address_data['house'],  # заполняется в entry
+                'locality_type': None,  # заполняется в entry
                 # необязательные
-                'building': address_data[''],
+                # todo:
+                'building': 'not-implemented',
                 'flat': address_data['apartment'],
             }
             main_item['body'].setdefault('residential_address', []).append(local_addr)
+            local_addr['locality_type'] = '1'
             for entry in address_data['entries']:
                 if entry['level'] == '4':
-                    local_addr['KLADR_locality'] = entry['kladrCode']
-                elif entry['level'] == '5':
+                    local_addr['KLADR_locality'] = entry['kladrCode'][:11] + '00'
+                    # local_addr['locality_type'] = '1' if entry['type'] == '18' else '2'
+                elif entry['level'] == '6':
                     local_addr['KLADR_street'] = entry['kladrCode']
+                elif entry['level'] == '7':
+                    local_addr['house'] = entry['name']
+                elif entry['level'] == '8':
+                    local_addr['flat'] = entry['name']
 
+        # образец работы с дозапросами
+        # childs = entity_package['childs']
+        # document_list = childs[RemoteEntityCode.IND_DOCUMENTS]
+        # for item in document_list:
+        #     document_data = item['data']
+        #     if document_data['type'] == '19':  # SNILS
+        #         main_item['body']['SNILS'] = document_data['code']
+        #     else:
+        #         # todo: в схеме рисар document будет переделан на список documents
+        #         main_item['body'].setdefault('documents', []).append({
+        #             'document_type_code': document_data['type'],
+        #             'document_number': document_data['number'],
+        #             'document_beg_date': document_data['activationDate'],
+        #             # необязательные
+        #             'document_series': document_data['series'],
+        #             'document_issuing_authority': document_data['issueOrganization'],
+        #         })
+        #
+        # address_list = childs[RemoteEntityCode.IND_ADDRESS]
+        # for item in address_list:
+        #     address_data = item['data']
+        #     local_addr = {
+        #         'KLADR_locality': None,  # заполняется в entry
+        #         'KLADR_street': None,  # заполняется в entry
+        #         'house': address_data['house'],
+        #         'locality_type': address_data[''],
+        #         # необязательные
+        #         'building': address_data[''],
+        #         'flat': address_data['apartment'],
+        #     }
+        #     main_item['body'].setdefault('residential_address', []).append(local_addr)
+        #     for entry in address_data['entries']:
+        #         if entry['level'] == '4':
+        #             local_addr['KLADR_locality'] = entry['kladrCode']
+        #         elif entry['level'] == '5':
+        #             local_addr['KLADR_street'] = entry['kladrCode']
+
+        # ждем доработку wsdl по группе крови
         # schema = {
         #     "blood_type_info": {  # добавят в patients-smart-ws позже
         #         "type": "array",
@@ -339,79 +378,80 @@ class TambovReformer(Reformer):
         # missing_entities = remote_entities - {dst_entity}
         if dst_entity == RemoteEntityCode.PATIENT:
             req = reformed_req
-            fl_data_url = 'http://develop.r-mis.ru/individuals-ws/individuals?wsdl'
             patients_list = self.transfer__send_request(req)
             if meta['dst_operation_code'] == OperationCode.READ_ALL:
                 for patient_item in patients_list:
                     patient_uid = patient_item.uid
+                    req = {
+                        'meta': {
+                            'dst_method': 'getPatient',
+                            'dst_url': dst_url,
+                            'dst_id_url_param_name': 'uid',
+                            'dst_id': patient_uid,
+                        },
+                    }
+                    patient_data = self.transfer__send_request(req)
                     root_parent = patient_node = {
                         'is_changed': True,
-                        'main_id': patient_item.id,
-                        'data': patient_item,
+                        'main_id': patient_data.id,
+                        'data': patient_data,
                     }
                     entity_packages.setdefault(
                         RemoteEntityCode.PATIENT, []
                     ).append(patient_node)
+
+                    # образец работы с дозапросами
+                    # individuals_url = 'http://develop.r-mis.ru/individuals-ws/individuals?wsdl'
                     # req = {
                     #     'meta': {
-                    #         'dst_method': 'getPatient',
-                    #         'dst_url': dst_url,
+                    #         'dst_method': 'getIndividualAddresses',
+                    #         'dst_url': individuals_url,
                     #         'dst_id_url_param_name': 'uid',
-                    #         'dst_id': patient_item,
+                    #         'dst_id': patient_uid,
                     #     },
                     # }
-                    # patient_data = self.transfer_give_data(req)
-
-                    req = {
-                        'meta': {
-                            'dst_method': 'getIndividualAddresses',
-                            'dst_url': fl_data_url,
-                            'dst_id_url_param_name': 'uid',
-                            'dst_id': patient_uid,
-                        },
-                    }
-                    patient_childs = patient_node.setdefault('childs', {})
-                    if patient_node != root_parent:
-                        patient_node['root_parent'] = root_parent
-                    IndividualAddresses_list = self.transfer__send_request(req)
-                    for ind_addr_item in IndividualAddresses_list:
-                        ind_address_node = {'data': ind_addr_item}
-                        patient_childs.setdefault(
-                            RemoteEntityCode.IND_ADDRESS, []
-                        ).append(ind_address_node)
-                        # req = {
-                        #     'meta': {
-                        #         'dst_method': 'getAddressAllInfo',
-                        #         'dst_url': fl_data_url,
-                        #         'dst_id_url_param_name': 'uid',
-                        #         'dst_id': ind_addr_item,
-                        #     },
-                        # }
-                        # AddressAllInfo_data = self.transfer_give_data(req)
-
-                    req = {
-                        'meta': {
-                            'dst_method': 'getIndividualDocuments',
-                            'dst_url': fl_data_url,
-                            'dst_id_url_param_name': 'uid',
-                            'dst_id': patient_uid,
-                        },
-                    }
-                    IndividualDocuments_list = self.transfer__send_request(req)
-                    for ind_doc_item in IndividualDocuments_list:
-                        ind_documents_data = {'data': ind_doc_item}
-                        patient_childs.setdefault(
-                            RemoteEntityCode.IND_DOCUMENTS, []
-                        ).append(ind_documents_data)
-                        # req = {
-                        #     'meta': {
-                        #         'dst_method': 'getDocument',
-                        #         'dst_url': fl_data_url,
-                        #         'dst_id_url_param_name': 'uid',
-                        #         'dst_id': ind_doc_item,
-                        #     },
-                        # }
-                        # Document_data = self.transfer_give_data(req)
+                    # patient_childs = patient_node.setdefault('childs', {})
+                    # if patient_node != root_parent:
+                    #     patient_node['root_parent'] = root_parent
+                    # IndividualAddresses_list = self.transfer__send_request(req)
+                    # for ind_addr_item in IndividualAddresses_list:
+                    #     ind_address_node = {'data': ind_addr_item}
+                    #     patient_childs.setdefault(
+                    #         RemoteEntityCode.IND_ADDRESS, []
+                    #     ).append(ind_address_node)
+                    #     # req = {
+                    #     #     'meta': {
+                    #     #         'dst_method': 'getAddressAllInfo',
+                    #     #         'dst_url': fl_data_url,
+                    #     #         'dst_id_url_param_name': 'uid',
+                    #     #         'dst_id': ind_addr_item,
+                    #     #     },
+                    #     # }
+                    #     # AddressAllInfo_data = self.transfer_give_data(req)
+                    #
+                    # req = {
+                    #     'meta': {
+                    #         'dst_method': 'getIndividualDocuments',
+                    #         'dst_url': individuals_url,
+                    #         'dst_id_url_param_name': 'uid',
+                    #         'dst_id': patient_uid,
+                    #     },
+                    # }
+                    # IndividualDocuments_list = self.transfer__send_request(req)
+                    # for ind_doc_item in IndividualDocuments_list:
+                    #     ind_documents_data = {'data': ind_doc_item}
+                    #     patient_childs.setdefault(
+                    #         RemoteEntityCode.IND_DOCUMENTS, []
+                    #     ).append(ind_documents_data)
+                    #     # req = {
+                    #     #     'meta': {
+                    #     #         'dst_method': 'getDocument',
+                    #     #         'dst_url': fl_data_url,
+                    #     #         'dst_id_url_param_name': 'uid',
+                    #     #         'dst_id': ind_doc_item,
+                    #     #     },
+                    #     # }
+                    #     # Document_data = self.transfer_give_data(req)
         return meta, entity_packages
 
     def create_remote_messages(self, entity_packages):

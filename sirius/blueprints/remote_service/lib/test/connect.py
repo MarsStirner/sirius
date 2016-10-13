@@ -1,18 +1,19 @@
 # coding: utf-8
 
-import os
 import requests
+from sirius.app import app
 
 from contextlib import contextmanager
 
 
-coldstar_url = os.getenv('TEST_COLDSTAR_URL', 'http://127.0.0.1:6098')
-sirius_url = os.getenv('TEST_SIRIUS_URL', 'http://127.0.0.1:6700')
-auth_token_name = 'CastielAuthToken'
-session_token_name = 'sirius.session.id'
-
-login = os.getenv('TEST_LOGIN', u'ВнешСис')
-password = os.getenv('TEST_PASSWORD', '')
+config = app.config
+hippo_url = config.get('HIPPOCRATE_URL', 'http://127.0.0.1:6600/').rstrip('/')
+sirius_url = config.get('SIRIUS_URL', 'http://127.0.0.1:8600/').rstrip('/')
+coldstar_url = config.get('COLDSTAR_URL', 'http://127.0.0.1:6605/').rstrip('/')
+login = config.get('HIPPOCRATE_API_LOGIN', u'ВнешСис')
+password = config.get('HIPPOCRATE_API_PASSWORD', '')
+authent_token_name = config.get('CASTIEL_AUTH_TOKEN', 'CastielAuthToken')
+authoriz_token_name = config.get('HIPPOCRATE_SESSION_KEY', 'hippocrates.session.id')
 
 
 def get_token(login, password):
@@ -46,27 +47,29 @@ def release_token(token):
 
 
 def get_role(token, role_code=''):
-    url = u'%s/chose_role/' % sirius_url
+    # пока роль не запрашиваем
+    return 'role-token'
+    # url = u'%s/chose_role/' % sirius_url
+    url = u'%s/chose_role/' % hippo_url
     if role_code:
         url += role_code
     result = requests.post(
         url,
-        cookies={auth_token_name: token}
+        cookies={authent_token_name: token}
     )
     j = result.json()
     if not result.status_code == 200:
         raise Exception('Ошибка авторизации')
-    return result.cookies['hippocrates.session.id']
+    return result.cookies[authoriz_token_name]
 
 
 @contextmanager
 def make_login():
-    # token = get_token(login, password)
-    # print ' > auth token: ', token
-    # session_token = get_role(token)
-    # print ' > session token: ', session_token
-    # session = token, session_token
-    session = None, None
+    token = get_token(login, password)
+    print ' > auth token: ', token
+    session_token = get_role(token)
+    print ' > session token: ', session_token
+    session = token, session_token
 
     try:
         yield session
@@ -93,17 +96,17 @@ def make_api_request(method, url, session, json_data=None, url_args=None):
         sirius_url + url,
         json=json_data,
         params=url_args,
-        # cookies={auth_token_name: token,
-        #          session_token_name: session_token}
+        cookies={authent_token_name: token,
+                 authoriz_token_name: session_token}
     )
-    if result.status_code != 200:
-        try:
-            j = result.json()
-            message = u'{0}: {1}'.format(j['meta']['code'], j['meta']['name'])
-        except Exception, e:
-            # raise e
-            message = u'Unknown ({0})({1})'.format(unicode(result), unicode(e))
-        raise Exception(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
+    # if result.status_code != 200:
+    #     try:
+    #         j = result.json()
+    #         message = u'{0}: {1}'.format(j['meta']['code'], j['meta']['name'])
+    #     except Exception, e:
+    #         # raise e
+    #         message = u'Unknown ({0})({1})({2})'.format(unicode(result), unicode(result.text)[:300], unicode(e))
+    #     raise Exception(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
     return result.json()
 
 
@@ -113,8 +116,8 @@ def make_test_api_request(testapp, method, url, session, json_data=None, url_arg
         sirius_url + url,
         json_data,
         # params=url_args,
-        # cookies={auth_token_name: token,
-        #          session_token_name: session_token}
+        # cookies={authent_token_name: token,
+        #          authoriz_token_name: session_token}
     )
     if result.status_code != 200:
         try:

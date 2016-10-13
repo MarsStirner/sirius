@@ -16,7 +16,7 @@ class RemoteProducer(object):
     def send(self, msg, async=True):
         assert isinstance(msg, Message)
         # todo: на время тестирования без обработки исключений
-        if os.environ['TESTING'] == '1':
+        if os.environ.get('TESTING') == '1':
             async = False
         res = None
         if msg.is_to_local:
