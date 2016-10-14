@@ -1,6 +1,6 @@
 configens: !include code/sirius/install/configens.yaml
 common:
-  sirius_database: &SQLALCHEMY postgresql://postgres:postgres@localhost/sirius
+  sirius_database: &SQLALCHEMY postgresql://bars_user:bars_password@localhost/sirius
   celery_broker: &CELERY_BROKER_URL amqp://bars:sirius@localhost:5672/sirius  # transport://userid:password@hostname:port/virtual_host
   # celery_result_backend: &CELERY_RESULT_BACKEND redis://localhost:6379/1
   # sql database for celery application task (CAT) info and results
@@ -23,6 +23,7 @@ common:
 
   user_apps: &USER_APPS
 
+    SERVER: true
     DEBUG: true
     PROFILE: false
     TITLE: SIRIUS
@@ -109,9 +110,9 @@ subsystems:
       ASSETS_DEBUG: False
       DEBUG_TB_ENABLED: False  # Disable Debug toolbar
       DEBUG_TB_INTERCEPT_REDIRECTS: False
-      CACHE_TYPE: memcached  # Can be "memcached", "redis", etc.
-#      CACHE_TYPE: filesystem
-#      CACHE_DIR: /tmp/cache/sirius
+      CACHE_TYPE: filesystem  # Can be "memcached", "redis", etc.
+      CACHE_DIR: |
+        /tmp/cache/{{ deployment.prefix }}
       WTF_CSRF_ENABLED: False
       BEAKER_SESSION:
         session.type: file
@@ -125,6 +126,13 @@ subsystems:
         SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
         DEBUG_TB_ENABLED: False  # Disable Debug toolbar
 
+      test:
+        ENV: 'dev'
+        DEBUG: True
+        SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
+        DEBUG_TB_ENABLED: True
+        ASSETS_DEBUG: True  # Don't bundle/minify static assets
+
       dev:
         ENV: 'dev'
         DEBUG: True
@@ -134,12 +142,20 @@ subsystems:
         CACHE_TYPE: simple  # Can be "memcached", "redis", etc.
         CELERY_ALWAYS_EAGER: true
 
-      test:
+      test_autotest:
         TESTING: True
         DEBUG: True
         SQLALCHEMY_DATABASE_URI: sqlite:///..\..\test.db
         BCRYPT_LOG_ROUNDS: 4  # For faster tests; needs at least 4 to avoid "ValueError: Invalid rounds"
         WTF_CSRF_ENABLED: False  # Allows form testing
+
+      dev_autotest:
+        TESTING: True
+        DEBUG: True
+        SQLALCHEMY_DATABASE_URI: sqlite:///..\..\test.db
+        BCRYPT_LOG_ROUNDS: 4  # For faster tests; needs at least 4 to avoid "ValueError: Invalid rounds"
+        WTF_CSRF_ENABLED: False  # Allows form testing
+        CACHE_TYPE: simple  # Can be "memcached", "redis", etc.
         CELERY_ALWAYS_EAGER: true  # dev testing
 
     url: *SIRIUS_URL
@@ -293,7 +309,7 @@ subsystems:
           [program:{{ deployment.prefix }}_{{ this.name }}]
           environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
           ;command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ deployment.prefix }}_{{ this.name }}_queue
-          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker beat -l INFO
+          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker beat -l INFO -s {{ deployment.base_dir }}/celery/celerybeat-schedule
           directory={{ deployment.base_dir }}
 
           ;numprocs=1
