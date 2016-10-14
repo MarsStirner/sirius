@@ -6,30 +6,45 @@
 @date: 26.09.2016
 
 """
-from zeep import Client
+from zeep import Client, Transport
 from zeep.exceptions import Fault as WebFault
+
+tambov_soap_login = 'ekonyaev'
+tambov_soap_password = 'jW0LpcN0e'
 
 
 class MISClient(object):
     """Класс SOAP-клиента для взаимодействия с сервисом МИС"""
     def __init__(self, url, user_key):
         self.user_key = user_key
-        self.client = Client(url)
+        transport_with_basic_auth = Transport(
+            http_auth=(tambov_soap_login, tambov_soap_password)
+        )
+        self.client = Client(url, transport=transport_with_basic_auth)
 
-    def getPatientList(self):
+    def searchPatient(self):
         try:
-            result = self.client.service.searchPatient()
-        except WebFault, e:
-            raise
-        else:
-            return getattr(result, 'item', [])
-
-    def getPatient(self):
-        try:
-            result = self.client.service.getPatient(
-                # userKey=self.user_key,
+            result = self.client.service.searchPatient(
+                page=100000,
             )
         except WebFault, e:
             raise
         else:
-            return getattr(result, 'item', [])
+            """
+            count
+            error
+            patient
+            """
+            return getattr(result, 'patient', [])
+
+    def getPatient(self, **kw):
+        try:
+            result = self.client.service.getPatient(**kw)
+        except WebFault, e:
+            raise
+        else:
+            """
+            error
+            patientCard
+            """
+            return getattr(result, 'patientCard', {})

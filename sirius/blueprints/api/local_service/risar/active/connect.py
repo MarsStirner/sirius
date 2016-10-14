@@ -82,22 +82,14 @@ def make_login():
 
 def make_api_request(method, url, session, json_data=None, url_args=None):
     authent_token, authoriz_token = session
-    result = getattr(requests, method)(
+    response = getattr(requests, method)(
         url,
         json=json_data,
         params=url_args,
         cookies={authent_token_name: authent_token,
                  authoriz_token_name: authoriz_token}
     )
-    if result.status_code != 200:
-        try:
-            j = result.json()
-            message = u'{0}: {1}'.format(j['meta']['code'], j['meta']['name'])
-        except Exception, e:
-            # raise e
-            message = u'Unknown ({0})({1})({2})'.format(unicode(result), unicode(result.text)[:300], unicode(e))
-        raise Exception(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
-    return result.json()
+    return response
 
 
 def test_auth(login, password):

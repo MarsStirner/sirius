@@ -25,6 +25,7 @@ class Difference(object):
 
     def check_diffs(self, package_data):
         # пометить изменения в Хранилище и в пакете
+        # в пакете нужно проставить src_operation_code
         self.set_all_data_table(package_data)
 
     def save_all_changes(self):

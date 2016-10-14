@@ -9,6 +9,6 @@
 from .config import MODULE_NAME
 from flask import Blueprint
 
-module = Blueprint(MODULE_NAME, __name__, url_prefix='/tula')
+module = Blueprint(MODULE_NAME, __name__, url_prefix='/reformer')
 
 from .views import *

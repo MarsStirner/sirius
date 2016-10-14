@@ -7,7 +7,7 @@
 
 """
 from sirius.blueprints.api.local_service.risar.active.request import request_by_url
-from sirius.blueprints.api.local_service.risar.lib.parser import LocalAnswer
+from sirius.blueprints.api.local_service.risar.lib.parser import LocalAnswerParser
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message
 from sirius.blueprints.api.local_service.producer import LocalProducer
@@ -20,7 +20,9 @@ class LocalConsumer(object):
         hdr = msg.get_header()
         # сценарий обработки сообщения
         if msg.is_request:
-            local_data = request_by_url('get', hdr.url, msg.get_data())
+            parser = LocalAnswerParser()
+            answer = request_by_url('get', hdr.url, msg.get_data(), parser)
+            local_data = parser.get_data(answer)
 
             next_msg = Message(local_data)
             next_msg.to_remote_service()
@@ -33,14 +35,16 @@ class LocalConsumer(object):
                 prod = LocalProducer()
                 prod.send(next_msg)
         elif msg.is_result:
-            req_res = request_by_url(hdr.method, hdr.url, msg.get_data())
+            parser = LocalAnswerParser()
+            answer = request_by_url(hdr.method, hdr.url, msg.get_data(), parser)
+            req_res = parser.get_data(answer)
         elif msg.is_send_data:
             implement = Implementation()
-            answer = LocalAnswer()
+            parser = LocalAnswerParser()
             rmt_sys_code = msg.get_header().meta['remote_system_code']
             reformer = implement.get_reformer(rmt_sys_code)
             entities = reformer.reform_msg(msg)
-            reformer.send_local_data(entities, request_by_url, answer)
+            reformer.send_local_data(entities, request_by_url, parser)
         else:
             raise Exception('Message has not type')
 

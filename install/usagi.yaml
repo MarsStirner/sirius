@@ -4,7 +4,7 @@ common:
   celery_broker: &CELERY_BROKER_URL amqp://bars:sirius@localhost:5672/sirius  # transport://userid:password@hostname:port/virtual_host
   # celery_result_backend: &CELERY_RESULT_BACKEND redis://localhost:6379/1
   # sql database for celery application task (CAT) info and results
-  cat_database: &SQLALCHEMY_CAT postgresql://postgres:postgres@localhost/sirius
+  cat_database: &SQLALCHEMY_CAT postgresql://bars_user:bars_password@localhost/sirius
 
   uwsgi_apps: &UWSGI_APPS
     SIRIUS_URL: &SIRIUS_URL http://127.0.0.1:8600/
@@ -123,20 +123,17 @@ subsystems:
       prod:
         ENV: 'prod'
         DEBUG: False
-        SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
         DEBUG_TB_ENABLED: False  # Disable Debug toolbar
 
       test:
         ENV: 'dev'
         DEBUG: True
-        SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
         DEBUG_TB_ENABLED: True
         ASSETS_DEBUG: True  # Don't bundle/minify static assets
 
       dev:
         ENV: 'dev'
         DEBUG: True
-        SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
         DEBUG_TB_ENABLED: True
         ASSETS_DEBUG: True  # Don't bundle/minify static assets
         CACHE_TYPE: simple  # Can be "memcached", "redis", etc.
@@ -309,8 +306,8 @@ subsystems:
           [program:{{ deployment.prefix }}_{{ this.name }}]
           environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
           ;command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ deployment.prefix }}_{{ this.name }}_queue
-          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker beat -l INFO -s {{ deployment.base_dir }}/celery/celerybeat-schedule
-          directory={{ deployment.base_dir }}
+          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker beat -l INFO
+          directory={{ deployment.base_dir }}/celery
 
           ;numprocs=1
           stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log

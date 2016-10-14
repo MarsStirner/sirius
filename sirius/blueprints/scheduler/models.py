@@ -17,7 +17,7 @@ from sirius.models.entity import Entity
 from sirius.models.system import System
 from sqlalchemy import UniqueConstraint, CheckConstraint
 from sqlalchemy.sql.elements import and_
-from sqlalchemy import case, extract
+from sqlalchemy import case, cast
 
 
 class ScheduleTimeType(Enum):
@@ -60,7 +60,11 @@ class Schedule(Model):
         cur_datetime = datetime.today()
         cur_date = cur_datetime.date()
         cur_time = cur_datetime.time()
-        res = cls.query.join().filter(
+        res = cls.query.join(
+            ScheduleTime, ScheduleTime.id == cls.schedule_time_id
+        ).join(
+            ScheduleExecute, ScheduleExecute.schedule_id == cls.id
+        ).filter(
             case([
                 (
                     ScheduleTime.type == ScheduleTimeType.DELTA,
@@ -69,8 +73,8 @@ class Schedule(Model):
                 (
                     ScheduleTime.type == ScheduleTimeType.TIME,
                     and_(
-                        cur_time > ScheduleTime.time,
-                        cur_date > extract('date', ScheduleExecute.begin_datetime)
+                        cur_time.isoformat() > ScheduleTime.time,
+                        cur_date > cast(ScheduleExecute.begin_datetime, db.Date)
                     )
                 ),
             ]),
@@ -116,8 +120,8 @@ class ScheduleGroup(Model):
             Entity, Entity.id == ScheduleGroupRequest.entity_id
         ).join(
             System, System.id == ScheduleGroupRequest.system_id
-        ).filter_by(
-            schedule_group_id=self.id
+        ).filter(
+            ScheduleGroupRequest.schedule_group_id == self.id
         ).order_by(ScheduleGroupRequest.order).all()
         return res
 

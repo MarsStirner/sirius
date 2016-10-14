@@ -6,11 +6,14 @@
 @date: 23.09.2016
 
 """
+from hitsl_utils.safe import safe_traverse, safe_int
+from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
 from sirius.blueprints.reformer.api import Builder
 from sirius.lib.remote_system import RemoteSystemCode
+from sirius.lib.xform import Undefined
 from sirius.models.operation import OperationCode
 
 
@@ -26,9 +29,9 @@ class PatientTambovBuilder(Builder):
 
         def set_current_id_func(record):
             reform_meta = record['meta']
-            record['body'] = {
-                'client_id': reform_meta['meta']['dst_id'],
-            }
+            record['body'].update({
+                'client_id': reform_meta['dst_id'] or Undefined,
+            })
         res = {
             'operation_order': {},
             RisarEntityCode.CLIENT: [{
@@ -37,35 +40,40 @@ class PatientTambovBuilder(Builder):
                     'src_id': header_meta['remote_main_id'],
                     'dst_entity_code': RisarEntityCode.CLIENT,
                     'set_current_id_func': set_current_id_func,
+                    'src_operation_code': header_meta['remote_operation_code'],
                 },
             }],
         }
         main_item = res[RisarEntityCode.CLIENT][0]
         self.set_operation_order(res, RisarEntityCode.CLIENT, 1)
+        patient = patient_data['patient']
+        gender = safe_int(patient.gender)
+        if gender != 2:
+            main_item['meta']['skip_trash'] = True
         main_item['body'] = {
-            'client_id': None,  # заполняется в set_current_id_func
+            'client_id': None or Undefined,  # заполняется в set_current_id_func
             'FIO': {
-                'middlename': patient_data['middleName'],
-                'name': patient_data['firstName'],
-                'surname': patient_data['lastName']
+                'middlename': patient['middleName'],
+                'name': patient['firstName'],
+                'surname': patient['lastName']
             },
-            'birthday_date': patient_data['birthDate'],
-            'gender': patient_data['gender'],
-            # необязательные
-            'SNILS': None,  # заполняется в документах
+            'birthday_date': WebMisJsonEncoder().default(patient['birthDate']),
+            'gender': gender,
+            'SNILS': None or Undefined,  # заполняется в документах
         }
-        for document_data in patient_data['identifiers']:
-            if document_data['type'] == '19':  # SNILS
-                main_item['body']['SNILS'] = document_data['code']
+        for document_data in patient_data.identifiers:
+            if document_data.type == '19':  # SNILS
+                main_item['body']['SNILS'] = document_data.code
             else:
                 # todo: в схеме рисар document будет переделан на список documents
                 main_item['body'].setdefault('documents', []).append({
-                    'document_type_code': document_data['type'],
-                    'document_number': document_data['number'],
-                    'document_beg_date': document_data['activationDate'],
-                    # необязательные
-                    'document_series': document_data['series'],
-                    'document_issuing_authority': document_data['issueOrganization'],
+                    'document_type_code': safe_int(document_data.type),
+                    'document_number': document_data.number,
+                    'document_beg_date': document_data.activationDate,
+                    'document_series': document_data.series or Undefined,
+                    # todo: error: has no method get
+                    # 'document_issuing_authority': safe_traverse(document_data, 'issueOrganization', 'name'),
+                    'document_issuing_authority': document_data.issueOrganization and document_data.issueOrganization.name or Undefined,
                 })
         for address_data in patient_data['addresses']:
             local_addr = {
@@ -73,13 +81,14 @@ class PatientTambovBuilder(Builder):
                 'KLADR_street': None,  # заполняется в entry
                 'house': address_data['house'],  # заполняется в entry
                 'locality_type': None,  # заполняется в entry
-                # необязательные
                 # todo:
-                'building': 'not-implemented',
-                'flat': address_data['apartment'],
+                'building': 'not-implemented' or Undefined,
+                'flat': address_data['apartment'] or Undefined,
             }
-            main_item['body'].setdefault('residential_address', []).append(local_addr)
-            local_addr['locality_type'] = '1'
+            # todo: в схеме рисар пока не массив, а объект
+            # main_item['body'].setdefault('residential_address', []).append(local_addr)
+            main_item['body']['residential_address'] = local_addr
+            local_addr['locality_type'] = 1
             for entry in address_data['entries']:
                 if entry['level'] == '4':
                     local_addr['KLADR_locality'] = entry['kladrCode'][:11] + '00'
@@ -90,6 +99,8 @@ class PatientTambovBuilder(Builder):
                     local_addr['house'] = entry['name']
                 elif entry['level'] == '8':
                     local_addr['flat'] = entry['name']
+            # todo: в схеме рисар пока не массив, а объект
+            break
 
         # образец работы с дозапросами
         # childs = entity_package['childs']
@@ -199,18 +210,20 @@ class PatientTambovBuilder(Builder):
         if meta['dst_operation_code'] == OperationCode.READ_ALL:
             for patient_item in patients_list:
                 patient_uid = patient_item.uid
+                if not patient_uid:
+                    continue
                 req = {
                     'meta': {
                         'dst_method': 'getPatient',
                         'dst_url': dst_url,
-                        'dst_id_url_param_name': 'uid',
+                        'dst_id_url_param_name': 'patientUid',
                         'dst_id': patient_uid,
                     },
                 }
                 patient_data = self.transfer__send_request(req)
                 root_parent = patient_node = {
                     'is_changed': True,
-                    'main_id': patient_data.id,
+                    'main_id': patient_data.patient.id,
                     'data': patient_data,
                 }
                 entity_packages.setdefault(

@@ -6,7 +6,7 @@
 @date: 13.10.2016
 
 """
-from sirius.blueprints.api.remote_service.lib.xform import XForm
+from sirius.lib.xform import XForm
 from sirius.blueprints.api.remote_service.tula.entities import TulaEntityCode
 from sirius.blueprints.api.remote_service.tula.passive.client.schemas import \
     ClientSchema

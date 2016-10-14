@@ -47,6 +47,7 @@ class Header(object):
         'remote_main_id': None,
         'remote_main_param_name': None,
         'remote_method': None,
+        'remote_operation_code': None,  # для передачи из пакета в сущность
     }
 
     # todo: по реализации Reformer станет ясно что еще сюда добавить

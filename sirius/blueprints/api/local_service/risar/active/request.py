@@ -9,12 +9,11 @@
 from .connect import make_api_request, make_login
 
 
-def request_by_url(method, url, data):
-    from sirius.app import app
-    with app.app_context():
-        with make_login() as session:
-            result = make_api_request(method, url, session, data)
-    return result
+def request_by_url(method, url, data, parser):
+    with make_login() as session:
+        response = make_api_request(method, url, session, data)
+        parser.check(response)
+    return response
 
 
 def create(data):

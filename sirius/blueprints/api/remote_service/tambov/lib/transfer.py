@@ -25,7 +25,7 @@ class TambovTransfer(Transfer):
         client = self.get_client(wsdl)
         req_method = getattr(client, method)
         kw = {}
-        if meta['dst_id_url_param_name']:
+        if 'dst_id_url_param_name' in meta:
             kw[meta['dst_id_url_param_name']] = meta['dst_id']
         req_result = req_method(**kw)
         res = self.answer.process(req_result)

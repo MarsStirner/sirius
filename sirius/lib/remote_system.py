@@ -36,11 +36,15 @@ class RemoteSystem(object):
     def is_active(self, rmt_sys_code):
         self.initialise()
         # todo:
+        if rmt_sys_code == RemoteSystemCode.TULA:
+            return True
         return False
 
     def is_passive(self, rmt_sys_code):
         self.initialise()
         # todo:
+        if rmt_sys_code == RemoteSystemCode.TAMBOV:
+            return True
         return False
 
     def get_event_system_code(self):

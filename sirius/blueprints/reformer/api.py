@@ -7,6 +7,7 @@
 
 """
 from abc import ABCMeta, abstractmethod
+from sirius.lib.xform import simplify
 from sirius.models.protocol import ProtocolCode
 from .models.matching import MatchingId
 from .models.method import ApiMethod
@@ -59,15 +60,15 @@ class Reformer(object):
         # реализация в регионе
         return {}
 
-    def conformity_local(self, record, answer, answer_data):
+    def conformity_local(self, record, parser, answer):
         # сопоставление ID в БД при добавлении данных
         # в record пишем полученное ID для дочерних запросов
 
         rec_meta = record['meta']
         if rec_meta['dst_operation_code'] == OperationCode.ADD:
-            answer_res = answer.process(
+            answer_res = parser.get_params(
                 rec_meta['dst_entity_code'],
-                answer_data,
+                answer,
             )
             rec_meta['dst_id'] = answer_res['main_id']
             rec_meta['dst_id_url_param_name'] = answer_res['param_name']
@@ -154,30 +155,23 @@ class Reformer(object):
 
                 set_current_id_func = record['meta'].get('set_current_id_func')
                 if set_current_id_func:
-                    set_current_id_func(record, meta)
+                    set_current_id_func(record)
 
                 yield record
 
     def set_service(self, record, is_to_local):
         meta = record['meta']
-        if is_to_local:
-            method = ApiMethod.get_method(
-                meta['src_entity_code'],
-                meta['src_operation_code'],
-                SystemCode.LOCAL,
-            )
-        else:
-            method = ApiMethod.get_method(
-                meta['dst_entity_code'],
-                meta['dst_operation_code'],
-                self.remote_sys_code,
-            )
+        method = ApiMethod.get_method(
+            meta['dst_entity_code'],
+            meta['dst_operation_code'],
+            SystemCode.LOCAL if is_to_local else self.remote_sys_code,
+        )
         meta['dst_method'] = method['method']
         meta['dst_url'] = method['template_url'].replace(
             'api_version'.join(('<int:', '>')),
             '0'
         )
-        if meta['src_operation_code'] != OperationCode.ADD:
+        if meta['dst_operation_code'] != OperationCode.ADD:
             meta['dst_url'] = meta['dst_url'].replace(
                 meta['dst_id_url_param_name'].join(('<int:', '>')),
                 str(meta['dst_id'])
@@ -205,7 +199,7 @@ class Reformer(object):
                 trans_res = self.transfer.execute(record)
                 self.conformity_remote(record, trans_res)
 
-    def send_local_data(self, entities, request_by_url, answer):
+    def send_local_data(self, entities, request_by_url, parser):
         soo = sorted(entities['operation_order'].items(), key=lambda x: x[0])
         for order, entity_codes in soo:
             for entity_code in entity_codes:
@@ -215,13 +209,13 @@ class Reformer(object):
                     set_parent_id_func = rec_meta.get('set_parent_id_func')
                     if set_parent_id_func:
                         set_parent_id_func(record)
-                    if rec_meta['skip_resend']:
+                    if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
                         continue
                     url = rec_meta['dst_url']
                     method = rec_meta['dst_method']
-                    body = record.get('body')
-                    answer_data = request_by_url(method, url, body)
-                    self.conformity_local(record, answer, answer_data)
+                    body = simplify(record.get('body'))
+                    answer = request_by_url(method, url, body, parser)
+                    self.conformity_local(record, parser, answer)
 
     def create_local_msgs(self, data, method):
         if method.upper() == 'POST':
@@ -319,6 +313,7 @@ class Reformer(object):
                 )
 
     def create_remote_messages(self, entity_packages):
+        msgs = []
         meta, packages = entity_packages
         dst_entity_code = meta['dst_entity_code']
         for item in packages[dst_entity_code]:
@@ -328,13 +323,17 @@ class Reformer(object):
             msg.to_local_service()
             msg.set_send_data_type()
             header_meta = msg.get_header().meta
+            # todo: это должен был определить ранее Difference
+            meta['src_operation_code'] = OperationCode.CHANGE
             header_meta.update({
                 'remote_system_code': self.remote_sys_code,
-                # 'remote_operation_code': OperationCode.CHANGE,
+                'remote_operation_code': meta['src_operation_code'],
                 'remote_entity_code': dst_entity_code,
-                'remote_main_id': meta['dst_id'],
+                'remote_main_id': item['main_id'],
                 'remote_method': meta['dst_method'],
             })
+            msgs.append(msg)
+        return msgs
 
 
 class Builder(object):

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """The app module, containing the app factory function."""
 import os
+from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.usagicompat import BIUsagiClient
 from flask import Flask, render_template
 
@@ -26,6 +27,8 @@ def init_sirius_app(new_app=False):
     usagi = BIUsagiClient(ini_app, ini_app.wsgi_app, conf_url, 'sirius')
     ini_app.wsgi_app = usagi.app
     usagi()
+
+    # ini_app.json_encoder = WebMisJsonEncoder
 
     register_extensions(ini_app)
     register_blueprints(ini_app)
@@ -54,9 +57,11 @@ def register_extensions(app):
 
 def register_blueprints(app):
     """Register Flask blueprints."""
-    from sirius.blueprints import public, user, api
+    from sirius.blueprints import public, user, reformer, scheduler, api
     app.register_blueprint(public.views.blueprint)
     app.register_blueprint(user.views.blueprint)
+    app.register_blueprint(scheduler.app.module)
+    app.register_blueprint(reformer.app.module)
     app.register_blueprint(api.local_service.risar.app.module)
     app.register_blueprint(api.remote_service.tula.app.module)
     app.register_blueprint(api.remote_service.tambov.app.module)
