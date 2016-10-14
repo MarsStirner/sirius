@@ -112,6 +112,7 @@ subsystems:
       CACHE_TYPE: memcached  # Can be "memcached", "redis", etc.
 #      CACHE_TYPE: filesystem
 #      CACHE_DIR: /tmp/cache/sirius
+      WTF_CSRF_ENABLED: False
       BEAKER_SESSION:
         session.type: file
         session.data_dir: /tmp/session/data
@@ -240,10 +241,14 @@ subsystems:
   celery_queue:
     risar_main: |
       {{ deployment.prefix }}_risar_main_queue
-    risar_error_1: sir_test_risar_error_1_queue
-    risar_error_2: sir_test_risar_error_2_queue
-    mis_tula: sir_test_mis_tula_queue
-    mis_tambov: sir_test_mis_tambov_queue
+    risar_error_1: |
+      {{ deployment.prefix }}_risar_error_1_queue
+    risar_error_2: |
+      {{ deployment.prefix }}_risar_error_2_queue
+    mis_tula: |
+      {{ deployment.prefix }}_mis_tula_queue
+    mis_tambov: |
+      {{ deployment.prefix }}_mis_tambov_queue
 
   risar_main_worker:
     configens:
@@ -256,26 +261,26 @@ subsystems:
       supervisor:
         template: "{{ configens.supervisor.templates.worker | recurse }}"
         queue: |
-          {{ subsystems.celery_queue.risar_error_1 }}
+          {{ subsystems.celery_queue.risar_error_1 | recurse }}
   risar_error_2_worker:
     configens:
       supervisor:
         template: "{{ configens.supervisor.templates.worker | recurse }}"
         queue: |
-          {{ subsystems.celery_queue.risar_error_2 }}
+          {{ subsystems.celery_queue.risar_error_2 | recurse }}
 
   mis_tula_worker:
     configens:
       supervisor:
         template: "{{ configens.supervisor.templates.worker | recurse }}"
         queue: |
-          {{ subsystems.celery_queue.mis_tula }}
+          {{ subsystems.celery_queue.mis_tula | recurse }}
   mis_tambov_worker:
     configens:
       supervisor:
         template: "{{ configens.supervisor.templates.worker | recurse }}"
         queue: |
-          {{ subsystems.celery_queue.mis_tambov }}
+          {{ subsystems.celery_queue.mis_tambov | recurse }}
 
   celerybeat:
     configens:
