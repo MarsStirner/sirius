@@ -7,11 +7,11 @@ deployment:
 
 
 common:
-  sirius_database: &SQLALCHEMY postgresql://bars_user:bars_password@localhost/sir_test  # {{ deployment.prefix }}
-  celery_broker: &CELERY_BROKER_URL amqp://bars:sirius@localhost:5672/sir_test  # {{ deployment.prefix }}  # transport://userid:password@hostname:port/virtual_host
+  sirius_database: &SQLALCHEMY postgresql://bars_user:bars_password@localhost:5433/sir_test  # {{ deployment.prefix }}
+  celery_broker: &CELERY_BROKER_URL amqp://bars:bars_password@localhost:5672/sir_test  # {{ deployment.prefix }}  # transport://userid:password@hostname:port/virtual_host
   # celery_result_backend: &CELERY_RESULT_BACKEND redis://localhost:6379/1
   # sql database for celery application task (CAT) info and results
-  cat_database: &SQLALCHEMY_CAT postgresql://bars_user:bars_password@localhost/sir_test  # {{ deployment.prefix }}
+  cat_database: &SQLALCHEMY_CAT postgresql://bars_user:bars_password@localhost:5433/sir_test  # {{ deployment.prefix }}
 
   uwsgi_apps: &UWSGI_APPS
     SIRIUS_URL: &SIRIUS_URL http://127.0.0.1:8600/
@@ -48,11 +48,12 @@ common:
     # CELERYD_LOG_FILE = {{ deployment.base_dir }}/logs/celery.log
     # CELERYD_LOG_FORMAT = [%(asctime)s] %(message)s
     CELERY_BROKER_URL: *CELERY_BROKER_URL
+    CELERY_TASK_SERIALIZER: pickle  # json
     # CELERY_RESULT_BACKEND: *CELERY_RESULT_BACKEND
     # CELERY_RESULT_SERIALIZER: json
+    CELERY_ACCEPT_CONTENT: ['pickle', 'json']
     CELERY_ENABLE_UTC: true
     CELERY_TIMEZONE: Europe/Moscow
-    CELERY_ACCEPT_CONTENT: ['json']
     # CELERYD_CONCURRENCY: 2
     # CELERY_TASK_RESULT_EXPIRES: 60 * 60 * 24 * 3  # in seconds, default 1 day
     CELERY_ACKS_LATE: true

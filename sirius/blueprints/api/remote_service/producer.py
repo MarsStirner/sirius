@@ -7,6 +7,7 @@
 
 """
 import os
+from sirius.app import app
 from sirius.lib.message import Message
 from sirius.lib.celery_tasks import local_task, remote_task
 from sirius.celery_queue import remote_queue_name_list, main_queue_name
@@ -16,7 +17,7 @@ class RemoteProducer(object):
     def send(self, msg, async=True):
         assert isinstance(msg, Message)
         # todo: на время тестирования без обработки исключений
-        if os.environ.get('TESTING') == '1':
+        if os.environ.get('TESTING') == '1' and not app.config['SERVER']:
             async = False
         res = None
         if msg.is_to_local:

@@ -23,4 +23,4 @@ class System(Model):
     __tablename__ = 'system'
 
     code = Column(db.String(80), unique=False, nullable=False)
-    url = Column(db.String(80), unique=False, nullable=False)
+    url = Column(db.String(80), unique=False, nullable=False)  # rename to host

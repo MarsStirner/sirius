@@ -33,25 +33,28 @@ class Header(object):
     is_immediate_answer = False
 
     # информация об исходном запросе
-    meta = {
-        'local_entity_code': None,  # не обязательное
-        'local_service_code': None,  # можем вычислить сущность
-        'local_main_id': None,
-        'local_main_param_name': None,
-        'local_method': None,
-        'local_operation_code': None,  # для запроса планировщиком списка
+    meta = None
 
-        'remote_system_code': None,
-        'remote_entity_code': None,
-        'remote_service_code': None,  # для справки в логах
-        'remote_main_id': None,
-        'remote_main_param_name': None,
-        'remote_method': None,
-        'remote_operation_code': None,  # для передачи из пакета в сущность
-    }
+    def __init__(self):
+        self.meta = {
+            'local_entity_code': None,  # не обязательное
+            'local_service_code': None,  # можем вычислить сущность
+            'local_main_id': None,
+            'local_main_param_name': None,
+            'local_method': None,
+            'local_operation_code': None,  # для запроса планировщиком списка
 
-    # todo: по реализации Reformer станет ясно что еще сюда добавить
-    # (ID/params, entity_code)
+            'remote_system_code': None,
+            'remote_entity_code': None,
+            'remote_service_code': None,  # для справки в логах
+            'remote_main_id': None,
+            'remote_main_param_name': None,
+            'remote_method': None,
+            'remote_operation_code': None,  # для передачи из пакета в сущность
+        }
+
+        # todo: по реализации Reformer станет ясно что еще сюда добавить
+        # (ID/params, entity_code)
 
 
 class Message(object):

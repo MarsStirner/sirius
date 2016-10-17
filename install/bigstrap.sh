@@ -40,7 +40,7 @@ pip install pyyaml jinja2
 echo " -> sirius branch: ${SIRIUS_BRANCH}"
 git clone https://stash.bars-open.ru/scm/medvtr/sirius.git -b ${SIRIUS_BRANCH} code/sirius
 
-# 4. Установить зависимости
+# 4. Установить зависимости (prod или test, или dev)
 pip install -r code/sirius/requirements/prod.txt
 pip install -r code/sirius/requirements/usagi.txt
 
