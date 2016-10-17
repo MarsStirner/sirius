@@ -4,9 +4,10 @@
 
 # from nemesis.lib.frontend import frontend_config
 from sirius.app import init_sirius_app
+from sirius.usagicompat import BIUsagiClient
 from version import version as app_version
 
-wsgi_app = init_sirius_app()
+wsgi_app = init_sirius_app(BIUsagiClient)
 
 
 @wsgi_app.context_processor

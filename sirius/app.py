@@ -13,18 +13,19 @@ app = Flask(__name__)
 
 
 def create_sirius_app():
-    return init_sirius_app(True)
+    return init_sirius_app(BIUsagiClient, True)
 
 
-def init_sirius_app(new_app=False):
+def init_sirius_app(usagi_client, new_app=False):
     """An application factory, as explained here: http://flask.pocoo.org/docs/patterns/appfactories/.
 
+    :param usagi_client: configuration client.
     :param new_app: The configuration object to use.
     """
     ini_app = Flask(__name__) if new_app else app
 
     conf_url = os.getenv('TSUKINO_USAGI_URL', 'http://127.0.0.1:6602')
-    usagi = BIUsagiClient(ini_app, ini_app.wsgi_app, conf_url, 'sirius')
+    usagi = usagi_client(ini_app, ini_app.wsgi_app, conf_url, 'sirius')
     ini_app.wsgi_app = usagi.app
     usagi()
 
