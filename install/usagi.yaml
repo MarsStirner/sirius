@@ -1,10 +1,17 @@
 configens: !include code/sirius/install/configens.yaml
+
+
+deployment:
+  base_dir: .
+  prefix: sir_test
+
+
 common:
-  sirius_database: &SQLALCHEMY postgresql://bars_user:bars_password@localhost/sirius
-  celery_broker: &CELERY_BROKER_URL amqp://bars:sirius@localhost:5672/sirius  # transport://userid:password@hostname:port/virtual_host
+  sirius_database: &SQLALCHEMY postgresql://bars_user:bars_password@localhost/sir_test  # {{ deployment.prefix }}
+  celery_broker: &CELERY_BROKER_URL amqp://bars:sirius@localhost:5672/sir_test  # {{ deployment.prefix }}  # transport://userid:password@hostname:port/virtual_host
   # celery_result_backend: &CELERY_RESULT_BACKEND redis://localhost:6379/1
   # sql database for celery application task (CAT) info and results
-  cat_database: &SQLALCHEMY_CAT postgresql://bars_user:bars_password@localhost/sirius
+  cat_database: &SQLALCHEMY_CAT postgresql://bars_user:bars_password@localhost/sir_test  # {{ deployment.prefix }}
 
   uwsgi_apps: &UWSGI_APPS
     SIRIUS_URL: &SIRIUS_URL http://127.0.0.1:8600/
@@ -60,11 +67,6 @@ common:
     FILE_STORAGE_PATH: &FILE_STORAGE_PATH '/tmp'
 
 
-deployment:
-  base_dir: .
-  prefix: sir_test
-
-
 subsystems:
 
   # Пользовательские подсистемы
@@ -111,8 +113,7 @@ subsystems:
       DEBUG_TB_ENABLED: False  # Disable Debug toolbar
       DEBUG_TB_INTERCEPT_REDIRECTS: False
       CACHE_TYPE: filesystem  # Can be "memcached", "redis", etc.
-      CACHE_DIR: |
-        /tmp/cache/{{ deployment.prefix }}
+      CACHE_DIR: /tmp/cache/sir_test  # {{ deployment.prefix }}
       WTF_CSRF_ENABLED: False
       BEAKER_SESSION:
         session.type: file
