@@ -78,7 +78,6 @@ class Schedule(Model):
                     )
                 ),
             ]),
-            ScheduleExecute.begin_datetime
         ).all()
         return res
 

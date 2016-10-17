@@ -10,6 +10,9 @@ import traceback
 
 import sys
 
+import datetime
+
+from celery.task import periodic_task
 from sirius.extensions import celery
 from sirius.blueprints.scheduler.api import Scheduler
 
@@ -34,6 +37,7 @@ def remote_task(msg, rmt_sys_code):
     receiver.process(msg, rmt_sys_code)
 
 
+# @periodic_task(run_every=datetime.timedelta(minutes=5), queue='sir_test_celerybeat_queue')
 @celery.task
 def scheduler_task():
     scheduler = Scheduler()

@@ -24,6 +24,7 @@ def get_celery_queues(conf):
     # supervisor = safe_traverse(conf, 'common', 'celery_worker', 'configens', 'supervisor')
     # prefix = safe_traverse(conf, 'deployment', 'prefix')
     res = [
+        # Queue('sir_test_celerybeat_queue', exchange=Exchange('sir_test_celerybeat_queue')),
         Queue(main_queue_name, exchange=Exchange(main_queue_name)),
         Queue(error_1_queue_name, exchange=Exchange(error_1_queue_name)),
         Queue(error_2_queue_name, exchange=Exchange(error_2_queue_name)),
