@@ -12,8 +12,8 @@ def create_client(testapp, session, client_id, data):
 
 def edit_client(testapp, session, client_id, data):
     url = u'/tula/api/integration/0/client/%s' % client_id
-    result = make_test_api_request(testapp, 'put', url, session, data)
-    # result = make_api_request('put', url, session, data)
+    # result = make_test_api_request(testapp, 'put', url, session, data)
+    result = make_api_request('put', url, session, data)
     return result
 
 

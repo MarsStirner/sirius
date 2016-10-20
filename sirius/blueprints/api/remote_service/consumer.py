@@ -72,9 +72,9 @@ class RemoteConsumer(object):
         return res
 
     def send_diff_data(self, entity_packages, reformer):
-        # data_store = Difference()
-        # data_store.check_diffs(entity_packages)
-        # data_store.save_all_changes()
-        msgs = reformer.create_remote_messages(entity_packages)
+        diff = Difference()
+        diff_entity_packages = diff.mark_diffs(entity_packages)
+        diff.save_all_changes()
+        msgs = reformer.create_remote_messages(diff_entity_packages)
         self.producer_send_msgs(msgs)
-        # data_store.commit_all_changes()
+        diff.commit_all_changes()

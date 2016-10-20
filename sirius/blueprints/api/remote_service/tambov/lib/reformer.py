@@ -65,36 +65,40 @@ class TambovReformer(Reformer):
         Сбор сущностей в пакеты дозапросами.
         root_parent проставляется только для узла, у которого есть childs, но
         сам этот узел не корневой.
-        is_changed - признак изменения пакета сущностей. ставится дефолт True
+        is_changed - признак изменения пакета сущностей. ставится дефолт False
 
         entity_packages = {
-            TambovEntityCode.PATIENT: [
-                {  # -> patient_node
-                    'is_changed': True,
-                    'main_id': patient_uid,
-                    'data': {...},
-                    'childs': {
-                        TambovEntityCode.IND_ADDRESS: [
-                            {
-                                'root_parent': patient_node,
-                                'data': {...},
-                                'childs': {
-                                    EntityCode...
-                                },
-                            }
-                        ],
-                        TambovEntityCode.IND_DOCUMENTS: [
-                            {
-                                'data': {...},
-                            }
-                        ],
+            'system_code': self.remote_sys_code,
+            'entities': {
+                TambovEntityCode.PATIENT: [
+                    {  # -> patient_node
+                        'is_changed': False,
+                        'main_id': patient_uid,
+                        'data': {...},
+                        'childs': {
+                            TambovEntityCode.IND_ADDRESS: [
+                                {
+                                    'root_parent': patient_node,
+                                    'method': req_data_method,
+                                    'main_id': ind_addr_id,
+                                    'data': {...},
+                                    'childs': {
+                                        EntityCode...
+                                    },
+                                }
+                            ],
+                            TambovEntityCode.IND_DOCUMENTS: [
+                                {
+                                    'data': {...},
+                                }
+                            ],
+                        },
                     },
-                },
-            ]
+                ],
+            },
         }
         """
-        # todo: вынести в ApiMethod метод, url дозапросов и возможно доступ к параметрам,
-        # todo: когда станет ясно как их лучше хранить
+        # todo: вынести в ApiMethod доступ к параметрам, когда станет ясно как их лучше хранить
         # todo: рассмотреть возможность использования MatchingEntity для автосборки пакетов
         # todo: дозапросы будут переделаны в соответствии с новой wsdl
         meta = reformed_req['meta']

@@ -37,21 +37,18 @@ class TestClient:
         assert code == 200
 
     def _test_resend(self, testapp):
-        session = (None, None)
         remote_client_id = 324
         result = create_client(testapp, session, remote_client_id, test_client_data_1)
         code = result['meta']['code']
         assert code == 200
 
     def test_edit(self, testapp):
-        session = (None, None)
         remote_client_id = 324
         result = edit_client(testapp, session, remote_client_id, test_client_data_2)
         code = result['meta']['code']
         assert code == 200
 
     def _test_delete(self, testapp):
-        session = (None, None)
         remote_client_id = 324
         result = delete_client(testapp, session, remote_client_id)
         code = result['meta']['code']

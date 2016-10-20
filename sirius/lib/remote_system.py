@@ -43,7 +43,7 @@ class RemoteSystem(object):
     def is_passive(self, rmt_sys_code):
         self.initialise()
         # todo:
-        if rmt_sys_code == RemoteSystemCode.TAMBOV:
+        if rmt_sys_code != RemoteSystemCode.TULA:
             return True
         return False
 
@@ -51,6 +51,6 @@ class RemoteSystem(object):
         # код пассивной системы, работающей с событиями
         self.initialise()
         # todo:
-        return RemoteSystemCode.TAMBOV
+        return RemoteSystemCode.TULA
 
 remote_system = RemoteSystem()

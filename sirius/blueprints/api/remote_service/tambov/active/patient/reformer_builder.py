@@ -6,12 +6,15 @@
 @date: 23.09.2016
 
 """
+from datetime import date
+
 from hitsl_utils.safe import safe_traverse, safe_int
 from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
 from sirius.blueprints.reformer.api import Builder
+from sirius.blueprints.reformer.models.method import ApiMethod
 from sirius.lib.remote_system import RemoteSystemCode
 from sirius.lib.xform import Undefined
 from sirius.models.operation import OperationCode
@@ -48,8 +51,8 @@ class PatientTambovBuilder(Builder):
         self.set_operation_order(res, RisarEntityCode.CLIENT, 1)
         patient = patient_data['patient']
         gender = safe_int(patient.gender)
-        if gender != 2:
-            main_item['meta']['skip_trash'] = True
+        # if gender != 2:
+        #     main_item['meta']['skip_trash'] = True
         main_item['body'] = {
             'client_id': None or Undefined,  # заполняется в set_current_id_func
             'FIO': {
@@ -75,6 +78,7 @@ class PatientTambovBuilder(Builder):
                     # 'document_issuing_authority': safe_traverse(document_data, 'issueOrganization', 'name'),
                     'document_issuing_authority': document_data.issueOrganization and document_data.issueOrganization.name or Undefined,
                 })
+        # Женя: Берем только один адрес проживания, всё остальное пофиг. Если их несколько - берем первый
         for address_data in patient_data['addresses']:
             local_addr = {
                 'KLADR_locality': None,  # заполняется в entry
@@ -85,7 +89,7 @@ class PatientTambovBuilder(Builder):
                 'building': 'not-implemented' or Undefined,
                 'flat': address_data['apartment'] or Undefined,
             }
-            # todo: в схеме рисар пока не массив, а объект
+            # в схеме рисар пока не массив, а объект
             # main_item['body'].setdefault('residential_address', []).append(local_addr)
             main_item['body']['residential_address'] = local_addr
             local_addr['locality_type'] = 1
@@ -99,7 +103,7 @@ class PatientTambovBuilder(Builder):
                     local_addr['house'] = entry['name']
                 elif entry['level'] == '8':
                     local_addr['flat'] = entry['name']
-            # todo: в схеме рисар пока не массив, а объект
+            # в схеме рисар пока не массив, а объект
             break
 
         # образец работы с дозапросами
@@ -202,84 +206,149 @@ class PatientTambovBuilder(Builder):
     ##  build packages patient
 
     def build_remote_patient_entity_packages(self, reformed_req):
-        entity_packages = {}
-        meta = reformed_req['meta']
-        dst_url = meta['dst_url']
-        req = reformed_req
-        patients_list = self.transfer__send_request(req)
-        if meta['dst_operation_code'] == OperationCode.READ_ALL:
-            for patient_item in patients_list:
-                patient_uid = patient_item.uid
-                if not patient_uid:
-                    continue
-                req = {
-                    'meta': {
-                        'dst_method': 'getPatient',
-                        'dst_url': dst_url,
-                        'dst_id_url_param_name': 'patientUid',
-                        'dst_id': patient_uid,
-                    },
-                }
-                patient_data = self.transfer__send_request(req)
-                root_parent = patient_node = {
-                    'is_changed': True,
-                    'main_id': patient_data.patient.id,
-                    'data': patient_data,
-                }
-                entity_packages.setdefault(
-                    TambovEntityCode.PATIENT, []
-                ).append(patient_node)
+        entities = {}
+        entity_packages = {
+            'system_code': self.remote_sys_code,
+            'entities': entities,
+        }
+        req_meta = reformed_req['meta']
+        if req_meta['dst_operation_code'] == OperationCode.READ_ALL:
+            api_method = ApiMethod.get_method(
+                TambovEntityCode.PATIENT,
+                OperationCode.READ_ONE,
+                self.remote_sys_code,
+            )
+            all_patients = self.get_all_patients(reformed_req)
+            changed_patients = self.get_changed_patients(reformed_req)
+            self.set_patient_cards(changed_patients, entities, api_method)
+            self.inject_all_patients(entities, all_patients, api_method)
+        return entity_packages
 
-                # образец работы с дозапросами
-                # individuals_url = 'http://develop.r-mis.ru/individuals-ws/individuals?wsdl'
-                # req = {
-                #     'meta': {
-                #         'dst_method': 'getIndividualAddresses',
-                #         'dst_url': individuals_url,
-                #         'dst_id_url_param_name': 'uid',
-                #         'dst_id': patient_uid,
-                #     },
-                # }
-                # patient_childs = patient_node.setdefault('childs', {})
-                # if patient_node != root_parent:
-                #     patient_node['root_parent'] = root_parent
-                # IndividualAddresses_list = self.transfer__send_request(req)
-                # for ind_addr_item in IndividualAddresses_list:
-                #     ind_address_node = {'data': ind_addr_item}
-                #     patient_childs.setdefault(
-                #         TambovEntityCode.IND_ADDRESS, []
-                #     ).append(ind_address_node)
-                #     # req = {
-                #     #     'meta': {
-                #     #         'dst_method': 'getAddressAllInfo',
-                #     #         'dst_url': fl_data_url,
-                #     #         'dst_id_url_param_name': 'uid',
-                #     #         'dst_id': ind_addr_item,
-                #     #     },
-                #     # }
-                #     # AddressAllInfo_data = self.transfer__send_request(req)
-                #
-                # req = {
-                #     'meta': {
-                #         'dst_method': 'getIndividualDocuments',
-                #         'dst_url': individuals_url,
-                #         'dst_id_url_param_name': 'uid',
-                #         'dst_id': patient_uid,
-                #     },
-                # }
-                # IndividualDocuments_list = self.transfer__send_request(req)
-                # for ind_doc_item in IndividualDocuments_list:
-                #     ind_documents_data = {'data': ind_doc_item}
-                #     patient_childs.setdefault(
-                #         TambovEntityCode.IND_DOCUMENTS, []
-                #     ).append(ind_documents_data)
-                #     # req = {
-                #     #     'meta': {
-                #     #         'dst_method': 'getDocument',
-                #     #         'dst_url': fl_data_url,
-                #     #         'dst_id_url_param_name': 'uid',
-                #     #         'dst_id': ind_doc_item,
-                #     #     },
-                #     # }
-                #     # Document_data = self.transfer__send_request(req)
-        return meta, entity_packages
+    def get_all_patients(self, reformed_req):
+        req = reformed_req.copy()
+        patients_uids = set()
+        res = None
+        page = 1
+        while res or page == 1:
+            req['meta'].update({
+                'dst_id_url_param_name': ['page', 'gender'],
+                'dst_id': [page, 2],
+            })
+            res = self.transfer__send_request(req)
+            patients_uids.update(res)
+            page += 1
+            # for test just 2 pages
+            if page > 2:
+                break
+        return patients_uids
+
+    def get_changed_patients(self, reformed_req):
+        req = reformed_req.copy()
+        patient_uids = []
+        res = None
+        page = 1
+        modified_since = date(2016, 9, 1)
+        while res or page == 1:
+            req['meta'].update({
+                'dst_id_url_param_name': ['page', 'gender', 'modifiedSince'],
+                'dst_id': [page, 2, modified_since],
+            })
+            res = self.transfer__send_request(req)
+            patient_uids.extend(res)
+            page += 1
+            # for test just 2 pages
+            if page > 2:
+                break
+        return patient_uids
+
+    def inject_all_patients(self, entities, all_patients, api_method):
+        # Добавляемые uid нужны будут для определения удаленных пациентов
+        nodes = entities[TambovEntityCode.PATIENT]
+        for patient_node in nodes:
+            if patient_node['main_id'] in all_patients:
+                all_patients.remove(patient_node['main_id'])
+        for pat_uid in all_patients:
+            patient_node = {
+                'is_changed': False,
+                'method': api_method['method'],
+                'main_id': pat_uid,
+                'data': None,
+            }
+            nodes.append(patient_node)
+
+    def set_patient_cards(self, changed_patients, entities, api_method):
+        for patient_uid in changed_patients:
+            # отброс мусора с тестовой БД
+            if not patient_uid:
+                continue
+            req = {
+                'meta': {
+                    'dst_method': api_method['method'],
+                    'dst_url': api_method['template_url'],
+                    'dst_id_url_param_name': 'patientUid',
+                    'dst_id': patient_uid,
+                },
+            }
+            patient_data = self.transfer__send_request(req)
+            root_parent = patient_node = {
+                'is_changed': False,
+                'method': req['meta']['dst_method'],
+                'main_id': patient_uid,
+                'data': patient_data,
+            }
+            entities.setdefault(
+                TambovEntityCode.PATIENT, []
+            ).append(patient_node)
+
+            # образец работы с дозапросами
+            # individuals_url = 'http://develop.r-mis.ru/individuals-ws/individuals?wsdl'
+            # req = {
+            #     'meta': {
+            #         'dst_method': 'getIndividualAddresses',
+            #         'dst_url': individuals_url,
+            #         'dst_id_url_param_name': 'uid',
+            #         'dst_id': patient_uid,
+            #     },
+            # }
+            # patient_childs = patient_node.setdefault('childs', {})
+            # if patient_node != root_parent:
+            #     patient_node['root_parent'] = root_parent
+            # IndividualAddresses_list = self.transfer__send_request(req)
+            # for ind_addr_item in IndividualAddresses_list:
+            #     ind_address_node = {'data': ind_addr_item, 'main_id': ind_addr_item.id}
+            #     patient_childs.setdefault(
+            #         TambovEntityCode.IND_ADDRESS, []
+            #     ).append(ind_address_node)
+            #     # req = {
+            #     #     'meta': {
+            #     #         'dst_method': 'getAddressAllInfo',
+            #     #         'dst_url': fl_data_url,
+            #     #         'dst_id_url_param_name': 'uid',
+            #     #         'dst_id': ind_addr_item,
+            #     #     },
+            #     # }
+            #     # AddressAllInfo_data = self.transfer__send_request(req)
+            #
+            # req = {
+            #     'meta': {
+            #         'dst_method': 'getIndividualDocuments',
+            #         'dst_url': individuals_url,
+            #         'dst_id_url_param_name': 'uid',
+            #         'dst_id': patient_uid,
+            #     },
+            # }
+            # IndividualDocuments_list = self.transfer__send_request(req)
+            # for ind_doc_item in IndividualDocuments_list:
+            #     ind_documents_data = {'data': ind_doc_item, 'main_id': ind_doc_item.id}
+            #     patient_childs.setdefault(
+            #         TambovEntityCode.IND_DOCUMENTS, []
+            #     ).append(ind_documents_data)
+            #     # req = {
+            #     #     'meta': {
+            #     #         'dst_method': 'getDocument',
+            #     #         'dst_url': fl_data_url,
+            #     #         'dst_id_url_param_name': 'uid',
+            #     #         'dst_id': ind_doc_item,
+            #     #     },
+            #     # }
+            #     # Document_data = self.transfer__send_request(req)

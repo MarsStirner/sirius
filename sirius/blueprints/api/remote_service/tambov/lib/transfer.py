@@ -26,7 +26,10 @@ class TambovTransfer(Transfer):
         req_method = getattr(client, method)
         kw = {}
         if 'dst_id_url_param_name' in meta:
-            kw[meta['dst_id_url_param_name']] = meta['dst_id']
+            if isinstance(meta['dst_id_url_param_name'], list):
+                kw = dict(zip(meta['dst_id_url_param_name'], meta['dst_id']))
+            else:
+                kw[meta['dst_id_url_param_name']] = meta['dst_id']
         req_result = req_method(**kw)
         res = self.answer.process(req_result)
         return res

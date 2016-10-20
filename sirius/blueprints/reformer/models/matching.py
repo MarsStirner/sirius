@@ -27,7 +27,7 @@ class MatchingId(Model):
     remote_entity_id = reference_col('entity', unique=False, nullable=False)
     remote_entity = relationship('Entity', backref='set_remote_matching_id',
                                  foreign_keys='MatchingId.remote_entity_id')
-    remote_id = Column(db.Integer, unique=False, nullable=False, index=True)
+    remote_id = Column(db.String(80), unique=False, nullable=False, index=True)
     remote_param_name = Column(db.String(80), unique=False, nullable=True)
 
     __table_args__ = (
@@ -111,23 +111,13 @@ class MatchingId(Model):
         remote_id=None,
         remote_param_name=None,
     ):
-        local_entity = Entity.query.join(
-            System, System.id == Entity.system_id
-        ).filter(
-            Entity.code == local_entity_code,
-            System.code == SystemCode.LOCAL,
-        ).first()
-        remote_entity = Entity.query.join(
-            System, System.id == Entity.system_id
-        ).filter(
-            Entity.code == remote_entity_code,
-            System.code == remote_sys_code,
-        ).first()
+        local_entity_id = Entity.get_id(SystemCode.LOCAL, local_entity_code)
+        remote_entity_id = Entity.get_id(remote_sys_code, remote_entity_code)
         cls.create(
-            local_entity_id=local_entity.id,
+            local_entity_id=local_entity_id,
             local_id=local_id,
             local_param_name=local_param_name,
-            remote_entity_id=remote_entity.id,
+            remote_entity_id=remote_entity_id,
             remote_id=remote_id,
             remote_param_name=remote_param_name,
         )

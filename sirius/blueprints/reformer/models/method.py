@@ -51,7 +51,7 @@ class ApiMethod(Model):
         ).first()
         if not method:
             raise RuntimeError('Service not registered in %s' % cls.__name__)
-        sys_url = method.entity.system.url.rstrip('/')
+        sys_url = method.entity.system.host.rstrip('/')
         res = {
             'protocol': method.protocol.code,
             'method': method.method,

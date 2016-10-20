@@ -314,25 +314,22 @@ class Reformer(object):
 
     def create_remote_messages(self, entity_packages):
         msgs = []
-        meta, packages = entity_packages
-        dst_entity_code = meta['dst_entity_code']
-        for item in packages[dst_entity_code]:
-            if not item['is_changed']:
-                continue
-            msg = Message(item)
-            msg.to_local_service()
-            msg.set_send_data_type()
-            header_meta = msg.get_header().meta
-            # todo: это должен был определить ранее Difference
-            meta['src_operation_code'] = OperationCode.CHANGE
-            header_meta.update({
-                'remote_system_code': self.remote_sys_code,
-                'remote_operation_code': meta['src_operation_code'],
-                'remote_entity_code': dst_entity_code,
-                'remote_main_id': item['main_id'],
-                'remote_method': meta['dst_method'],
-            })
-            msgs.append(msg)
+        for entity_code, items in entity_packages['entities'].iteritems():
+            for item in items:
+                if not item['is_changed']:
+                    continue
+                msg = Message(item)
+                msg.to_local_service()
+                msg.set_send_data_type()
+                header_meta = msg.get_header().meta
+                header_meta.update({
+                    'remote_system_code': self.remote_sys_code,
+                    'remote_operation_code': item['operation_code'],
+                    'remote_entity_code': entity_code,
+                    'remote_main_id': item['main_id'],
+                    'remote_method': item['method'],
+                })
+                msgs.append(msg)
         return msgs
 
 
@@ -360,8 +357,4 @@ class Builder(object):
 
     def transfer__send_request(self, request):
         trans_res = self.transfer.execute(request)
-        # if request['dst_protocol_code'] == Protocol.REST:
-        #     trans_res = self.transfer.execute(request)
-        # elif request['dst_protocol_code'] == Protocol.SOAP:
-        #     trans_res = self.transfer.execute(request)
         return trans_res

@@ -14,6 +14,10 @@ class Transfer(object):
     answer = None
 
     def execute(self, reformed_data):
+        # if request['dst_protocol_code'] == Protocol.REST:
+        #     trans_res = self.transfer.execute(request)
+        # elif request['dst_protocol_code'] == Protocol.SOAP:
+        #     trans_res = self.transfer.execute(request)
         from sirius.app import app
         with app.app_context():
             with self.login() as session:
