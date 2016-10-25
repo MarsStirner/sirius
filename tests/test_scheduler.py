@@ -8,12 +8,14 @@
 """
 from sirius.app import app
 from sirius.blueprints.api.remote_service.consumer import RemoteConsumer
+from sirius.blueprints.monitor.exception import beat_entry
 from sirius.blueprints.scheduler.api import Scheduler
 from sirius.blueprints.scheduler.models import ScheduleGroup
 
 
 class TestClient:
 
+    @beat_entry
     def test_execute(self):
         with app.app_context():
             sch = Scheduler()

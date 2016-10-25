@@ -10,6 +10,7 @@ from sirius.blueprints.api.remote_service.tambov.lib.reformer import TambovRefor
 from sirius.blueprints.api.remote_service.tambov.lib.transfer import TambovTransfer
 from sirius.blueprints.api.remote_service.tula.lib.reformer import TulaReformer
 from sirius.blueprints.api.remote_service.tula.lib.transfer import TulaTransfer
+from sirius.blueprints.monitor.exception import InternalError
 
 implements = (
     (TambovReformer, TambovTransfer),
@@ -31,7 +32,7 @@ class Implementation(object):
         try:
             reformer_cls, transfer_cls = imp_map[rmt_sys_code]
         except KeyError:
-            raise Exception('Unknown remote code "%s" in implements' % rmt_sys_code)
+            raise InternalError('Unknown remote code "%s" in implements' % rmt_sys_code)
         reformer = reformer_cls()
         reformer.set_transfer(transfer_cls())
         return reformer

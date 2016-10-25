@@ -7,6 +7,9 @@
 
 """
 from abc import ABCMeta, abstractmethod
+
+from sirius.blueprints.monitor.api import IStreamMeta
+from sirius.blueprints.monitor.exception import module_entry, InternalError
 from sirius.lib.xform import simplify
 from sirius.models.protocol import ProtocolCode
 from .models.matching import MatchingId
@@ -18,7 +21,7 @@ from sirius.models.operation import OperationCode
 from sirius.models.system import SystemCode
 
 
-class Reformer(object):
+class Reformer(IStreamMeta):
     __metaclass__ = ABCMeta
 
     orig_msg = None
@@ -29,6 +32,7 @@ class Reformer(object):
     def set_transfer(self, transfer):
         self.transfer = transfer
 
+    @module_entry
     def reform_msg(self, msg):
         addition_data = msg.get_missing_data()
         header_meta = msg.get_header().meta
@@ -50,6 +54,7 @@ class Reformer(object):
         #     res.append(reformed_msg)
         return entities
 
+    @module_entry
     def reform_req(self, msg):
         header_meta = msg.get_header().meta
         request = self.get_remote_request(header_meta)
@@ -60,6 +65,7 @@ class Reformer(object):
         # реализация в регионе
         return {}
 
+    @module_entry
     def conformity_local(self, record, parser, answer):
         # сопоставление ID в БД при добавлении данных
         # в record пишем полученное ID для дочерних запросов
@@ -188,6 +194,7 @@ class Reformer(object):
                 'data': msg.get_data(),
             }
 
+    @module_entry
     def transfer__send_data(self, entities):
         soo = sorted(entities['operation_order'].items(), key=lambda x: x[0])
         for entity_code in soo:
@@ -199,6 +206,7 @@ class Reformer(object):
                 trans_res = self.transfer.execute(record)
                 self.conformity_remote(record, trans_res)
 
+    @module_entry
     def send_local_data(self, entities, request_by_url, parser):
         soo = sorted(entities['operation_order'].items(), key=lambda x: x[0])
         for order, entity_codes in soo:
@@ -225,7 +233,7 @@ class Reformer(object):
         elif method.upper() == 'DELETE':
             res = self.create_local_del_msgs({'deleted': [data]})
         else:
-            raise Exception('Unexpected method')
+            raise InternalError('Unexpected method')
         return res
 
     def create_local_post_msgs(self, diff_data):
@@ -332,6 +340,16 @@ class Reformer(object):
                 msgs.append(msg)
         return msgs
 
+    @classmethod
+    def get_stream_meta(cls, obj):
+        if isinstance(obj, Message):
+            res = {'header': vars(obj.get_header())}
+        elif isinstance(obj, dict):
+            res = {'dict len': len(obj)}
+        else:
+            raise InternalError('Unexpected stream type')
+        return res
+
 
 class Builder(object):
     remote_sys_code = None
@@ -339,7 +357,7 @@ class Builder(object):
     def __init__(self, transfer, remote_sys_code):
         self.transfer = transfer
         if self.remote_sys_code != remote_sys_code:
-            raise Exception('No matched system codes Reformer and Builder')
+            raise InternalError('No matched system codes Reformer and Builder')
 
     def set_operation_order(self, dict_, entity, order):
         dict_['operation_order'].setdefault(order, []).append(entity)
@@ -352,7 +370,7 @@ class Builder(object):
         elif method_code.upper() == 'DELETE':
             res = OperationCode.DELETE
         else:
-            raise Exception('Unexpected method')
+            raise InternalError('Unexpected method')
         return res
 
     def transfer__send_request(self, request):

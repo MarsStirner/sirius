@@ -5,6 +5,7 @@ from sirius.app import app
 
 from contextlib import contextmanager
 
+from sirius.blueprints.monitor.exception import ConnectError, ExternalError
 
 config = app.config
 hippo_url = config.get('HIPPOCRATE_URL', 'http://127.0.0.1:6600/').rstrip('/')
@@ -28,7 +29,7 @@ def get_token(login, password):
     j = result.json()
     if not j['success']:
         print j
-        raise Exception(j['exception'])
+        raise ConnectError(j['exception'])
     return j['token']
 
 
@@ -43,7 +44,7 @@ def release_token(token):
     j = result.json()
     if not j['success']:
         print j
-        raise Exception(j['exception'])
+        raise ExternalError(j['exception'])
 
 
 def get_role(token, role_code=''):
@@ -59,7 +60,7 @@ def get_role(token, role_code=''):
     )
     j = result.json()
     if not result.status_code == 200:
-        raise Exception('Ошибка авторизации')
+        raise ConnectError('Ошибка авторизации')
     return result.cookies[authoriz_token_name]
 
 
@@ -126,7 +127,7 @@ def make_test_api_request(testapp, method, url, session, json_data=None, url_arg
         except Exception, e:
             # raise e
             message = u'Unknown ({0})({1})'.format(unicode(result), unicode(e))
-        raise Exception(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
+        raise ExternalError(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
     res = result.json
     if callable(res):
         res = res()

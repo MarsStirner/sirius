@@ -7,6 +7,7 @@
 
 """
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
+from sirius.blueprints.monitor.exception import InternalError, ExternalError
 
 
 class RequestLocalData(object):
@@ -38,7 +39,7 @@ class LocalAnswerParser(object):
                 'param_name': 'client_id',
             }
         else:
-            raise Exception('Unexpected entity_code')
+            raise InternalError('Unexpected entity_code')
         return res
 
     def get_data(self, response):
@@ -56,4 +57,4 @@ class LocalAnswerParser(object):
                     message = u'{0}: {1}'.format(j['meta']['code'], j['meta']['name'])
             except Exception, e:
                 message = u'Unknown ({0})({1})({2})'.format(unicode(response), unicode(response.text)[:300], unicode(e))
-            raise Exception(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
+            raise ExternalError(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))

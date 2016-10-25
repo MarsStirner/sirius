@@ -36,6 +36,7 @@ def init_sirius_app(usagi_client, new_app=False):
     register_errorhandlers(ini_app)
     register_shellcontext(ini_app)
     register_commands(ini_app)
+    init_logger()
     return ini_app
 
 
@@ -100,3 +101,39 @@ def register_commands(app):
     # app.cli.add_command(commands.lint)
     app.cli.add_command(commands.clean)
     app.cli.add_command(commands.urls)
+
+
+def init_logger():
+    app_version = app.config.get('APP_VERSION', 'Unversioned App')
+    import logging
+    from pysimplelogs2 import SimplelogHandler
+
+    logger = logging.getLogger('simple')
+    if logger.handlers:
+        # на каждый тестовый блок переинициализация
+        # исключаем дубли хэндлеров
+        return
+
+    debug_mode = app.config['DEBUG']
+
+    formatter = logging.Formatter(
+        u'%(asctime)s - %(pathname)s:%(funcName)s [%(levelname)s] %(message)s'
+        if debug_mode else
+        u'%(message)s'
+    )
+
+    handler = SimplelogHandler()
+    url = app.config['SIMPLELOGS_URL']
+    handler.set_url(url)
+    handler.owner = {
+        'name': app.config['PROJECT_NAME'],
+        'version': u'%s' % (app_version,)
+    }
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(formatter)
+
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+    logger.addHandler(logging.StreamHandler())
+
+    logger.debug('SimpleLogs Handler initialized')

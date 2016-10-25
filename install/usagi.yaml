@@ -16,7 +16,7 @@ common:
   uwsgi_apps: &UWSGI_APPS
     SIRIUS_URL: &SIRIUS_URL http://127.0.0.1:8600/
     TSUKINO_USAGI_URL: &TSUKINO_USAGI_URL http://127.0.0.1:8602/
-#    SIMPLELOGS_URL: &SIMPLELOGS_URL http://10.1.2.11:6603/
+    SIMPLELOGS_URL: &SIMPLELOGS_URL http://127.0.0.1:6604/
     HIPPOCRATE_URL: &HIPPOCRATE_URL http://127.0.0.1:6600/
     COLDSTAR_URL: &COLDSTAR_URL http://127.0.0.1:6605/
     CASTIEL_AUTH_TOKEN: &CASTIEL_AUTH_TOKEN CastielAuthToken # authToken
@@ -197,13 +197,27 @@ subsystems:
 #      nginx:
 #        port: 6604
 #        template: "{{ configens.nginx.templates.uwsgi | recurse }}"
-#        ext:
+#        ext: |
+#          location /static/ {
+#            alias {{ deployment.base_dir }}/venv/lib/python2.7/site-packages/simplelogs/admin/static/;
+#          }
 #
 #    app: !inherit
 #      ancestors:
 #        - *UWSGI_APPS
+#      DEBUG: True
+#      PROJECT_NAME: simplelogs
+#      TITLE: Подсистема журналирования
+#      BEAKER_SESSION:
+#        session.type: file
+#        session.data_dir: /tmp/session/data
+#        session.lock_dir: /tmp/session/lock
+#        session.key: simplelogs.session.id
+#      WSF_CSRF_ENABLED: True
+#      SECRET_KEY: "Жил бы цитрус в чаще юга? Да! Но фальшивый экземплярррище."
+#      SQLALCHEMY_DATABASE_URI: *SQLALCHEMY
 #
-#      MONGO_URI: mongodb://localhost/simplelogs
+#      MONGO_URI: mongodb://localhost/simplelogs24
 #      SIMPLELOGS_COLLECTION: simplelogs
 #      SIMPLELOGS_LEVELS:
 #        - critical

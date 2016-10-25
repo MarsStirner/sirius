@@ -247,6 +247,7 @@ class PatientTambovBuilder(Builder):
         patient_uids = []
         res = None
         page = 1
+        # todo: брать из даты начала работы планировщика по сущности
         modified_since = date(2016, 9, 1)
         while res or page == 1:
             req['meta'].update({

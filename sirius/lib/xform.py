@@ -112,7 +112,6 @@ class XForm(object):
             'path': '/' + '/'.join(map(unicode, error.absolute_path)),
         } for error in val.iter_errors(data)]
         if errors:
-            logger.error(u'Ошибка валидации данных', extra={'errors': errors})
             raise ApiException(
                 VALIDATION_ERROR,
                 'Validation error',

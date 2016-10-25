@@ -35,6 +35,9 @@ class ClientTulaBuilder(Builder):
         if src_operation_code != OperationCode.DELETE:
             self.set_operation_order(res, RisarEntityCode.CLIENT, 1)
             main_item['body'] = data
+            if 'document' in main_item['body']:
+                document = main_item['body'].pop('document')
+                main_item['body']['documents'] = [document]
         else:
             self.set_operation_order(res, RisarEntityCode.CLIENT, 2)
 

@@ -9,13 +9,14 @@
 from sirius.blueprints.api.local_service.risar.app import module
 from sirius.blueprints.api.local_service.risar.lib.parser import RequestLocalData
 from sirius.blueprints.api.local_service.producer import LocalProducer
+from sirius.blueprints.monitor.exception import local_api_method
 from sirius.lib.message import Message
 from flask import request
-from hitsl_utils.api import api_method
+from sirius.blueprints.monitor.logformat import hook
 
 
 @module.route('/api/request/local/', methods=["POST"])
-@api_method
+@local_api_method(hook=hook)
 def api_request_local():
     data = request.get_json()
     rld = RequestLocalData(data)
@@ -29,7 +30,7 @@ def api_request_local():
 
 
 @module.route('/api/send/remote/', methods=["POST"])
-@api_method
+@local_api_method(hook=hook)
 def api_send_remote():
     data = request.get_json()
     msg = Message(data)

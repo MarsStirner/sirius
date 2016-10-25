@@ -55,7 +55,7 @@ class MatchingId(Model):
         ).filter(
             RemoteEntity.code == src_entity_code,
             RemoteSystem.code == remote_sys_code,
-            cls.remote_id == src_id,
+            cls.remote_id == str(src_id),
             LocalEntity.code == dst_entity_code,
             LocalSystem.code == SystemCode.LOCAL,
         ).first()
@@ -146,7 +146,7 @@ class MatchingId(Model):
         ).filter(
             RemoteSystem.code == remote_sys_code,
             RemoteEntity.code == remote_entity_code,
-            cls.remote_id == remote_id,
+            cls.remote_id == str(remote_id),
             LocalSystem.code == SystemCode.LOCAL,
             LocalEntity.code == local_entity_code,
             cls.local_id == local_id,

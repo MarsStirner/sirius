@@ -8,6 +8,7 @@
 """
 import os
 from sirius.blueprints.api.local_service.risar.active.request import request_by_url
+from sirius.blueprints.monitor.exception import InternalError
 from sirius.celery_queue import remote_queue_name_list, main_queue_name
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message
@@ -47,9 +48,9 @@ class LocalProducer(object):
                 rmt_sys_code = msg.get_header().meta['remote_system_code']
                 remote_task(msg, rmt_sys_code)
             else:
-                raise Exception('Unexpected message type')
+                raise InternalError('Unexpected message type')
         else:
-            raise Exception('Message direct missing')
+            raise InternalError('Message direct missing')
         return True
 
     def request_data(self, missing_requests):

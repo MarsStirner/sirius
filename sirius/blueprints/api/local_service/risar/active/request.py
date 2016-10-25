@@ -6,9 +6,11 @@
 @date: 23.09.2016
 
 """
+from sirius.blueprints.monitor.exception import connect_entry
 from .connect import make_api_request, make_login
 
 
+@connect_entry
 def request_by_url(method, url, data, parser):
     with make_login() as session:
         response = make_api_request(method, url, session, data)

@@ -13,6 +13,8 @@ from sirius.app import app
 
 from contextlib import contextmanager
 
+from sirius.blueprints.monitor.exception import ExternalError, ConnectError
+
 config = app.config
 hippo_url = config.get('HIPPOCRATE_URL', 'http://127.0.0.1:6600/').rstrip('/')
 coldstar_url = config.get('COLDSTAR_URL', 'http://127.0.0.1:6605/').rstrip('/')
@@ -34,7 +36,7 @@ def get_token(login, password):
     j = result.json()
     if not j['success']:
         print j
-        raise Exception(j['exception'])
+        raise ConnectError(j['exception'])
     return j['token']
 
 
@@ -49,7 +51,7 @@ def release_token(token):
     j = result.json()
     if not j['success']:
         print j
-        raise Exception(j['exception'])
+        raise ExternalError(j['exception'])
 
 
 def get_role(token, role_code=''):
@@ -62,7 +64,7 @@ def get_role(token, role_code=''):
     )
     j = result.json()
     if not result.status_code == 200:
-        raise Exception('Ошибка авторизации')
+        raise ConnectError('Ошибка авторизации')
     return result.cookies[authoriz_token_name]
 
 

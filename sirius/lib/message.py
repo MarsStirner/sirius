@@ -54,6 +54,7 @@ class Header(object):
         }
 
         # todo: по реализации Reformer станет ясно что еще сюда добавить
+        # todo: скорее всего объединить local и remote (посмотреть на запросах с возвратами)
         # (ID/params, entity_code)
 
 

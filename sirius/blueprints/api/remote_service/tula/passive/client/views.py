@@ -12,14 +12,15 @@ from flask import request
 from sirius.blueprints.api.remote_service.tula.app import module
 from sirius.blueprints.api.remote_service.tula.passive.client.xform import \
     TulaClientXForm
-from sirius.lib.apiutils import api_method
+from sirius.blueprints.monitor.exception import remote_api_method
+from sirius.blueprints.monitor.logformat import hook
 
 client_id_name = 'client_id'
 
 
 @module.route('/api/integration/<int:api_version>/client/<int:' + client_id_name + '>',
               methods=['PUT', 'POST', 'DELETE'])
-@api_method(authorization=False)
+@remote_api_method(authorization=False, hook=hook)
 def api_client_change(api_version, **kwargs):
     client_id = kwargs.get(client_id_name)
     data = None

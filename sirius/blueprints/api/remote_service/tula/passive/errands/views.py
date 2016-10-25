@@ -7,14 +7,15 @@
 
 """
 from flask import request
-from hitsl_utils.api import api_method
 from sirius.blueprints.api.remote_service.tula.app import module
 
 # todo:
+from sirius.blueprints.monitor.exception import remote_api_method
+from sirius.blueprints.monitor.logformat import hook
 
 
 @module.route('/api/integration/tula/<int:api_version>/card/errands/', methods=['GET'])
-@api_method
+@remote_api_method(authorization=False, hook=hook)
 def api_integr_errands_get(api_version):
     xform = ErrandListXForm(api_version)
     return xform.get_data('errands')

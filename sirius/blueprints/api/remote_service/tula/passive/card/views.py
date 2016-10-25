@@ -6,16 +6,17 @@
 @date: 27.09.2016
 
 """
+from sirius.blueprints.monitor.exception import remote_api_method
+from sirius.blueprints.monitor.logformat import hook
 from sirius.lib.message import Message
 from flask import request
-from hitsl_utils.api import api_method
 from sirius.blueprints.api.remote_service.tula.app import module
 
 # todo:
 
 @module.route('/api/integration/tula/<int:api_version>/card/', methods=['POST'])
 @module.route('/api/integration/tula/<int:api_version>/card/<int:card_id>', methods=['PUT'])
-@api_method
+@remote_api_method(authorization=False, hook=hook)
 def api_card_save(api_version, card_id=None):
     data = request.get_json()
     create = request.method == 'POST'

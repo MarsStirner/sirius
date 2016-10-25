@@ -217,7 +217,7 @@ class DiffEntityImage(object):
         db.session.execute(set_query)
 
     @classmethod
-    def save_new_data(cls):
+    def save_new_data(cls, root_external_id):
         set_query = '''
         insert into %(chk_table_name)s
         (
@@ -235,16 +235,18 @@ class DiffEntityImage(object):
           from %(src_table_name)s src
           where
             src.operation_code = '%(operation_code)s'
+            and src.root_external_id = '%(root_external_id)s'
         );
         ''' % ({
             'src_table_name': cls.temp_table_name,
             'chk_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.ADD,
+            'root_external_id': root_external_id,
         })
         db.session.execute(set_query)
 
     @classmethod
-    def save_changed_data(cls):
+    def save_changed_data(cls, root_external_id):
         set_query = '''
         update %(chk_table_name)s chk
         set content = sq.content
@@ -253,6 +255,7 @@ class DiffEntityImage(object):
           from %(src_table_name)s src
           where
             src.operation_code = '%(operation_code)s'
+            and src.root_external_id = '%(root_external_id)s'
         ) sq
         where
           chk.entity_id = sq.entity_id and
@@ -261,22 +264,25 @@ class DiffEntityImage(object):
             'src_table_name': cls.temp_table_name,
             'chk_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.CHANGE,
+            'root_external_id': root_external_id,
         })
         db.session.execute(set_query)
 
     @classmethod
-    def save_deleted_data(cls):
+    def save_deleted_data(cls, root_external_id):
         set_query = '''
         delete from %(chk_table_name)s chk
         using %(src_table_name)s src
         where
           src.operation_code = '%(operation_code)s' and
+          src.root_external_id = '%(root_external_id)s' and
           chk.entity_id = src.entity_id and
           chk.external_id = src.external_id;
         ''' % ({
             'src_table_name': cls.temp_table_name,
             'chk_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.DELETE,
+            'root_external_id': root_external_id,
         })
         db.session.execute(set_query)
 

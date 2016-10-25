@@ -13,6 +13,7 @@ from sirius.blueprints.api.remote_service.tambov.active.patient.reformer_builder
     PatientTambovBuilder
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
+from sirius.blueprints.monitor.exception import InternalError, module_entry
 from sirius.blueprints.reformer.api import Reformer
 from sirius.lib.remote_system import RemoteSystemCode
 
@@ -55,6 +56,7 @@ class TambovReformer(Reformer):
     ##################################################################
     ##  build packages
 
+    @module_entry
     def get_entity_packages(self, reformed_req):
         """
         Args:
@@ -110,5 +112,5 @@ class TambovReformer(Reformer):
         if dst_entity == TambovEntityCode.PATIENT:
             res = PatientTambovBuilder(self.transfer, self.remote_sys_code).build_remote_patient_entity_packages(reformed_req)
         else:
-            raise Exception('Unexpected entity code')
+            raise InternalError('Unexpected entity code')
         return res

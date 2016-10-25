@@ -8,6 +8,7 @@
 """
 from sirius.blueprints.api.local_service.risar.active.request import request_by_url
 from sirius.blueprints.api.local_service.risar.lib.parser import LocalAnswerParser
+from sirius.blueprints.monitor.exception import InternalError
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message
 from sirius.blueprints.api.local_service.producer import LocalProducer
@@ -46,6 +47,6 @@ class LocalConsumer(object):
             entities = reformer.reform_msg(msg)
             reformer.send_local_data(entities, request_by_url, parser)
         else:
-            raise Exception('Message has not type')
+            raise InternalError('Message has not type')
 
         return res

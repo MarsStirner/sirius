@@ -11,6 +11,7 @@ from json import dumps
 from collections import OrderedDict
 
 from hitsl_utils.wm_api import WebMisJsonEncoder
+from sirius.blueprints.monitor.exception import module_entry
 from sirius.models.entity import Entity, DiffEntityImage
 from sirius.models.operation import OperationCode
 from sirius.database import db
@@ -19,6 +20,7 @@ from zeep.xsd.valueobjects import CompoundValue
 
 class Difference(object):
 
+    # @module_entry
     def mark_diffs(self, entity_packages):
         # пометить изменения в Хранилище и в пакете
         # в пакете проставляются operation_code, is_changed, удаляемые записи
@@ -74,14 +76,30 @@ class Difference(object):
                 package_record['operation_code'] = diff_rec.operation_code
                 (root_parent if root_parent else package_record)['is_changed'] = True
 
-    def save_all_changes(self):
-        # вносит изменения в EntityImage, удаляет временные таблицы
-        DiffEntityImage.save_new_data()
-        DiffEntityImage.save_changed_data()
-        DiffEntityImage.save_deleted_data()
-        DiffEntityImage.drop_temp_table()
+    # def save_all_changes(self):
+    #     # вносит изменения в EntityImage, удаляет временные таблицы
+    #     DiffEntityImage.save_new_data()
+    #     DiffEntityImage.save_changed_data()
+    #     DiffEntityImage.save_deleted_data()
+    #     DiffEntityImage.drop_temp_table()
+
+    # @module_entry
+    def save_change(self, msg):
+        # вносит изменения в EntityImage
+        meta = msg.get_header().meta
+        main_id = meta['remote_main_id']
+        operation_code = meta['remote_operation_code']
+        if operation_code == OperationCode.ADD:
+            DiffEntityImage.save_new_data(main_id)
+        elif operation_code == OperationCode.CHANGE:
+            DiffEntityImage.save_changed_data(main_id)
+        else:
+            assert operation_code == OperationCode.DELETE
+            DiffEntityImage.save_deleted_data(main_id)
 
     def commit_all_changes(self):
+        # удаляет временные таблицы
+        DiffEntityImage.drop_temp_table()
         # фиксирует изменения в EntityImage
         # todo: убрать (проверить) комиты в DiffEntityImage
         db.session.commit()
