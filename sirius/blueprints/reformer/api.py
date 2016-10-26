@@ -359,6 +359,14 @@ class Reformer(IStreamMeta):
             raise InternalError('Unexpected stream type')
         return res
 
+    def get_local_id_by_remote(self, remote_entity_code, remote_id):
+        res = MatchingId.get_local_id(
+            remote_entity_code,
+            remote_id,
+            self.remote_sys_code,
+        )
+        return res
+
 
 class Builder(object):
     remote_sys_code = None
