@@ -31,7 +31,7 @@ class MatchingId(Model):
     remote_param_name = Column(db.String(80), unique=False, nullable=True)
 
     __table_args__ = (
-        UniqueConstraint('local_entity_id', 'local_id', name='_local_entity_id_uc'),
+        UniqueConstraint('local_entity_id', 'local_id', 'remote_entity_id', name='_local_entity_id_remote_entity_uc'),
         UniqueConstraint('remote_entity_id', 'remote_id', name='_remote_entity_id_uc'),
         CheckConstraint("local_param_name > '' OR remote_param_name > ''", name='_param_name_chk'),
     )
@@ -101,7 +101,7 @@ class MatchingId(Model):
         return res
 
     @classmethod
-    def first_remote_param_name(cls, dst_id, dst_entity_code, remote_sys_code):
+    def first_remote_param_name(cls, remote_entity_code, remote_id, remote_sys_code):
         dst_param_name = None
         RemoteEntity = aliased(Entity, name='RemoteEntity')
         RemoteSystem = aliased(System, name='RemoteSystem')
@@ -110,8 +110,8 @@ class MatchingId(Model):
         ).join(
             RemoteSystem, RemoteSystem.id == RemoteEntity.system_id
         ).filter(
-            cls.remote_id == str(dst_id),
-            RemoteEntity.code == dst_entity_code,
+            cls.remote_id == str(remote_id),
+            RemoteEntity.code == remote_entity_code,
             RemoteSystem.code == remote_sys_code,
         ).first()
         if res:
@@ -120,6 +120,21 @@ class MatchingId(Model):
             'dst_id_url_param_name': dst_param_name,
         }
         return res
+
+    @classmethod
+    def get_local_id(cls, remote_entity_code, remote_id, remote_sys_code):
+        RemoteEntity = aliased(Entity, name='RemoteEntity')
+        RemoteSystem = aliased(System, name='RemoteSystem')
+        res = cls.query.join(
+            RemoteEntity, RemoteEntity.id == cls.remote_entity_id
+        ).join(
+            RemoteSystem, RemoteSystem.id == RemoteEntity.system_id
+        ).filter(
+            cls.remote_id == str(remote_id),
+            RemoteEntity.code == remote_entity_code,
+            RemoteSystem.code == remote_sys_code,
+        ).one()
+        return res.local_id
 
     @classmethod
     def add(

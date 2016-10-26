@@ -10,6 +10,7 @@ from sirius.blueprints.api.local_service.risar.app import module
 from sirius.blueprints.api.local_service.risar.lib.parser import RequestLocalData
 from sirius.blueprints.api.local_service.producer import LocalProducer
 from sirius.blueprints.monitor.exception import local_api_method
+from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.lib.message import Message
 from flask import request
 from sirius.blueprints.monitor.logformat import hook
@@ -60,3 +61,16 @@ def api_send_event_remote():
     prod = LocalProducer()
     res = prod.send(msg)
     return res
+
+
+@module.route('/api/local_id/', methods=["GET"])
+@local_api_method(hook=hook)
+def api_local_id():
+    data = request.get_json()
+    rld = RequestLocalData(data)
+    local_id = MatchingId.get_local_id(
+        rld.data.get('remote_entity_code'),
+        rld.data.get('remote_main_id'),
+        rld.data.get('remote_system_code'),
+    )
+    return local_id

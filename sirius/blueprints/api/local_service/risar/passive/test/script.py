@@ -29,3 +29,8 @@ class TestLocalApi:
         result = request_remote(testapp, session, request_tula_patient_1)
         code = result['meta']['code']
         assert code == 200
+
+    def test_local_id_by_remote_id(self, testapp):
+        result = request_remote(testapp, session, request_tula_patient_1)
+        code = result['meta']['code']
+        assert code == 200

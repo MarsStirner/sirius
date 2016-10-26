@@ -291,8 +291,8 @@ class Reformer(IStreamMeta):
         if req_meta['dst_operation_code'] == OperationCode.READ_ONE:
             if req_meta['dst_id']:
                 matching_id_data = MatchingId.first_remote_param_name(
-                    req_meta['dst_id'],
                     req_meta['dst_entity_code'],
+                    req_meta['dst_id'],
                     self.remote_sys_code,
                 )
                 if matching_id_data['dst_id_url_param_name']:
