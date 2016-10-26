@@ -6,7 +6,7 @@
 @date: 14.04.2016
 
 """
-from hitsl_utils.api import ApiException
+from sirius.lib.apiutils import ApiException
 
 NOT_FOUND_ERROR = 404
 

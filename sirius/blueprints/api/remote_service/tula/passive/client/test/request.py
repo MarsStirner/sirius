@@ -1,5 +1,5 @@
 # coding: utf-8
-from sirius.blueprints.api.remote_service.lib.test.connect import \
+from sirius.blueprints.api.test.connect import \
     make_api_request, make_test_api_request
 
 

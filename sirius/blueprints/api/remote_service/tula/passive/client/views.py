@@ -20,7 +20,7 @@ client_id_name = 'client_id'
 
 @module.route('/api/integration/<int:api_version>/client/<int:' + client_id_name + '>',
               methods=['PUT', 'POST', 'DELETE'])
-@remote_api_method(authorization=False, hook=hook)
+@remote_api_method(hook=hook)
 def api_client_change(api_version, **kwargs):
     client_id = kwargs.get(client_id_name)
     data = None

@@ -6,6 +6,7 @@
 @date: 26.09.2016
 
 """
+from sirius.lib.apiutils import ApiException
 from zeep import Client, Transport
 from zeep.exceptions import Fault as WebFault
 # from suds.client import Client
@@ -38,6 +39,7 @@ class MISClient(object):
             error
             patient
             """
+            self.check_error(result)
             return result
 
     def getPatient(self, **kw):
@@ -50,4 +52,10 @@ class MISClient(object):
             error
             patientCard
             """
+            self.check_error(result)
             return getattr(result, 'patientCard', {})
+
+    def check_error(self, result):
+        err = getattr(result, 'error', None)
+        if err:
+            raise ApiException(err.code, err.message)

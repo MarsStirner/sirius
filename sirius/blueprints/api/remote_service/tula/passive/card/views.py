@@ -16,7 +16,7 @@ from sirius.blueprints.api.remote_service.tula.app import module
 
 @module.route('/api/integration/tula/<int:api_version>/card/', methods=['POST'])
 @module.route('/api/integration/tula/<int:api_version>/card/<int:card_id>', methods=['PUT'])
-@remote_api_method(authorization=False, hook=hook)
+@remote_api_method(hook=hook)
 def api_card_save(api_version, card_id=None):
     data = request.get_json()
     create = request.method == 'POST'

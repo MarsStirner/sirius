@@ -16,7 +16,7 @@ class OperationCode(Enum):
     CHANGE = 'change'
     DELETE = 'delete'
     READ_ONE = 'read_one'
-    READ_ALL = 'read_all'
+    READ_MANY = 'read_many'
 
 
 class Operation(Model):

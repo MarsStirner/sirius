@@ -15,7 +15,7 @@ from sirius.blueprints.monitor.logformat import hook
 
 
 @module.route('/api/integration/tula/<int:api_version>/card/errands/', methods=['GET'])
-@remote_api_method(authorization=False, hook=hook)
+@remote_api_method(hook=hook)
 def api_integr_errands_get(api_version):
     xform = ErrandListXForm(api_version)
     return xform.get_data('errands')

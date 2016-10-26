@@ -35,14 +35,14 @@ class RemoteSystem(object):
 
     def is_active(self, rmt_sys_code):
         self.initialise()
-        # todo:
+        # todo: определять по сущности (методу)
         if rmt_sys_code == RemoteSystemCode.TULA:
             return True
         return False
 
     def is_passive(self, rmt_sys_code):
         self.initialise()
-        # todo:
+        # todo: определять по сущности (методу)
         if rmt_sys_code != RemoteSystemCode.TULA:
             return True
         return False

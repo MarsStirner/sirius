@@ -289,17 +289,26 @@ class Reformer(IStreamMeta):
     def set_remote_id(self, req_data):
         req_meta = req_data['meta']
         if req_meta['dst_operation_code'] == OperationCode.READ_ONE:
-            matching_id_data = MatchingId.first_remote_id(
-                req_meta['src_entity_code'],
-                req_meta['src_id'],
-                req_meta['dst_entity_code'],
-                self.remote_sys_code,
-            )
-            if matching_id_data:
-                req_meta['dst_id'] = matching_id_data['dst_id']
-                req_meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
+            if req_meta['dst_id']:
+                matching_id_data = MatchingId.first_remote_param_name(
+                    req_meta['dst_id'],
+                    req_meta['dst_entity_code'],
+                    self.remote_sys_code,
+                )
+                if matching_id_data['dst_id_url_param_name']:
+                    req_meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
             else:
-                raise ApiException(400, 'This entity has not yet passed')
+                matching_id_data = MatchingId.first_remote_id(
+                    req_meta['src_entity_code'],
+                    req_meta['src_id'],
+                    req_meta['dst_entity_code'],
+                    self.remote_sys_code,
+                )
+                if matching_id_data['dst_id']:
+                    req_meta['dst_id'] = matching_id_data['dst_id']
+                    req_meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
+                else:
+                    raise ApiException(400, 'This entity has not yet passed')
 
     def set_remote_service_request(self, req_data):
         req_meta = req_data['meta']
@@ -314,7 +323,7 @@ class Reformer(IStreamMeta):
             'dst_url': method['template_url'],
         })
         if method['protocol'] == ProtocolCode.REST:
-            if req_meta['dst_operation_code'] != OperationCode.READ_ALL:
+            if req_meta['dst_operation_code'] != OperationCode.READ_MANY:
                 req_meta['dst_url'] = req_meta['dst_url'].replace(
                     req_meta['dst_id_url_param_name'].join(('<int:', '>')),
                     str(req_meta['dst_id'])

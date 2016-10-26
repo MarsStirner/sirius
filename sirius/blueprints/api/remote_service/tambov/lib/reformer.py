@@ -44,8 +44,9 @@ class TambovReformer(Reformer):
     ##  reform requests
 
     def get_remote_request(self, header_meta):
+        remote_entity_code = header_meta['remote_entity_code']
         local_entity_code = header_meta['local_entity_code']
-        if local_entity_code == RisarEntityCode.CLIENT:
+        if local_entity_code == RisarEntityCode.CLIENT or remote_entity_code == TambovEntityCode.PATIENT:
             req_data = PatientTambovBuilder(self.transfer, self.remote_sys_code).build_remote_patient_request(header_meta)
             self.set_remote_id(req_data)
             self.set_remote_service_request(req_data)

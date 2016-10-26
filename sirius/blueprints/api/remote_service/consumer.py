@@ -13,6 +13,7 @@ from sirius.blueprints.api.remote_service.lib.result import OperationResult
 from sirius.blueprints.api.remote_service.lib.difference import Difference
 from sirius.lib.message import Message
 from sirius.lib.remote_system import remote_system
+from sirius.models.operation import OperationCode
 
 
 class RemoteConsumer(object):
@@ -42,7 +43,7 @@ class RemoteConsumer(object):
                 elif msg.is_request:
                     reformed_req = reformer.reform_req(msg)
                     entity_packages = reformer.get_entity_packages(reformed_req)
-                    self.send_diff_data(entity_packages, reformer)
+                    self.send_diff_data(entity_packages, reformer, msg)
                 else:
                     raise InternalError('Unexpected message type')
             elif remote_system.is_active(rmt_sys_code):
@@ -60,34 +61,37 @@ class RemoteConsumer(object):
                 else:
                     raise InternalError('Unexpected message type')
             else:
-                raise InternalError('Type of remote system is not define')
+                raise InternalError(
+                    'Type of remote system is not define: %s' % rmt_sys_code
+                )
         elif msg.is_to_local:
             raise InternalError('Wrong message direct')
         else:
             raise InternalError('Message direct is not define')
         return res
 
-    def producer_send_msgs(self, msgs, async=False, on_succ=None, on_err=None):
+    def producer_send_msgs(self, msgs, async=False, skip_err=False, callback=None):
         producer = RemoteProducer()
-        if on_succ or on_err:
+        if callback:
             res = []
             for msg in msgs:
                 try:
                     r = producer.send(msg, async=async)
                     res.append(r)
-                    if callable(on_succ):
-                        on_succ(msg)
+                    if callable(callback):
+                        callback(msg)
                 except LoggedException:
-                    if callable(on_err):
-                        on_err(msg)
+                    if not skip_err:
+                        raise
         else:
             res = [producer.send(msg, async=async) for msg in msgs]
         return res
 
-    def send_diff_data(self, entity_packages, reformer):
+    def send_diff_data(self, entity_packages, reformer, msg):
         diff = Difference()
         diff_entity_packages = diff.mark_diffs(entity_packages)
         # diff.save_all_changes()
         msgs = reformer.create_remote_messages(diff_entity_packages)
-        self.producer_send_msgs(msgs, on_succ=diff.save_change)
+        skip_err = msg.get_header().meta['local_operation_code'] == OperationCode.READ_MANY
+        self.producer_send_msgs(msgs, skip_err=skip_err, callback=diff.save_change)
         diff.commit_all_changes()

@@ -101,6 +101,27 @@ class MatchingId(Model):
         return res
 
     @classmethod
+    def first_remote_param_name(cls, dst_id, dst_entity_code, remote_sys_code):
+        dst_param_name = None
+        RemoteEntity = aliased(Entity, name='RemoteEntity')
+        RemoteSystem = aliased(System, name='RemoteSystem')
+        res = cls.query.join(
+            RemoteEntity, RemoteEntity.id == cls.remote_entity_id
+        ).join(
+            RemoteSystem, RemoteSystem.id == RemoteEntity.system_id
+        ).filter(
+            cls.remote_id == str(dst_id),
+            RemoteEntity.code == dst_entity_code,
+            RemoteSystem.code == remote_sys_code,
+        ).first()
+        if res:
+            dst_param_name = res.remote_param_name
+        res = {
+            'dst_id_url_param_name': dst_param_name,
+        }
+        return res
+
+    @classmethod
     def add(
         cls,
         local_entity_code=None,

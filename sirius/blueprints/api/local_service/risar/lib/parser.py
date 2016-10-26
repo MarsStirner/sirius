@@ -18,6 +18,7 @@ class RequestLocalData(object):
     def __init__(self, data):
         self.validate(data)
         self.get_params(data)
+        self.data = data
 
     def validate(self, data):
         # todo:

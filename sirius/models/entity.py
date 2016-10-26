@@ -296,11 +296,11 @@ class DiffEntityImage(object):
         # order by src.level desc;
         # ''' % ({
         #     'src_table_name': cls.temp_table_name,
-        #     'operation_code': OperationCode.READ_ALL,
+        #     'operation_code': OperationCode.READ_MANY,
         # })
         # db.session.execute(set_query)
         return _DiffEntityImage.query.join(
             Entity, Entity.id == _DiffEntityImage.entity_id
         ).filter(
-            _DiffEntityImage.operation_code != OperationCode.READ_ALL,
+            _DiffEntityImage.operation_code != OperationCode.READ_MANY,
         ).order_by(_DiffEntityImage.level.desc()).all()

@@ -241,7 +241,7 @@ def get_stream_data(module, func, obj, meta):
     }
 
 
-def local_api_method(func=None, hook=None, authorization=True):
+def local_api_method(func=None, hook=None, authorization=False):
     """Декоратор API-функции. Автомагически оборачивает результат или исключение в jsonify-ответ
     :param func: декорируемая функция
     :type func: callable
@@ -291,7 +291,7 @@ def local_api_method(func=None, hook=None, authorization=True):
     return decorator(func)
 
 
-def remote_api_method(func=None, hook=None, authorization=True):
+def remote_api_method(func=None, hook=None, authorization=False):
     """Декоратор API-функции. Автомагически оборачивает результат или исключение в jsonify-ответ
     :param func: декорируемая функция
     :type func: callable

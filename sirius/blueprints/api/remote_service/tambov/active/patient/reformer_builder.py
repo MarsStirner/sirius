@@ -197,7 +197,7 @@ class PatientTambovBuilder(Builder):
                 'dst_system_code': self.remote_sys_code,
                 'dst_entity_code': TambovEntityCode.PATIENT,
                 'dst_operation_code': header_meta['local_operation_code'],
-                'dst_id': None,
+                'dst_id': header_meta['remote_main_id'],
             }
         }
         return req_data
@@ -212,7 +212,7 @@ class PatientTambovBuilder(Builder):
             'entities': entities,
         }
         req_meta = reformed_req['meta']
-        if req_meta['dst_operation_code'] == OperationCode.READ_ALL:
+        if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
             api_method = ApiMethod.get_method(
                 TambovEntityCode.PATIENT,
                 OperationCode.READ_ONE,
@@ -222,6 +222,13 @@ class PatientTambovBuilder(Builder):
             changed_patients = self.get_changed_patients(reformed_req)
             self.set_patient_cards(changed_patients, entities, api_method)
             self.inject_all_patients(entities, all_patients, api_method)
+        elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
+            api_method = ApiMethod.get_method(
+                TambovEntityCode.PATIENT,
+                OperationCode.READ_ONE,
+                self.remote_sys_code,
+            )
+            self.set_patient_cards([req_meta['dst_id']], entities, api_method)
         return entity_packages
 
     def get_all_patients(self, reformed_req):

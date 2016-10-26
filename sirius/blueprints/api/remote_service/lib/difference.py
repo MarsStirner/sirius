@@ -52,7 +52,7 @@ class Difference(object):
                     'root_external_id': (package_record.get('root_parent') or {}).get('main_id', main_id),
                     'external_id': main_id,
                     'content': dumps(self.serialize_object(package_record['data']), cls=WebMisJsonEncoder),
-                    'operation_code': OperationCode.READ_ALL,
+                    'operation_code': OperationCode.READ_MANY,
                     'level': level,
                 }
                 for main_id, package_record in fl_entity_dict.iteritems()
