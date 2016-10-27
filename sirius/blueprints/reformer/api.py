@@ -167,16 +167,13 @@ class Reformer(IStreamMeta):
 
     def set_service(self, record, is_to_local):
         meta = record['meta']
-        method = ApiMethod.get_method(
+        method = self.get_api_method(
+            SystemCode.LOCAL if is_to_local else self.remote_sys_code,
             meta['dst_entity_code'],
             meta['dst_operation_code'],
-            SystemCode.LOCAL if is_to_local else self.remote_sys_code,
         )
         meta['dst_method'] = method['method']
-        meta['dst_url'] = method['template_url'].replace(
-            'api_version'.join(('<int:', '>')),
-            '0'
-        )
+        meta['dst_url'] = method['template_url']
         if meta['dst_operation_code'] != OperationCode.ADD:
             meta['dst_url'] = meta['dst_url'].replace(
                 meta['dst_id_url_param_name'].join(('<int:', '>')),
@@ -288,34 +285,45 @@ class Reformer(IStreamMeta):
 
     def set_remote_id(self, req_data):
         req_meta = req_data['meta']
-        if req_meta['dst_operation_code'] == OperationCode.READ_ONE:
-            if req_meta['dst_id']:
-                matching_id_data = MatchingId.first_remote_param_name(
-                    req_meta['dst_entity_code'],
-                    req_meta['dst_id'],
-                    self.remote_sys_code,
-                )
-                if matching_id_data['dst_id_url_param_name']:
-                    req_meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
+        if req_meta['dst_id'] and not req_meta['dst_id_url_param_name']:
+            matching_id_data = MatchingId.first_remote_param_name(
+                req_meta['dst_entity_code'],
+                req_meta['dst_id'],
+                self.remote_sys_code,
+            )
+            if matching_id_data['dst_id_url_param_name']:
+                req_meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
+        elif req_meta['src_id'] and not req_meta['dst_id']:
+            matching_id_data = MatchingId.first_remote_id(
+                req_meta['src_entity_code'],
+                req_meta['src_id'],
+                req_meta['dst_entity_code'],
+                self.remote_sys_code,
+            )
+            if matching_id_data['dst_id']:
+                req_meta['dst_id'] = matching_id_data['dst_id']
+                req_meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
             else:
-                matching_id_data = MatchingId.first_remote_id(
-                    req_meta['src_entity_code'],
-                    req_meta['src_id'],
-                    req_meta['dst_entity_code'],
-                    self.remote_sys_code,
-                )
-                if matching_id_data['dst_id']:
-                    req_meta['dst_id'] = matching_id_data['dst_id']
-                    req_meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
-                else:
-                    raise ApiException(400, 'This entity has not yet passed')
+                raise ApiException(500, 'Entity (%s) has not yet passed' % req_meta['src_entity_code'])
+        for src_entity_code, src_id in (req_meta.get('src_parents_params') or {}).items():
+            matching_id_data = MatchingId.shortest_first_remote_id(
+                src_entity_code,
+                src_id,
+                self.remote_sys_code,
+            )
+            if matching_id_data['dst_id']:
+                req_meta.setdefault('dst_parents_params', {}).update({
+                    matching_id_data['dst_id_url_param_name']: matching_id_data['dst_id']
+                })
+            else:
+                raise ApiException(500, 'Entity (%s) has not yet passed' % src_entity_code)
 
     def set_remote_service_request(self, req_data):
         req_meta = req_data['meta']
-        method = ApiMethod.get_method(
+        method = self.get_api_method(
+            self.remote_sys_code,
             req_meta['dst_entity_code'],
             req_meta['dst_operation_code'],
-            self.remote_sys_code,
         )
         req_meta.update({
             'dst_protocol_code': method['protocol'],
@@ -364,6 +372,24 @@ class Reformer(IStreamMeta):
             remote_entity_code,
             remote_id,
             self.remote_sys_code,
+        )
+        return res
+
+    # def get_remote_id_by_local(self, local_entity_code, local_id):
+    #     res = MatchingId.get_remote_id(
+    #         local_entity_code,
+    #         local_id,
+    #         self.remote_sys_code,
+    #     )
+    #     return res
+
+    def get_api_method(self, system_code, entity_code, operation_code):
+        res = ApiMethod.get(
+            system_code, entity_code, operation_code
+        )
+        res['template_url'] = res['template_url'].replace(
+            'api_version'.join(('<int:', '>')),
+            '0'
         )
         return res
 

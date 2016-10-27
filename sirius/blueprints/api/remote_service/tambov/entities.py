@@ -11,6 +11,8 @@ from hitsl_utils.enum import Enum
 
 class TambovEntityCode(Enum):
     PATIENT = 'patient'
+    REFERRAL = 'referral'
+    SERVICE = 'service'
 
     # IND_ADDRESS = 'individual_address'
     # IND_DOCUMENTS = 'individual_document'

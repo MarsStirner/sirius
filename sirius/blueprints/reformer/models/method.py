@@ -35,7 +35,7 @@ class ApiMethod(Model):
     )
 
     @classmethod
-    def get_method(cls, entity_code, operation_code, system_code):
+    def get(cls, system_code, entity_code, operation_code):
         method = cls.query.join(
             Entity, Entity.id == cls.entity_id
         ).join(

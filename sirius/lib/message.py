@@ -43,6 +43,7 @@ class Header(object):
             'local_main_param_name': None,
             'local_method': None,
             'local_operation_code': None,  # для запроса планировщиком списка
+            'local_parents_params': None,  # для фильтрации запроса по родительским сущностям
 
             'remote_system_code': None,
             'remote_entity_code': None,

@@ -39,11 +39,11 @@ class PatientTambovBuilder(Builder):
             'operation_order': {},
             RisarEntityCode.CLIENT: [{
                 'meta': {
+                    'src_operation_code': header_meta['remote_operation_code'],
                     'src_entity_code': src_entity_code,
                     'src_id': header_meta['remote_main_id'],
                     'dst_entity_code': RisarEntityCode.CLIENT,
                     'set_current_id_func': set_current_id_func,
-                    'src_operation_code': header_meta['remote_operation_code'],
                 },
             }],
         }
@@ -105,6 +105,34 @@ class PatientTambovBuilder(Builder):
                     local_addr['flat'] = entry['name']
             # в схеме рисар пока не массив, а объект
             break
+
+        #######################
+        ## RisarEntityCode.CARD
+
+        def set_current_id_func(record):
+            reform_meta = record['meta']
+            record['body'].update({
+                'client_id': reform_meta['dst_id'],
+            })
+        res.update({
+            RisarEntityCode.CARD: [{
+                'meta': {
+                    'src_operation_code': header_meta['remote_operation_code'],
+                    'src_entity_code': src_entity_code,
+                    'src_id': header_meta['remote_main_id'],
+                    'dst_entity_code': RisarEntityCode.CARD,
+                    'set_current_id_func': set_current_id_func,
+                },
+            }],
+        })
+        main_item = res[RisarEntityCode.CARD][0]
+        self.set_operation_order(res, RisarEntityCode.CARD, 1)
+        main_item['body'] = {
+            'client_id': None,  # заполняется в set_current_id_func
+            'card_set_date': WebMisJsonEncoder().default(date.today()),
+            'card_doctor': '-1',
+            'card_LPU': '-1',
+        }
 
         # образец работы с дозапросами
         # childs = entity_package['childs']

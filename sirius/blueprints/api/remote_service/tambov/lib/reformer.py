@@ -11,6 +11,8 @@ from sirius.blueprints.api.remote_service.tambov.active.checkup_first.reformer_b
     CheckupTambovBuilder
 from sirius.blueprints.api.remote_service.tambov.active.patient.reformer_builder import \
     PatientTambovBuilder
+from sirius.blueprints.api.remote_service.tambov.active.service.reformer_builder import \
+    ServiceTambovBuilder
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
 from sirius.blueprints.monitor.exception import InternalError, module_entry
@@ -48,6 +50,14 @@ class TambovReformer(Reformer):
         local_entity_code = header_meta['local_entity_code']
         if local_entity_code == RisarEntityCode.CLIENT or remote_entity_code == TambovEntityCode.PATIENT:
             req_data = PatientTambovBuilder(self.transfer, self.remote_sys_code).build_remote_patient_request(header_meta)
+            self.set_remote_id(req_data)
+            self.set_remote_service_request(req_data)
+        elif local_entity_code in (
+                RisarEntityCode.MEASURE_RESEARCH,
+                RisarEntityCode.MEASURE_HOSPITALIZATION,
+                RisarEntityCode.MEASURE_SPECIALISTS_CHECKUP,
+        ) or remote_entity_code == TambovEntityCode.SERVICE:
+            req_data = ServiceTambovBuilder(self.transfer, self.remote_sys_code).build_remote_service_request(header_meta)
             self.set_remote_id(req_data)
             self.set_remote_service_request(req_data)
         else:
@@ -112,6 +122,8 @@ class TambovReformer(Reformer):
         # missing_entities = remote_entities - {dst_entity}
         if dst_entity == TambovEntityCode.PATIENT:
             res = PatientTambovBuilder(self.transfer, self.remote_sys_code).build_remote_patient_entity_packages(reformed_req)
+        elif dst_entity == TambovEntityCode.SERVICE:
+            res = ServiceTambovBuilder(self.transfer, self.remote_sys_code).build_remote_service_entity_packages(reformed_req)
         else:
             raise InternalError('Unexpected entity code')
         return res

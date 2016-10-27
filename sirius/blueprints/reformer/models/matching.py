@@ -31,8 +31,8 @@ class MatchingId(Model):
     remote_param_name = Column(db.String(80), unique=False, nullable=True)
 
     __table_args__ = (
-        UniqueConstraint('local_entity_id', 'local_id', 'remote_entity_id', name='_local_entity_id_remote_entity_uc'),
-        UniqueConstraint('remote_entity_id', 'remote_id', name='_remote_entity_id_uc'),
+        UniqueConstraint('local_entity_id', 'local_id', 'remote_entity_id', name='_local_entity_local_id_remote_entity_uc'),
+        UniqueConstraint('remote_entity_id', 'remote_id', 'local_entity_id', name='_remote_entity_remote_id_local_entity_uc'),
         CheckConstraint("local_param_name > '' OR remote_param_name > ''", name='_param_name_chk'),
     )
 
@@ -101,6 +101,37 @@ class MatchingId(Model):
         return res
 
     @classmethod
+    def shortest_first_remote_id(cls, src_entity_code, src_id, remote_sys_code):
+        dst_id = None
+        dst_param_name = None
+        LocalEntity = aliased(Entity, name='LocalEntity')
+        LocalSystem = aliased(System, name='LocalSystem')
+        RemoteEntity = aliased(Entity, name='RemoteEntity')
+        RemoteSystem = aliased(System, name='RemoteSystem')
+        res = cls.query.join(
+            LocalEntity, LocalEntity.id == cls.local_entity_id
+        ).join(
+            LocalSystem, LocalSystem.id == LocalEntity.system_id
+        ).join(
+            RemoteEntity, RemoteEntity.id == cls.remote_entity_id
+        ).join(
+            RemoteSystem, RemoteSystem.id == RemoteEntity.system_id
+        ).filter(
+            LocalEntity.code == src_entity_code,
+            LocalSystem.code == SystemCode.LOCAL,
+            cls.local_id == src_id,
+            RemoteSystem.code == remote_sys_code,
+        ).first()
+        if res:
+            dst_id = res.remote_id
+            dst_param_name = res.remote_param_name
+        res = {
+            'dst_id': dst_id,
+            'dst_id_url_param_name': dst_param_name,
+        }
+        return res
+
+    @classmethod
     def first_remote_param_name(cls, remote_entity_code, remote_id, remote_sys_code):
         dst_param_name = None
         RemoteEntity = aliased(Entity, name='RemoteEntity')
@@ -135,6 +166,24 @@ class MatchingId(Model):
             RemoteSystem.code == remote_sys_code,
         ).one()
         return res.local_id
+
+    # @classmethod
+    # def get_remote_id(cls, local_entity_code, local_id, remote_sys_code):
+    #     LocalEntity = aliased(Entity, name='LocalEntity')
+    #     RemoteEntity = aliased(Entity, name='RemoteEntity')
+    #     RemoteSystem = aliased(System, name='RemoteSystem')
+    #     res = cls.query.join(
+    #         LocalEntity, LocalEntity.id == cls.local_entity_id
+    #     ).join(
+    #         RemoteEntity, RemoteEntity.id == cls.remote_entity_id
+    #     ).join(
+    #         RemoteSystem, RemoteSystem.id == RemoteEntity.system_id
+    #     ).filter(
+    #         cls.local_id == local_id,
+    #         LocalEntity.code == local_entity_code,
+    #         RemoteSystem.code == remote_sys_code,
+    #     ).one()
+    #     return res.remote_id
 
     @classmethod
     def add(

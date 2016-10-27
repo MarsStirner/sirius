@@ -132,10 +132,11 @@ class ScheduleGroupRequest(Model):
 
     schedule_group_id = reference_col('schedule_group', unique=False, nullable=False)
     schedule_group = relationship('ScheduleGroup', backref='set_sch_group_request')
-    entity_id = reference_col('entity', unique=False, nullable=False)
+    entity_id = reference_col('entity', unique=False, nullable=False)  # что
     entity = relationship('Entity', backref='set_sch_group_request')
-    system_id = reference_col('system', unique=False, nullable=False)
+    system_id = reference_col('system', unique=False, nullable=False)  # откуда
     system = relationship('System', backref='set_sch_group_request')
+    sampling_method = Column(db.String(80), unique=False, nullable=True)
     order = Column(db.Integer, unique=False, nullable=False)
 
     __table_args__ = (
