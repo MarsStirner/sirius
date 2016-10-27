@@ -38,4 +38,4 @@ def remote_task(self, msg, rmt_sys_code):
 @beat_entry
 def scheduler_task(self):
     scheduler = Scheduler()
-    scheduler.execute()
+    scheduler.run()

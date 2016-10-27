@@ -19,9 +19,6 @@ class TestSchedule:
     def test_execute(self):
         with app.app_context():
             sch = Scheduler()
-            # sch.execute()
-            schedule_group = ScheduleGroup.query.first()
+            schedule_group = ScheduleGroup.query.all()
             for req_data in schedule_group.get_requests():
-                msg = sch.create_message(req_data.entity.code)
-                consumer = RemoteConsumer()
-                consumer.process(msg, req_data.system.code)
+                sch.execute(req_data)

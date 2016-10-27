@@ -15,30 +15,34 @@ from .models import Schedule
 
 
 class Scheduler(object):
-    def execute(self):
-        from sirius.blueprints.api.local_service.producer import LocalProducer
+    def run(self):
         schedules = Schedule.get_schedules_to_execute()
         for schedule in schedules:
             with schedule.acquire_group_lock() as is_success:
                 if is_success:
                     for req_data in schedule.schedule_group.get_requests():
-                        entity_code = req_data.entity.code
-                        system_code = req_data.system.code
-                        sampling_method_name = req_data.sampling_method
-                        if sampling_method_name:
-                            sampling_method_func = getattr(self, sampling_method_name, None)
-                            if callable(sampling_method_func):
-                                sampling_method_func(system_code, entity_code)
-                            else:
-                                raise InternalError(
-                                    'Sampling method (%s) not found' %
-                                    sampling_method_name
-                                )
-                        else:
-                            msg = self.create_message(system_code, entity_code)
-                            producer = LocalProducer()
-                            producer.send(msg)
+                        self.execute(req_data)
                     return
+
+    def execute(self, req_data):
+        from sirius.blueprints.api.local_service.producer import LocalProducer
+
+        entity_code = req_data.entity.code
+        system_code = req_data.system.code
+        sampling_method_name = req_data.sampling_method
+        if sampling_method_name:
+            sampling_method_func = getattr(self, sampling_method_name, None)
+            if callable(sampling_method_func):
+                sampling_method_func(system_code, entity_code)
+            else:
+                raise InternalError(
+                    'Sampling method (%s) not found' %
+                    sampling_method_name
+                )
+        else:
+            msg = self.create_message(system_code, entity_code)
+            producer = LocalProducer()
+            producer.send(msg)
 
     def create_message(self, system_code, entity_code):
         # создает сообщение с параметрами, по которым сообщение реформируется
