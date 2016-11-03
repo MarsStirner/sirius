@@ -13,10 +13,12 @@ from kombu import Queue, Exchange
 main_queue_name = 'sir_test_risar_main_queue'
 error_1_queue_name = 'sir_test_risar_error_1_queue'
 error_2_queue_name = 'sir_test_risar_error_2_queue'
+mis_tula_queue_name = 'sir_test_mis_tula_queue'
+mis_tambov_queue_name = 'sir_test_mis_tambov_queue'
 
 remote_queue_name_list = [
-    'sir_test_mis_tula_queue',
-    'sir_test_mis_tambov_queue',
+    # mis_tula_queue_name,
+    mis_tambov_queue_name,
 ]
 
 

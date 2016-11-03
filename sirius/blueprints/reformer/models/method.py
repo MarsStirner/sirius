@@ -6,6 +6,7 @@
 @date: 03.10.2016
 
 """
+from sirius.blueprints.monitor.exception import InternalError
 from sirius.database import Column, Model, db, reference_col, relationship, \
     XMLType
 from sirius.models.entity import Entity
@@ -50,11 +51,42 @@ class ApiMethod(Model):
             System.code == system_code,
         ).first()
         if not method:
-            raise RuntimeError('Service not registered in %s' % cls.__name__)
+            raise InternalError('Service not registered in %s' % cls.__name__)
         sys_url = method.entity.system.host.rstrip('/')
         res = {
             'protocol': method.protocol.code,
             'method': method.method,
             'template_url': sys_url + method.template_url,
+        }
+        return res
+
+
+class ServiceMethod(Model):
+    """Service метод"""
+
+    __tablename__ = 'service_method'
+
+    method_code = Column(db.String(80), unique=True, nullable=False)  # service method/rest method
+    entity_id = reference_col('entity', unique=False, nullable=False)
+    entity = relationship('Entity', backref='set_service_method')
+
+    __table_args__ = (
+        UniqueConstraint('entity_id', 'method_code', name='_entity_method_name_uc'),
+    )
+
+    @classmethod
+    def get_entity(cls, method_code):
+        method = cls.query.join(
+            Entity, Entity.id == cls.entity_id
+        ).join(
+            System, System.id == Entity.system_id
+        ).filter(
+            cls.method_code == method_code,
+        ).first()
+        if not method:
+            raise InternalError('Service method not registered in %s' % cls.__name__)
+        res = {
+            'entity_code': method.entity.code,
+            'system_code': method.entity.system.code,
         }
         return res

@@ -8,12 +8,13 @@
 """
 import os
 from sirius.blueprints.api.local_service.risar.active.request import request_by_url
-from sirius.blueprints.monitor.exception import InternalError
+from sirius.blueprints.monitor.exception import InternalError, LoggedException
 from sirius.celery_queue import remote_queue_name_list, main_queue_name
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message
 from sirius.lib.celery_tasks import local_task, remote_task
 from sirius.lib.remote_system import remote_system
+from sirius.models.operation import OperationCode
 
 
 class LocalProducer(object):
@@ -28,15 +29,8 @@ class LocalProducer(object):
                 for queue_name in remote_queue_name_list:
                     rmt_sys_code = remote_system.get_code(queue_name)
                     reformer = implement.get_reformer(rmt_sys_code)
-                    missing_requests = reformer.get_local_missing_requests(msg)
-                    miss_data = self.request_data(missing_requests)
-                    msg.add_missing_data(miss_data)
-                    # todo: на время тестирования без обработки исключений
-                    if os.environ['TESTING'] == '1':
-                        remote_task(msg, rmt_sys_code)
-                    else:
-                        remote_task.apply_async(args=(msg, rmt_sys_code),
-                                                queue=queue_name)
+                    entity_package = reformer.get_entity_package_by_msg(msg)
+                    self.send_diff_data(entity_package, reformer, msg, rmt_sys_code, queue_name)
             elif msg.is_send_event:
                 rmt_sys_code = remote_system.get_event_system_code()
                 remote_task(msg, rmt_sys_code)
@@ -52,12 +46,38 @@ class LocalProducer(object):
             raise InternalError('Message direct missing')
         return True
 
-    def request_data(self, missing_requests):
-        res = []
-        local_data = None
-        # todo: цикл вложенных дозапросов и связывание ответов
-        for miss_req in missing_requests:
-            miss_req.link_miss_requests(local_data)
-            local_data = request_by_url(miss_req.method, miss_req.url, None)
-            res.append(local_data)
+    def send_diff_data(self, entity_packages, reformer, msg, rmt_sys_code, queue_name):
+        # diff = Difference()
+        # diff_entity_packages = diff.mark_diffs(entity_packages)
+        # diff.save_all_changes()
+        msgs = reformer.create_to_remote_messages(entity_packages)
+        skip_err = msg.get_header().meta['local_operation_code'] == OperationCode.READ_MANY
+        # self.producer_send_msgs(msgs, skip_err=skip_err, callback=diff.save_change)
+        self.send_msgs(msgs, rmt_sys_code, queue_name, skip_err=skip_err)
+        # diff.commit_all_changes()
+
+    def send_msgs(self, msgs, rmt_sys_code, queue_name, async=False, skip_err=False, callback=None):
+        if callback:
+            res = []
+            for msg in msgs:
+                try:
+                    r = self.task_run(msg, rmt_sys_code, queue_name, async)
+                    res.append(r)
+                    if callable(callback):
+                        callback(msg)
+                except LoggedException:
+                    if not skip_err:
+                        raise
+        else:
+            res = [self.task_run(msg, rmt_sys_code, queue_name, async) for msg in msgs]
+        return res
+
+    def task_run(self, msg, rmt_sys_code, queue_name, async):
+        res = None
+        # todo: на время тестирования без обработки исключений
+        if not async or os.environ.get('TESTING') == '1':
+            res = remote_task(msg, rmt_sys_code)
+        else:
+            remote_task.apply_async(args=(msg, rmt_sys_code),
+                                    queue=queue_name)
         return res

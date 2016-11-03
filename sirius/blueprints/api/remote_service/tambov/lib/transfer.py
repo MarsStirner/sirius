@@ -19,19 +19,14 @@ class TambovTransfer(Transfer):
     answer = TambovAnswer()
 
     # @module_entry
-    def execute(self, reformed_data):
-        meta = reformed_data['meta']
+    def execute(self, req):
+        meta = req['meta']
+        data = req.get('body', {})
         method = meta['dst_method']
         wsdl = meta['dst_url']
         client = self.get_client(wsdl)
         req_method = getattr(client, method)
-        kw = {}
-        if 'dst_id_url_param_name' in meta:
-            if isinstance(meta['dst_id_url_param_name'], list):
-                kw = dict(zip(meta['dst_id_url_param_name'], meta['dst_id']))
-            else:
-                kw[meta['dst_id_url_param_name']] = meta['dst_id']
-        req_result = req_method(**kw)
+        req_result = connect_entry(function=req_method)(**data)
         res = self.answer.process(req_result)
         return res
 

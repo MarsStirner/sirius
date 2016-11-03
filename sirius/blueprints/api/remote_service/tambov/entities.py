@@ -13,8 +13,8 @@ class TambovEntityCode(Enum):
     PATIENT = 'patient'
     REFERRAL = 'referral'
     SERVICE = 'service'
+    CASE = 'case'
+    VISIT = 'visit'
 
     # IND_ADDRESS = 'individual_address'
     # IND_DOCUMENTS = 'individual_document'
-    CHECKUP = 'checkup'
-    CHECKUP_FETUS = 'checkup_fetus'

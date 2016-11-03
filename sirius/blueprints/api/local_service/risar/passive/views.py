@@ -7,6 +7,7 @@
 
 """
 from sirius.blueprints.api.local_service.risar.app import module
+from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.local_service.risar.lib.parser import RequestLocalData
 from sirius.blueprints.api.local_service.producer import LocalProducer
 from sirius.blueprints.monitor.exception import local_api_method
@@ -25,7 +26,8 @@ def api_request_local():
     msg = Message(None)
     msg.to_local_service()
     msg.set_request_type()
-    msg.set_method(rld.method, rld.url)
+    msg.set_method(rld.request_method, rld.request_url)
+    msg.get_header().meta.update(rld.get_msg_meta())
     prod = LocalProducer()
     res = prod.send(msg)
     return res
@@ -63,15 +65,32 @@ def api_send_event_remote():
     return res
 
 
-@module.route('/api/local_id/', methods=["GET"])
+@module.route('/api/client/local_id/', methods=["GET"])
 @local_api_method(hook=hook)
-def api_local_id():
+def api_client_local_id():
     data = request.get_json()
     rld = RequestLocalData(data)
     implement = Implementation()
     reformer = implement.get_reformer(rld.data.get('remote_system_code'))
     local_id = reformer.get_local_id_by_remote(
+        RisarEntityCode.CLIENT,
         rld.data.get('remote_entity_code'),
         rld.data.get('remote_main_id'),
     )
     return local_id
+
+
+@module.route('/api/card/register/', methods=["POST"])
+@local_api_method(hook=hook)
+def api_card_register():
+    data = request.get_json()
+    rld = RequestLocalData(data)
+    implement = Implementation()
+    reformer = implement.get_reformer(rld.data.get('remote_system_code'))
+    res = reformer.get_register_entity_match(
+        RisarEntityCode.CARD,
+        rld.data.get('local_main_id'),
+        rld.data.get('remote_entity_code'),
+        rld.data.get('remote_main_id'),
+    )
+    return res

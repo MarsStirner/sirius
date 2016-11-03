@@ -3,7 +3,6 @@ import functools
 import logging
 import jsonschema
 from abc import ABCMeta
-from sirius.blueprints.api.remote_service.producer import RemoteProducer
 
 from sirius.lib.apiutils import ApiException
 from sirius.lib.message import Message
@@ -140,6 +139,8 @@ class XForm(object):
         # msg.add_missing_data(miss_data)
 
         # data_store = Difference()
+        from sirius.blueprints.api.remote_service.producer import \
+            RemoteProducer
 
         producer = RemoteProducer()
         producer.send(msg)

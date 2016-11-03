@@ -24,7 +24,7 @@ for imp in implements:
     if sys_code not in imp_map:
         imp_map[sys_code] = imp
     else:
-        raise RuntimeError('Duplicate remote_sys_code')
+        raise InternalError('Duplicate remote_sys_code')
 
 
 class Implementation(object):
@@ -32,7 +32,7 @@ class Implementation(object):
         try:
             reformer_cls, transfer_cls = imp_map[rmt_sys_code]
         except KeyError:
-            raise InternalError('Unknown remote code "%s" in implements' % rmt_sys_code)
+            raise InternalError('Unknown remote system code "%s" in implements' % rmt_sys_code)
         reformer = reformer_cls()
         reformer.set_transfer(transfer_cls())
         return reformer

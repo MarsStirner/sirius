@@ -11,8 +11,13 @@ from sirius.blueprints.monitor.exception import InternalError, ExternalError
 
 
 class RequestLocalData(object):
-    url = None
+    service_method = None
+    request_url = None
+    request_method = None
+    request_params = None
     method = None
+    main_id = None
+    main_param_name = None
     # разбирает запрос локальной системы и достает полезные данные
 
     def __init__(self, data):
@@ -25,15 +30,31 @@ class RequestLocalData(object):
         pass
 
     def get_params(self, data):
-        self.url = data.get('url')
+        self.request_url = data.get('request_url')
+        self.request_method = data.get('request_method')
+
+        self.service_method = data.get('service_method')
+        self.request_params = data.get('request_params')
         self.method = data.get('method')
+        self.main_id = data.get('main_id')
+        self.main_param_name = data.get('main_param_name')
+
+    def get_msg_meta(self):
+        meta = {
+            'local_service_code': self.service_method,
+            'local_main_id': self.main_id,
+            'local_main_param_name': self.main_param_name,
+            'local_method': self.method,
+            'local_parents_params': dict((k, {'id': v}) for k, v in self.request_params.items()),
+        }
+        return meta
 
 
 class LocalAnswerParser(object):
     def get_params(self, entity_code, response):
         # разбирает ответ локальной системы и достает полезные данные
         res = None
-        result = self.get_data(response)['result']
+        result = self.get_data(response)
         if entity_code == RisarEntityCode.CLIENT:
             res = {
                 'main_id': result['client_id'],
@@ -45,7 +66,7 @@ class LocalAnswerParser(object):
 
     def get_data(self, response):
         data = response.json()
-        return data
+        return data['result']
 
     def check(self, response):
         if response.status_code != 200:

@@ -23,4 +23,4 @@ class OperationResult(object):
 
     def get_operation_result(self):
         # todo:
-        return False
+        return None

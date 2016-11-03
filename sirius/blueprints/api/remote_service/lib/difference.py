@@ -21,16 +21,16 @@ from zeep.xsd.valueobjects import CompoundValue
 class Difference(object):
 
     # @module_entry
-    def mark_diffs(self, entity_packages):
+    def mark_diffs(self, entity_package):
         # пометить изменения в Хранилище и в пакете
         # в пакете проставляются operation_code, is_changed, удаляемые записи
         flat_entities = {}
-        system_code = entity_packages['system_code']
-        entities = entity_packages['entities']
+        system_code = entity_package['system_code']
+        entities = entity_package['entities']
         self.build_flat_entities(flat_entities, entities)
         self.set_diffs(system_code, flat_entities)
         self.mark_entities(flat_entities)
-        return entity_packages
+        return entity_package
 
     def build_flat_entities(self, flat_entities, package_data, level=1):
         for entity_code, records in package_data.iteritems():

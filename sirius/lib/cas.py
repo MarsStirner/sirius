@@ -35,6 +35,8 @@ semi_public_endpoints = ('config_js', 'current_user_js', 'select_role', 'logout'
 #             return redirect(url_for('doctor_to_assist', next=request.url))
 
 
+# todo: hitsl_utils.cas.CasExtension
+
 @app.before_request
 def check_valid_login():
     if (request.endpoint and 'static' not in request.endpoint and

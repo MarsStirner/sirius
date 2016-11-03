@@ -37,13 +37,13 @@ class Header(object):
 
     def __init__(self):
         self.meta = {
-            'local_entity_code': None,  # не обязательное
-            'local_service_code': None,  # можем вычислить сущность
-            'local_main_id': None,
-            'local_main_param_name': None,
-            'local_method': None,
-            'local_operation_code': None,  # для запроса планировщиком списка
-            'local_parents_params': None,  # для фильтрации запроса по родительским сущностям
+            'local_entity_code': None,  # не обязательное (если есть local_service_code)
+            'local_service_code': None,  # вычисляется сущность
+            'local_main_id': None,  # для сопоставления ID
+            'local_main_param_name': None,  # для сопоставления ID
+            'local_method': None,  # для вычисления operation_code
+            'local_operation_code': None,  # для запроса планировщиком списка / для порядка обработки дочерних сущностей
+            'local_parents_params': None,  # для фильтрации/уточнения запроса по родительским сущностям
 
             'remote_system_code': None,
             'remote_entity_code': None,
@@ -55,7 +55,7 @@ class Header(object):
         }
 
         # todo: по реализации Reformer станет ясно что еще сюда добавить
-        # todo: скорее всего объединить local и remote (посмотреть на запросах с возвратами)
+        # todo: скорее всего объединить local и remote (посмотреть на запросах с возвратами) !запросы без реформера ID
         # (ID/params, entity_code)
 
 
@@ -108,11 +108,16 @@ class Message(object):
     def get_source_data(self):
         return self.header.source_data
 
-    def add_missing_data(self, miss_data):
-        self.missing = miss_data
-
-    def get_missing_data(self):
-        return self.missing
+    def get_relative_meta(self):
+        meta = self.get_header().meta
+        lcl_prefix = 'dst_' if self.is_to_local else 'src_'
+        rmt_prefix = 'src' if self.is_to_local else 'dst'
+        res = {}
+        for k, v in meta.items():
+            rk = k[6:]
+            prefix = rmt_prefix if k[0] == 'r' else lcl_prefix
+            res[''.join((prefix, rk))] = v
+        return res
 
     @property
     def is_to_local(self):

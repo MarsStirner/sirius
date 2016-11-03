@@ -15,40 +15,43 @@ from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
 from sirius.blueprints.reformer.api import Builder
 from sirius.blueprints.reformer.models.method import ApiMethod
-from sirius.lib.remote_system import RemoteSystemCode
+from sirius.models.system import SystemCode
 from sirius.lib.xform import Undefined
 from sirius.models.operation import OperationCode
 
+encode = WebMisJsonEncoder().default
+
 
 class PatientTambovBuilder(Builder):
-    remote_sys_code = RemoteSystemCode.TAMBOV
+    remote_sys_code = SystemCode.TAMBOV
 
     ##################################################################
-    ##  reform entities client
+    ##  reform requests
 
-    def build_local_client(self, header_meta, entity_package, addition_data):
+    def build_remote_request(self, header_meta, dst_entity_code):
+        req_data = self.build_remote_request_common(header_meta, dst_entity_code)
+        return req_data
+
+    ##################################################################
+    ##  reform entities
+
+    def build_local_entities(self, header_meta, entity_package, addition_data):
         patient_data = entity_package['data']
         src_entity_code = header_meta['remote_entity_code']
 
-        def set_current_id_func(record):
-            reform_meta = record['meta']
-            record['body'].update({
-                'client_id': reform_meta['dst_id'] or Undefined,
-            })
-        res = {
-            'operation_order': {},
-            RisarEntityCode.CLIENT: [{
-                'meta': {
-                    'src_operation_code': header_meta['remote_operation_code'],
-                    'src_entity_code': src_entity_code,
-                    'src_id': header_meta['remote_main_id'],
-                    'dst_entity_code': RisarEntityCode.CLIENT,
-                    'set_current_id_func': set_current_id_func,
-                },
-            }],
-        }
-        main_item = res[RisarEntityCode.CLIENT][0]
-        self.set_operation_order(res, RisarEntityCode.CLIENT, 1)
+        res = self.get_entity_node()
+        main_item = self.set_main_entity(
+            node=res,
+            dst_entity_code=RisarEntityCode.CLIENT,
+            dst_parents_params=header_meta['local_parents_params'],
+            dst_main_id_name='client_id',
+            src_operation_code=header_meta['remote_operation_code'],
+            src_entity_code=src_entity_code,
+            src_main_id_name=header_meta['remote_main_param_name'],
+            src_id=header_meta['remote_main_id'],
+            level=1,
+            level_count=1,
+        )
         patient = patient_data['patient']
         gender = safe_int(patient.gender)
         # if gender != 2:
@@ -60,24 +63,46 @@ class PatientTambovBuilder(Builder):
                 'name': patient['firstName'],
                 'surname': patient['lastName']
             },
-            'birthday_date': WebMisJsonEncoder().default(patient['birthDate']),
+            'birthday_date': encode(patient['birthDate']),
             'gender': gender,
             'SNILS': None or Undefined,  # заполняется в документах
         }
         for document_data in patient_data.identifiers:
+            if not document_data.type:
+                continue
             if document_data.type == '19':  # SNILS
-                main_item['body']['SNILS'] = document_data.code
-            else:
-                # todo: в схеме рисар document будет переделан на список documents
-                main_item['body'].setdefault('documents', []).append({
-                    'document_type_code': safe_int(document_data.type),
+                main_item['body']['SNILS'] = document_data.number
+            # elif document_data.codeType == '1' and not main_item['body']['SNILS'] is Undefined:  # SNILS
+            #     main_item['body']['SNILS'] = document_data.code
+            elif document_data.type == '26':  # ENP
+                main_item['body'].setdefault('insurance_documents', []).append({
+                    # todo: синхронизация справочников
+                    # 'insurance_document_type': document_data.type or '',
+                    'insurance_document_type': '3',
+                    'insurance_document_number': document_data.number or '',
+                    'insurance_document_beg_date': encode(document_data.issueDate) or '',
+                    'insurance_document_series': document_data.series or Undefined,
+                    # todo: error: has no method get
+                    # 'document_issuing_authority': safe_traverse(document_data, 'issueOrganization', 'code'),
+                    # todo: синхронизация справочников
+                    # 'insurance_document_issuing_authority': document_data.issueOrganization and document_data.issueOrganization.code or '',
+                    'insurance_document_issuing_authority': '64014',
+                })
+            elif document_data.type == '13':  # passport
+                # todo: в схеме рисар document будет переделан на список documents. зачем?
+                main_item['body'].setdefault('document', {}).update({
+                    # todo: синхронизация справочников
+                    # 'document_type_code': safe_int(document_data.type),
+                    'document_type_code': 2,
                     'document_number': document_data.number,
-                    'document_beg_date': document_data.activationDate,
+                    'document_beg_date': encode(document_data.issueDate) or '',
                     'document_series': document_data.series or Undefined,
                     # todo: error: has no method get
-                    # 'document_issuing_authority': safe_traverse(document_data, 'issueOrganization', 'name'),
-                    'document_issuing_authority': document_data.issueOrganization and document_data.issueOrganization.name or Undefined,
+                    # 'document_issuing_authority': safe_traverse(document_data, 'issueOrganization', 'code'),
+                    'document_issuing_authority': document_data.issueOrganization and document_data.issueOrganization.code or Undefined,
                 })
+            else:
+                pass
         # Женя: Берем только один адрес проживания, всё остальное пофиг. Если их несколько - берем первый
         for address_data in patient_data['addresses']:
             local_addr = {
@@ -86,7 +111,7 @@ class PatientTambovBuilder(Builder):
                 'house': address_data['house'],  # заполняется в entry
                 'locality_type': None,  # заполняется в entry
                 # todo:
-                'building': 'not-implemented' or Undefined,
+                # 'building': 'not-implemented' or Undefined,
                 'flat': address_data['apartment'] or Undefined,
             }
             # в схеме рисар пока не массив, а объект
@@ -94,7 +119,7 @@ class PatientTambovBuilder(Builder):
             main_item['body']['residential_address'] = local_addr
             local_addr['locality_type'] = 1
             for entry in address_data['entries']:
-                if entry['level'] == '4':
+                if entry['level'] == '5':
                     local_addr['KLADR_locality'] = entry['kladrCode'][:11] + '00'
                     # local_addr['locality_type'] = '1' if entry['type'] == '18' else '2'
                 elif entry['level'] == '6':
@@ -109,30 +134,29 @@ class PatientTambovBuilder(Builder):
         #######################
         ## RisarEntityCode.CARD
 
-        def set_current_id_func(record):
-            reform_meta = record['meta']
-            record['body'].update({
-                'client_id': reform_meta['dst_id'],
-            })
-        res.update({
-            RisarEntityCode.CARD: [{
-                'meta': {
-                    'src_operation_code': header_meta['remote_operation_code'],
-                    'src_entity_code': src_entity_code,
-                    'src_id': header_meta['remote_main_id'],
-                    'dst_entity_code': RisarEntityCode.CARD,
-                    'set_current_id_func': set_current_id_func,
-                },
-            }],
-        })
-        main_item = res[RisarEntityCode.CARD][0]
-        self.set_operation_order(res, RisarEntityCode.CARD, 1)
-        main_item['body'] = {
-            'client_id': None,  # заполняется в set_current_id_func
-            'card_set_date': WebMisJsonEncoder().default(date.today()),
-            'card_doctor': '-1',
-            'card_LPU': '-1',
-        }
+        # def set_current_id_func(record):
+        #     reform_meta = record['meta']
+        #     record['body'].update({
+        #         'client_id': reform_meta['dst_id'],
+        #     })
+        # main_item = self.set_main_entity(
+        #     node=res,
+        #     dst_entity_code=RisarEntityCode.CARD,
+        #     dst_parents_params=header_meta['local_parents_params'],
+        #     src_operation_code=header_meta['remote_operation_code'],
+        #     src_entity_code=src_entity_code,
+        #     src_id_url_param_name=header_meta['remote_main_param_name'],
+        #     src_id=header_meta['remote_main_id'],
+        #     level=1,
+        #     level_count=1,
+        #     set_current_id_func=set_current_id_func,
+        # )
+        # main_item['body'] = {
+        #     'client_id': None,  # заполняется в set_current_id_func
+        #     'card_set_date': encode(date.today()),
+        #     'card_doctor': '-1',
+        #     'card_LPU': '-1',
+        # }
 
         # образец работы с дозапросами
         # childs = entity_package['childs']
@@ -215,25 +239,9 @@ class PatientTambovBuilder(Builder):
         return res
 
     ##################################################################
-    ##  reform patient requests
+    ##  build packages by req
 
-    def build_remote_patient_request(self, header_meta):
-        req_data = {
-            'meta': {
-                'src_entity_code': header_meta['local_entity_code'],
-                'src_id': header_meta['local_main_id'],
-                'dst_system_code': self.remote_sys_code,
-                'dst_entity_code': TambovEntityCode.PATIENT,
-                'dst_operation_code': header_meta['local_operation_code'],
-                'dst_id': header_meta['remote_main_id'],
-            }
-        }
-        return req_data
-
-    ##################################################################
-    ##  build packages patient
-
-    def build_remote_patient_entity_packages(self, reformed_req):
+    def build_remote_entity_packages(self, reformed_req):
         entities = {}
         entity_packages = {
             'system_code': self.remote_sys_code,
@@ -241,20 +249,20 @@ class PatientTambovBuilder(Builder):
         }
         req_meta = reformed_req['meta']
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
-            api_method = ApiMethod.get_method(
+            api_method = ApiMethod.get(
+                self.remote_sys_code,
                 TambovEntityCode.PATIENT,
                 OperationCode.READ_ONE,
-                self.remote_sys_code,
             )
             all_patients = self.get_all_patients(reformed_req)
             changed_patients = self.get_changed_patients(reformed_req)
             self.set_patient_cards(changed_patients, entities, api_method)
             self.inject_all_patients(entities, all_patients, api_method)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
-            api_method = ApiMethod.get_method(
+            api_method = ApiMethod.get(
+                self.remote_sys_code,
                 TambovEntityCode.PATIENT,
                 OperationCode.READ_ONE,
-                self.remote_sys_code,
             )
             self.set_patient_cards([req_meta['dst_id']], entities, api_method)
         return entity_packages
@@ -265,10 +273,7 @@ class PatientTambovBuilder(Builder):
         res = None
         page = 1
         while res or page == 1:
-            req['meta'].update({
-                'dst_id_url_param_name': ['page', 'gender'],
-                'dst_id': [page, 2],
-            })
+            req['body'].update({'page': page, 'gender': 2})
             res = self.transfer__send_request(req)
             patients_uids.update(res)
             page += 1
@@ -285,9 +290,10 @@ class PatientTambovBuilder(Builder):
         # todo: брать из даты начала работы планировщика по сущности
         modified_since = date(2016, 9, 1)
         while res or page == 1:
-            req['meta'].update({
-                'dst_id_url_param_name': ['page', 'gender', 'modifiedSince'],
-                'dst_id': [page, 2, modified_since],
+            req['body'].update({
+                'page': page,
+                'gender': 2,
+                'modifiedSince': modified_since,
             })
             res = self.transfer__send_request(req)
             patient_uids.extend(res)
@@ -321,8 +327,9 @@ class PatientTambovBuilder(Builder):
                 'meta': {
                     'dst_method': api_method['method'],
                     'dst_url': api_method['template_url'],
-                    'dst_id_url_param_name': 'patientUid',
-                    'dst_id': patient_uid,
+                },
+                'body': {
+                    'patientUid': patient_uid,
                 },
             }
             patient_data = self.transfer__send_request(req)

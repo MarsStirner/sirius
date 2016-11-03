@@ -22,3 +22,17 @@ def send_event_remote(testapp, session):
     result = make_test_api_request(testapp, 'post', url, session)
     # result = make_api_request('post', url, session)
     return result
+
+
+def request_client_local_id_by_remote_id(testapp, session, data):
+    url = u'/risar/api/client/local_id/'
+    # result = make_test_api_request(testapp, 'post', url, session, data)
+    result = make_api_request('get', url, session, data)
+    return result
+
+
+def request_register_card_idents(testapp, session, data):
+    url = u'/risar/api/card/register/'
+    # result = make_test_api_request(testapp, 'post', url, session, data)
+    result = make_api_request('post', url, session, data)
+    return result

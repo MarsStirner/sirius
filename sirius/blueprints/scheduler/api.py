@@ -98,10 +98,10 @@ class Scheduler(object):
 
                 msg = self.create_message(system_code, entity_code)  # searchServiceRend
                 meta = msg.get_header().meta
-                meta['local_parents_params'] = {
-                    RisarEntityCode.CLIENT: card_data['client_id'],
-                    RisarEntityCode.CARD: card_data['card_id'],
-                    RisarEntityCode.MEASURE: measure_data['measure_id'],
+                meta['parents_params'] = {
+                    'client_id': {'entity': RisarEntityCode.CLIENT, 'id': card_data['client_id']},
+                    'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
+                    'measure_id': {'entity': RisarEntityCode.MEASURE, 'id': measure_data['measure_id']},
                 }
                 producer = LocalProducer()
                 producer.send(msg)

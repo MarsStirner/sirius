@@ -19,7 +19,8 @@ from six import reraise
 
 from sirius.lib.apiutils import ApiException, jsonify_api_exception, \
     jsonify_exception, RawApiResult, jsonify_ok, json_dumps
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError as SAOperationalError
+from zeep.exceptions import TransportError, Error as ZeepError
 
 logger = logging.getLogger('simple')
 
@@ -57,7 +58,7 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
                 meta = module.get_stream_meta(obj)
                 res = func(*args, **kwargs)
                 exit_time = time()
-            except StandardError as exc:
+            except (StandardError, ZeepError) as exc:
                 error_datetime = datetime.today()
                 traceback.print_exc()
                 message = traceback.format_exception_only(type(exc), exc)[-1]
@@ -114,7 +115,7 @@ def task_entry(function=None, stream_pos=2, self_pos=1):
                     exit_time = time()
                 except LoggedException as exc:
                     reraise(Exception, LoggedException(exc.args[0]), sys.exc_info()[2])
-                except OperationalError as exc:
+                except SAOperationalError as exc:
                     logger.error(unicode(exc))
                     # logg_to_MonitorDB(params)
                     if retry_count > max_retry:
@@ -200,7 +201,7 @@ def beat_entry(function=None, self_pos=1):
     return decorator
 
 
-def connect_entry(function=None, stream_pos=2, self_pos=1):
+def connect_entry(function=None, login=None):
     """
     Ловит ошибку на входе в модуль активных запросов
     """
@@ -215,6 +216,12 @@ def connect_entry(function=None, stream_pos=2, self_pos=1):
                 retry = False
                 retry_count += 1
                 try:
+                    if callable(login):
+                        session = getattr(func, '_session', None)
+                        if not session:
+                            session = login()
+                            func._session = session
+                        kwargs['session'] = session
                     res = func(*args, **kwargs)
                 except (ConnectError, ConnectionError) as exc:
                     traceback.print_exc()
@@ -225,6 +232,10 @@ def connect_entry(function=None, stream_pos=2, self_pos=1):
                         pass
                     retry = True
                     sleep(60)
+                except (TransportError,) as exc:
+                    if retry_count == 1 and callable(login):  #and res.status_code == 403:
+                        func._session = None
+                        retry = True
             return res
         return wrapper
     if callable(function):

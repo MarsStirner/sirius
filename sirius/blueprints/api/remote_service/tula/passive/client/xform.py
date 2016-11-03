@@ -10,9 +10,9 @@ from sirius.lib.xform import XForm
 from sirius.blueprints.api.remote_service.tula.entities import TulaEntityCode
 from sirius.blueprints.api.remote_service.tula.passive.client.schemas import \
     ClientSchema
-from sirius.lib.remote_system import RemoteSystemCode
+from sirius.models.system import SystemCode
 
 
 class TulaClientXForm(ClientSchema, XForm):
-    remote_system_code = RemoteSystemCode.TULA
+    remote_system_code = SystemCode.TULA
     entity_code = TulaEntityCode.CLIENT

@@ -22,6 +22,7 @@ login = config.get('HIPPOCRATE_API_LOGIN', u'ВнешСис')
 password = config.get('HIPPOCRATE_API_PASSWORD', '')
 authent_token_name = config.get('CASTIEL_AUTH_TOKEN', 'CastielAuthToken')
 authoriz_token_name = config.get('HIPPOCRATE_SESSION_KEY', 'hippocrates.session.id')
+session = None
 
 
 def get_token(login, password):
@@ -68,7 +69,6 @@ def get_role(token, role_code=''):
     return result.cookies[authoriz_token_name]
 
 
-@contextmanager
 def make_login():
     token = get_token(login, password)
     print ' > auth token: ', token
@@ -76,10 +76,7 @@ def make_login():
     print ' > session token: ', session_token
     session = token, session_token
 
-    try:
-        yield session
-    finally:
-        release_token(token)
+    return session
 
 
 def make_api_request(method, url, session, json_data=None, url_args=None):

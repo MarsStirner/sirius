@@ -15,7 +15,7 @@ from sirius.blueprints.api.test.connect import make_login, release_token
 session = None
 
 
-class TestClient:
+class _TestClient:
 
     def test_auth(self):
         global session
