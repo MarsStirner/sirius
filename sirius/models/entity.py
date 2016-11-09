@@ -49,13 +49,14 @@ class EntityImage(Model):
     root_external_id = Column(db.String(80), unique=False, nullable=False)
     external_id = Column(db.String(80), unique=False, nullable=False, index=True)
     content = Column(JSONB, unique=False, nullable=False)
+    level = Column(db.Integer, unique=False, nullable=False)
 
 
-class _DiffEntityImage(Model):
-    __tablename__ = 'temp_entity_image'
+class EntityImageDiff(Model):
+    __tablename__ = 'entity_image_diff'
 
     entity_id = reference_col('entity', unique=False, nullable=False)
-    entity = relationship('Entity', backref='set_diff_entity_image')
+    entity = relationship('Entity', backref='set_entity_image_diff')
     root_external_id = Column(db.String(80), unique=False, nullable=False)
     external_id = Column(db.String(80), unique=False, nullable=False, index=True)
     content = Column(JSONB, unique=False, nullable=True)
@@ -65,8 +66,8 @@ class _DiffEntityImage(Model):
     __table_args__ = {'prefixes': ['TEMPORARY']}
 
 
-class DiffEntityImage(object):
-    temp_table_name = 'temp_entity_image'
+class DiffEntityImage(object):  # todo: перенести методы в EntityImageDiff
+    temp_table_name = EntityImageDiff.__tablename__
 
     @classmethod
     def create_temp_table(cls):
@@ -118,6 +119,13 @@ class DiffEntityImage(object):
     def drop_temp_table(cls):
         drop_query = '''
         DROP TABLE IF EXISTS %(table_name)s;
+        ''' % ({'table_name': cls.temp_table_name})
+        db.session.execute(drop_query)
+
+    @classmethod
+    def clear_temp_table(cls):
+        drop_query = '''
+        DELETE FROM %(table_name)s;
         ''' % ({'table_name': cls.temp_table_name})
         db.session.execute(drop_query)
 
@@ -190,7 +198,8 @@ class DiffEntityImage(object):
           root_external_id,
           external_id,
           content,
-          operation_code
+          operation_code,
+          level
         )
         (
           select
@@ -198,7 +207,8 @@ class DiffEntityImage(object):
             chk.root_external_id,
             chk.external_id,
             chk.content,
-            '%(operation_code)s'
+            '%(operation_code)s',
+            chk.level
           from %(chk_table_name)s chk
           where
             not exists(
@@ -224,14 +234,16 @@ class DiffEntityImage(object):
           entity_id,
           root_external_id,
           external_id,
-          content
+          content,
+          level
         )
         (
           select
             src.entity_id,
             src.root_external_id,
             src.external_id,
-            src.content
+            src.content,
+            src.level
           from %(src_table_name)s src
           where
             src.operation_code = '%(operation_code)s'
@@ -299,8 +311,8 @@ class DiffEntityImage(object):
         #     'operation_code': OperationCode.READ_MANY,
         # })
         # db.session.execute(set_query)
-        return _DiffEntityImage.query.join(
-            Entity, Entity.id == _DiffEntityImage.entity_id
+        return EntityImageDiff.query.join(
+            Entity, Entity.id == EntityImageDiff.entity_id
         ).filter(
-            _DiffEntityImage.operation_code != OperationCode.READ_MANY,
-        ).order_by(_DiffEntityImage.level.desc()).all()
+            EntityImageDiff.operation_code != OperationCode.READ_MANY,
+        ).order_by(EntityImageDiff.level.desc()).all()

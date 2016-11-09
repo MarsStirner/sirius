@@ -16,6 +16,8 @@ from sirius.models.system import SystemCode
 
 class TulaReformer(Reformer):
     remote_sys_code = SystemCode.TULA
+    local_version = '0'
+    remote_version = '0'
 
     ##################################################################
     ##  reform entities

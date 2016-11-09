@@ -52,6 +52,7 @@ class Header(object):
             'remote_main_param_name': None,
             'remote_method': None,
             'remote_operation_code': None,  # для передачи из пакета в сущность
+            'remote_parents_params': None,  # для фильтрации/уточнения запроса по родительским сущностям
         }
 
         # todo: по реализации Reformer станет ясно что еще сюда добавить
@@ -117,6 +118,10 @@ class Message(object):
             rk = k[6:]
             prefix = rmt_prefix if k[0] == 'r' else lcl_prefix
             res[''.join((prefix, rk))] = v
+        return res
+
+    def get_stream_meta(self):
+        res = {'header': vars(self.get_header())}
         return res
 
     @property

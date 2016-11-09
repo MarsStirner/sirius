@@ -7,7 +7,7 @@
 
 """
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
-from sirius.blueprints.reformer.api import Builder
+from sirius.blueprints.reformer.api import Builder, RequestEntities
 from sirius.models.system import SystemCode
 from sirius.models.operation import OperationCode
 
@@ -17,9 +17,8 @@ class ClientTulaBuilder(Builder):
 
     def build_local_client(self, header_meta, data, addition_data):
         src_operation_code = self.get_operation_code_by_method(header_meta['remote_method'])
-        res = self.get_entity_node()
-        main_item = self.set_main_entity(
-            node=res,
+        entities = RequestEntities()
+        main_item = entities.set_main_entity(
             dst_entity_code=RisarEntityCode.CLIENT,
             dst_parents_params=header_meta['local_parents_params'],
             dst_main_id_name='client_id',
@@ -36,4 +35,4 @@ class ClientTulaBuilder(Builder):
                 document = main_item['body'].pop('document')
                 main_item['body']['documents'] = [document]
 
-        return res
+        return entities

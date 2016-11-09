@@ -98,7 +98,7 @@ class Scheduler(object):
 
                 msg = self.create_message(system_code, entity_code)  # searchServiceRend
                 meta = msg.get_header().meta
-                meta['parents_params'] = {
+                meta['local_parents_params'] = {
                     'client_id': {'entity': RisarEntityCode.CLIENT, 'id': card_data['client_id']},
                     'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
                     'measure_id': {'entity': RisarEntityCode.MEASURE, 'id': measure_data['measure_id']},

@@ -19,6 +19,7 @@ class _TestSchedule:
     def test_execute(self):
         with app.app_context():
             sch = Scheduler()
-            schedule_group = ScheduleGroup.query.all()
-            for req_data in schedule_group.get_requests():
-                sch.execute(req_data)
+            schedule_groups = ScheduleGroup.query.all()
+            for schedule_group in schedule_groups:
+                for req_data in schedule_group.get_requests():
+                    sch.execute(req_data)

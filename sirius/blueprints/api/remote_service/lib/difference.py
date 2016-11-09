@@ -25,15 +25,16 @@ class Difference(object):
         # пометить изменения в Хранилище и в пакете
         # в пакете проставляются operation_code, is_changed, удаляемые записи
         flat_entities = {}
-        system_code = entity_package['system_code']
-        entities = entity_package['entities']
-        self.build_flat_entities(flat_entities, entities)
+        system_code = entity_package.system_code
+        pack_entities = entity_package.get_pack_entities()
+        self.build_flat_entities(flat_entities, pack_entities)
         self.set_diffs(system_code, flat_entities)
-        self.mark_entities(flat_entities)
+        self.mark_entities(entity_package, pack_entities, flat_entities)
+        db.session.commit()
         return entity_package
 
-    def build_flat_entities(self, flat_entities, package_data, level=1):
-        for entity_code, records in package_data.iteritems():
+    def build_flat_entities(self, flat_entities, pack_entities, level=1):
+        for entity_code, records in pack_entities.iteritems():
             for record in records:
                 flat_entities.setdefault((level, entity_code), {}).update(
                     {record['main_id']: record}
@@ -43,7 +44,8 @@ class Difference(object):
                     self.build_flat_entities(flat_entities, childs, level + 1)
 
     def set_diffs(self, system_code, flat_entities):
-        DiffEntityImage.create_temp_table()
+        # DiffEntityImage.create_temp_table()
+        DiffEntityImage.clear_temp_table()
         for (level, entity_code), fl_entity_dict in flat_entities.iteritems():
             entity_id = Entity.get_id(system_code, entity_code)
             objects = [
@@ -62,19 +64,31 @@ class Difference(object):
         DiffEntityImage.set_new_data()
         DiffEntityImage.set_deleted_data()
 
-    def mark_entities(self, flat_entities):
+    def mark_entities(self, entity_package, pack_entities, flat_entities):
         diff_records = DiffEntityImage.get_marked_data()
         for diff_rec in diff_records:
             key = (diff_rec.level, diff_rec.entity.code)
             fl_entity_dict = flat_entities[key]
-            if diff_rec.operation_code != OperationCode.DELETE or diff_rec.level == 1:
-                # остальные уровни обработаются уже во внешнем приложении
+            if diff_rec.operation_code != OperationCode.DELETE:
                 package_record = fl_entity_dict[diff_rec.external_id]
                 root_parent = package_record.get('root_parent')
                 if root_parent:
                     root_parent['operation_code'] = OperationCode.CHANGE
                 package_record['operation_code'] = diff_rec.operation_code
                 (root_parent if root_parent else package_record)['is_changed'] = True
+            else:
+                # остальные уровни обработаются уже во внешнем приложении
+                if diff_rec.level == 1:
+                    entity_package.add_main_pack_entity(
+                        entity_code=diff_rec.entity.code,
+                        method=None,
+                        main_param_name=None,
+                        main_id=diff_rec.external_id,
+                        parents_params=None,
+                        data=None,
+                        operation_code=diff_rec.operation_code,
+                        is_changed=True,
+                    )
 
     # def save_all_changes(self):
     #     # вносит изменения в EntityImage, удаляет временные таблицы
@@ -99,9 +113,11 @@ class Difference(object):
 
     def commit_all_changes(self):
         # удаляет временные таблицы
-        DiffEntityImage.drop_temp_table()
-        # фиксирует изменения в EntityImage
-        # todo: убрать (проверить) комиты в DiffEntityImage
+        # DiffEntityImage.drop_temp_table()
+        DiffEntityImage.clear_temp_table()
+        # фиксирует изменения в EntityImage, EntityImageDiff
+        # todo: убрать комиты в conformity_local..
+        # todo: комит по каждой записи отдельно - save_change. совместно с conformity_local, (conformity_remote?)
         db.session.commit()
 
     def place(self, data):

@@ -7,13 +7,13 @@
 
 """
 
-request_tula_patient_1 = {
+request_tambov_patient_1 = {
     "remote_system_code": 'tambov',
     "remote_entity_code": 'patient',
     "remote_main_id": '6EHBT7UCLVXB5LSV',
 }
 
-request_tula_register_patient_card = {
+request_tambov_register_patient_card = {
     "local_main_id": None,
     "remote_system_code": 'tambov',
     "remote_entity_code": 'patient',
@@ -27,32 +27,32 @@ create_risar_card_1 = {
     'card_LPU': '1246'
 }
 
-request_risar_first_checkup_1995 = {
+request_risar_first_checkup_2159 = {
     'service_method': 'api_checkup_obs_first_ticket25_get',
-    'request_url': 'http://localhost:6600/risar/api/integration/0/card/127/checkup/obs/first/1995/ticket25',
+    'request_url': 'http://localhost:6600/risar/api/integration/0/card/139/checkup/obs/first/2159/ticket25',
     'request_method': 'get',
-    'request_params': {'card_id': 127},
-    'main_id': 1995,
+    'request_params': {'card_id': 139},
+    'main_id': 2159,
     'main_param_name': 'exam_obs_id',
     'method': 'post' if False else 'put',
 }
 
-request_risar_measures_127 = {
+request_risar_measures_139 = {
     'service_method': 'api_measure_list_get',
-    'request_url': 'http://localhost:6600/risar/api/integration/0/card/127/measures/list/',
+    'request_url': 'http://localhost:6600/risar/api/integration/0/card/139/measures/list/',
     'request_method': 'get',
-    'request_params': {'card_id': 127},
+    'request_params': {'card_id': 139},
     'main_id': None,
     'main_param_name': None,
     'method': 'post' if False else 'put',
 }
 
-request_risar_second_checkup_1995 = {
+request_risar_second_checkup_2159 = {
     'service_method': 'api_checkup_obs_second_ticket25_get',
-    'request_url': 'http://localhost:6600/risar/api/integration/0/card/127/checkup/obs/second/1995/ticket25',
+    'request_url': 'http://localhost:6600/risar/api/integration/0/card/139/checkup/obs/second/2159/ticket25',
     'request_method': 'get',
-    'request_params': {'card_id': 127},
-    'main_id': 1995,
+    'request_params': {'card_id': 139},
+    'main_id': 2159,
     'main_param_name': 'exam_obs_id',
     'method': 'post' if False else 'put',
 }

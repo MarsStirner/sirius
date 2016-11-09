@@ -21,6 +21,8 @@ from sirius.models.system import SystemCode
 
 class TambovReformer(Reformer):
     remote_sys_code = SystemCode.TAMBOV
+    local_version = '0'
+    remote_version = '0'
 
     ##################################################################
     ##  reform entities

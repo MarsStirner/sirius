@@ -64,12 +64,12 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
                 message = traceback.format_exception_only(type(exc), exc)[-1]
                 params = {
                     'stream': get_stream_data(module, func, obj, meta),
-                    'message': message.decode('utf-8'),
+                    'message': message,
                     'enter_time': enter_datetime,
                     'error_time': error_datetime,
                     'traceback': traceback.format_exc(),
                 }
-                logger.error(unicode(params))
+                logger.error(params_to_str(params))
                 # logg_to_MonitorDB(params)
                 reraise(Exception, LoggedException(params), sys.exc_info()[2])
             else:
@@ -88,10 +88,17 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
     return decorator
 
 
+def params_to_str(params):
+    r = '\n'.join([': '.join((k.upper(), str(v))) for k, v in params.items()])
+    return r.decode('utf-8')
+
+
 def task_entry(function=None, stream_pos=2, self_pos=1):
     """
     Ловит ошибку на входе в таск, собирая входные данные
     """
+    sleep_timeout = 6
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -122,19 +129,19 @@ def task_entry(function=None, stream_pos=2, self_pos=1):
                         # todo: stop celery workers (back rabbit msg)
                         pass
                     retry = True
-                    sleep(60)
+                    sleep(sleep_timeout)
                 except Exception as exc:
                     error_datetime = datetime.today()
                     traceback.print_exc()
                     message = traceback.format_exception_only(type(exc), exc)[-1]
                     params = {
                         'stream': get_stream_data(module, func, obj, meta),
-                        'message': message.decode('utf-8'),
+                        'message': message,
                         'enter_time': enter_datetime,
                         'error_time': error_datetime,
                         'traceback': traceback.format_exc(),
                     }
-                    logger.error(unicode(params))
+                    logger.error(params_to_str(params))
                     # logg_to_MonitorDB(params)
                     reraise(Exception, LoggedException(params), sys.exc_info()[2])
                 else:
@@ -177,12 +184,12 @@ def beat_entry(function=None, self_pos=1):
                 message = traceback.format_exception_only(type(exc), exc)[-1]
                 params = {
                     'stream': get_stream_data(module, func, obj, meta),
-                    'message': message.decode('utf-8'),
+                    'message': message,
                     'enter_time': enter_datetime,
                     'error_time': error_datetime,
                     'traceback': traceback.format_exc(),
                 }
-                logger.error(unicode(params))
+                logger.error(params_to_str(params))
                 # logg_to_MonitorDB(params)
                 reraise(Exception, LoggedException(params), sys.exc_info()[2])
             else:
@@ -205,6 +212,8 @@ def connect_entry(function=None, login=None):
     """
     Ловит ошибку на входе в модуль активных запросов
     """
+    sleep_timeout = 6
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -225,13 +234,13 @@ def connect_entry(function=None, login=None):
                     res = func(*args, **kwargs)
                 except (ConnectError, ConnectionError) as exc:
                     traceback.print_exc()
-                    logger.error(unicode(exc))
+                    logger.error(str(exc))
                     # logg_to_MonitorDB(params)
                     if retry_count > max_retry:
                         # todo: stop celery workers (back rabbit msg)
                         pass
                     retry = True
-                    sleep(60)
+                    sleep(sleep_timeout)
                 except (TransportError,) as exc:
                     if retry_count == 1 and callable(login):  #and res.status_code == 403:
                         func._session = None
