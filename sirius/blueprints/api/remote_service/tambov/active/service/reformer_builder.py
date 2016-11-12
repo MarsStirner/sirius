@@ -6,7 +6,7 @@
 @date: 23.09.2016
 
 """
-from datetime import date
+from datetime import date, datetime
 
 from hitsl_utils.safe import safe_traverse, safe_int
 from hitsl_utils.wm_api import WebMisJsonEncoder
@@ -14,7 +14,7 @@ from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
-    RequestEntities
+    RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.blueprints.reformer.models.method import ApiMethod
 from sirius.models.system import SystemCode
@@ -22,6 +22,7 @@ from sirius.lib.xform import Undefined
 from sirius.models.operation import OperationCode
 
 encode = WebMisJsonEncoder().default
+to_date = lambda x: datetime.strptime(x, '%Y-%m-%d')
 
 
 class ServiceTambovBuilder(Builder):
@@ -36,7 +37,7 @@ class ServiceTambovBuilder(Builder):
         params_map = {
             RisarEntityCode.CARD: {
                 'entity': TambovEntityCode.PATIENT, 'param': 'patientUid'
-            }
+            },
         }
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
 
@@ -44,121 +45,224 @@ class ServiceTambovBuilder(Builder):
         return req_data
 
     ##################################################################
-    ##  reform entities client
-
-    def build_local_measure(self, header_meta, pack_entity, addition_data):
-        service_data = pack_entity['data']
-        if service_data.type == 11:
-            res = self.build_local_measure_research(header_meta, service_data)
-        elif service_data.type == 12:
-            res = self.build_local_measure_specialists_checkup(header_meta, service_data)
-        elif service_data.type == 13:
-            res = self.build_local_measure_hospitalization(header_meta, service_data)
-        else:
-            # todo:
-            raise NotImplementedError()
-        return res
-
-    def build_local_measure_research(self, header_meta, service_data):
-        src_entity_code = header_meta['remote_entity_code']
-        src_operation_code = header_meta['remote_operation_code']
-
-        # сопоставление параметров родительских сущностей
-        params_map = {
-            TambovEntityCode.PATIENT: {
-                'entity': RisarEntityCode.CARD, 'param': 'card_id'
-            }
-        }
-        self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
-
-        # card_match = MatchingId.first_local_id(
-        #     TambovEntityCode.PATIENT,
-        #     service_data['patient_uid'],
-        #     RisarEntityCode.CARD,
-        #     self.remote_sys_code,
-        # )
-        measure_match = MatchingId.first_local_id(
-            TambovEntityCode.REFERRAL,
-            service_data['referralId'],
-            RisarEntityCode.MEASURE,
-            self.remote_sys_code,
-        )
-
-        entities = RequestEntities()
-        main_item = entities.set_main_entity(
-            dst_entity_code=RisarEntityCode.MEASURE_RESEARCH,
-            dst_parents_params=header_meta['local_parents_params'],
-            dst_main_id_name='result_action_id',
-            src_operation_code=src_operation_code,
-            src_entity_code=src_entity_code,
-            src_main_id_name=header_meta['remote_main_param_name'],
-            src_id=header_meta['remote_main_id'],
-            level=1,
-            level_count=1,
-        )
-        if src_operation_code != OperationCode.DELETE:
-            main_item['body'] = {
-                # 'result_action_id': None,  # заполняется в set_current_id_func
-                'measure_id': measure_match['dst_id'] or Undefined,
-                # 'measure_type_code': service_data[''],
-                # 'realization_date': service_data[''],
-                # 'lpu_code': service_data[''] or Undefined,
-                # 'analysis_number': service_data[''] or Undefined,
-                # 'results': service_data[''],
-                # 'comment': service_data[''] or Undefined,
-                # 'doctor_code': service_data[''] or Undefined,
-                # 'status': service_data[''] or Undefined,
-            }
-
-        return entities
-
-    ##################################################################
     ##  build packages
 
     def build_remote_entity_packages(self, reformed_req):
+        """
+        Сборка услуг с направлениями. Уже здесь направление делаем родительским,
+        т.к. список сущностей разбивается на сообщения, в которых нужно решать,
+        что делать с направлением.
+        """
         package = EntitiesPackage(self.remote_sys_code)
-        req_meta = reformed_req['meta']
+        req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
-            api_method = self.reformer.get_api_method(
-                self.remote_sys_code,
-                TambovEntityCode.SERVICE,
-                OperationCode.READ_ONE,
-            )
             services_ids = self.get_services_ids(reformed_req)
-            self.set_services(services_ids, package, api_method, req_meta)
+            self.set_services(services_ids, package, req_meta)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
-            api_method = self.reformer.get_api_method(
-                self.remote_sys_code,
-                TambovEntityCode.SERVICE,
-                OperationCode.READ_ONE,
-            )
-            self.set_services([req_meta['dst_id']], package, api_method, req_meta)
+            self.set_services([req_meta['dst_id']], package, req_meta)
         return package
 
     def get_services_ids(self, reformed_req):
         req = reformed_req
-        for param_name, param_value in req['meta']['dst_parents_params'].items():
-            req.setdefault('body', {}).update({param_name: param_value})
+        for param_name, param_data in req.meta['dst_parents_params'].items():
+            req.data_update({param_name: param_data['id']})
         res = self.transfer__send_request(req)
         return res
 
-    def set_services(self, services_ids, package, api_method, req_meta):
+    def set_services(self, services_ids, package, req_meta):
+        service_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.SERVICE,
+            OperationCode.READ_ONE,
+        )
+        referral_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.REFERRAL,
+            OperationCode.READ_ONE,
+        )
+
+        referral_items = {}
         for service_id in services_ids:
-            req = {
-                'meta': {
-                    'dst_method': api_method['method'],
-                    'dst_url': api_method['template_url'],
-                },
-                'body': {
-                    'id': service_id,
-                }
-            }
+            req = DataRequest()
+            req.set_req_params(
+                url=service_api_method['template_url'],
+                method=service_api_method['method'],
+                data={'id': service_id},
+            )
             service_data = self.transfer__send_request(req)
-            main_item = package.add_main_pack_entity(
+            referralId = service_data['referralId']
+            # так как в мис направление не указано, а в мр его нужно создать
+            # обозначим направление мис фейковым ID. если в мис проставят
+            # направление, то в мр должны создать новое и перепривязать услугу
+            if referralId:
+                req = DataRequest()
+                req.set_req_params(
+                    url=referral_api_method['template_url'],
+                    method=referral_api_method['method'],
+                    data={'id': referralId},
+                )
+                referral_data = self.transfer__send_request(req)
+            else:
+                continue
+                referralId = '_'.join(('serviceId', service_id))
+                referral_data = {}
+
+            if referralId in referral_items:
+                main_item = referral_items[referralId]
+            else:
+                main_item = package.add_main_pack_entity(
+                    entity_code=TambovEntityCode.REFERRAL,
+                    method=req.method,
+                    main_param_name='referralId',
+                    main_id=referralId,
+                    parents_params=req_meta['dst_parents_params'],
+                    data=referral_data,
+                )
+                referral_items[referralId] = main_item
+
+            child_item = package.add_child_pack_entity(
+                root_item=main_item,
+                parent_item=main_item,
                 entity_code=TambovEntityCode.SERVICE,
-                method=req['meta']['dst_method'],
-                main_param_name='measure_id',
+                method=req.method,
                 main_id=service_id,
-                parents_params=req_meta['dst_parents_params'],
                 data=service_data,
             )
+
+
+# todo: удалить, когда объединение запланированных и внеплановых утвердится
+# class ServiceTambovBuilder__(Builder):
+#     remote_sys_code = SystemCode.TAMBOV
+#
+#     ##################################################################
+#     ##  reform requests
+#
+#     def build_remote_request(self, header_meta, dst_entity_code):
+#         # сопоставление параметров родительских сущностей
+#         src_entity_code = header_meta['local_entity_code']
+#         params_map = {
+#             RisarEntityCode.CARD: {
+#                 'entity': TambovEntityCode.PATIENT, 'param': 'patientUid'
+#             },
+#             RisarEntityCode.MEASURE: {
+#                 'entity': TambovEntityCode.REFERRAL, 'param': 'referralId'
+#             },
+#         }
+#         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
+#
+#         req_data = self.build_remote_request_common(header_meta, dst_entity_code)
+#         return req_data
+#
+#     ##################################################################
+#     ##  reform entities client
+#
+#     def build_local_measure(self, header_meta, pack_entity):
+#         service_data = pack_entity['data']
+#         srv_prototype__measure_type__map = {
+#             '5338': 'lab_test',
+#             '5339': 'func_test',
+#         }
+#         measure_type = srv_prototype__measure_type__map[service_data.prototypeId]
+#         research_meas_types = ('lab_test', 'func_test')
+#         checkup_meas_types = ('checkup',)
+#         if measure_type in research_meas_types:
+#             res = self.build_local_measure_research(header_meta, service_data, measure_type)
+#         elif measure_type in checkup_meas_types:
+#             res = self.build_local_measure_specialists_checkup(header_meta, service_data, measure_type)
+#         else:
+#             # todo:
+#             raise NotImplementedError()
+#         return res
+#
+#     def build_local_measure_research(self, header_meta, service_data, measure_type):
+#         src_entity_code = header_meta['remote_entity_code']
+#         src_operation_code = header_meta['remote_operation_code']
+#
+#         # сопоставление параметров родительских сущностей
+#         params_map = {
+#             TambovEntityCode.PATIENT: {
+#                 'entity': RisarEntityCode.CARD, 'param': 'card_id'
+#             },
+#             TambovEntityCode.REFERRAL: {
+#                 'entity': RisarEntityCode.MEASURE, 'param': 'measure_id'
+#             },
+#         }
+#         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
+#
+#         entities = RequestEntities()
+#         main_item = entities.set_main_entity(
+#             dst_entity_code=RisarEntityCode.MEASURE_RESEARCH,
+#             dst_parents_params=header_meta['local_parents_params'],
+#             dst_main_id_name='result_action_id',
+#             src_operation_code=src_operation_code,
+#             src_entity_code=src_entity_code,
+#             src_main_id_name=header_meta['remote_main_param_name'],
+#             src_id=header_meta['remote_main_id'],
+#             level_count=1,
+#         )
+#         if src_operation_code != OperationCode.DELETE:
+#             main_item['body'] = {
+#                 # 'result_action_id': None,  # заполняется в set_current_id_func
+#                 'measure_id': str(header_meta['local_parents_params']['measure_id']['id']),
+#                 'measure_type_code': measure_type,
+#                 'realization_date': to_date(service_data['dateTo']),
+#                 # 'lpu_code': service_data[''] or Undefined,
+#                 # 'analysis_number': service_data[''] or Undefined,
+#                 'results': service_data[''],
+#                 # 'comment': service_data[''] or Undefined,
+#                 # 'doctor_code': service_data[''] or Undefined,
+#                 # 'status': service_data[''] or Undefined,
+#             }
+#
+#         return entities
+#
+#     ##################################################################
+#     ##  build packages
+#
+#     def build_remote_entity_packages(self, reformed_req):
+#         package = EntitiesPackage(self.remote_sys_code)
+#         req_meta = reformed_req['meta']
+#         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
+#             api_method = self.reformer.get_api_method(
+#                 self.remote_sys_code,
+#                 TambovEntityCode.SERVICE,
+#                 OperationCode.READ_ONE,
+#             )
+#             services_ids = self.get_services_ids(reformed_req)
+#             self.set_services(services_ids, package, api_method, req_meta)
+#         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
+#             api_method = self.reformer.get_api_method(
+#                 self.remote_sys_code,
+#                 TambovEntityCode.SERVICE,
+#                 OperationCode.READ_ONE,
+#             )
+#             self.set_services([req_meta['dst_id']], package, api_method, req_meta)
+#         return package
+#
+#     def get_services_ids(self, reformed_req):
+#         req = reformed_req
+#         for param_name, param_data in req['meta']['dst_parents_params'].items():
+#             req.data_update({param_name: param_data['id']})
+#         res = self.transfer__send_request(req)
+#         return res
+#
+#     def set_services(self, services_ids, package, api_method, req_meta):
+#         for service_id in services_ids:
+#             req = {
+#                 'meta': {
+#                     'dst_method': api_method['method'],
+#                     'dst_url': api_method['template_url'],
+#                 },
+#                 'body': {
+#                     'id': service_id,
+#                 }
+#             }
+#             service_data = self.transfer__send_request(req)
+#             main_item = package.add_main_pack_entity(
+#                 entity_code=TambovEntityCode.SERVICE,
+#                 method=req['meta']['dst_method'],
+#                 main_param_name='measure_id',
+#                 main_id=service_id,
+#                 parents_params=req_meta['dst_parents_params'],
+#                 data=service_data,
+#             )

@@ -36,7 +36,7 @@ class PatientTambovBuilder(Builder):
     ##################################################################
     ##  reform entities
 
-    def build_local_entities(self, header_meta, pack_entity, addition_data):
+    def build_local_entities(self, header_meta, pack_entity):
         patient_data = pack_entity['data']
         src_entity_code = header_meta['remote_entity_code']
         src_operation_code = header_meta['remote_operation_code']
@@ -58,7 +58,6 @@ class PatientTambovBuilder(Builder):
             src_entity_code=src_entity_code,
             src_main_id_name=header_meta['remote_main_param_name'],
             src_id=header_meta['remote_main_id'],
-            level=1,
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
@@ -210,7 +209,8 @@ class PatientTambovBuilder(Builder):
         #         elif entry['level'] == '5':
         #             local_addr['KLADR_street'] = entry['kladrCode']
 
-        # ждем доработку wsdl по группе крови
+        # todo: дозапросы будут переделаны в соответствии с новой wsdl
+        # todo: ждем доработку wsdl по группе крови
         # schema = {
         #     "blood_type_info": {  # добавят в patients-smart-ws позже
         #         "type": "array",
@@ -256,7 +256,7 @@ class PatientTambovBuilder(Builder):
 
     def build_remote_entity_packages(self, reformed_req):
         package = EntitiesPackage(self.remote_sys_code)
-        req_meta = reformed_req['meta']
+        req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
             api_method = self.reformer.get_api_method(
                 self.remote_sys_code,
@@ -282,7 +282,7 @@ class PatientTambovBuilder(Builder):
         res = None
         page = 1
         while res or page == 1:
-            req.setdefault('body', {}).update({'page': page, 'gender': 2})
+            req.data_update({'page': page, 'gender': 2})
             res = self.transfer__send_request(req)
             patients_uids.update(res)
             page += 1
@@ -299,7 +299,7 @@ class PatientTambovBuilder(Builder):
         # todo: брать из даты начала работы планировщика по сущности
         modified_since = date(2016, 11, 1)
         while res or page == 1:
-            req.setdefault('body', {}).update({
+            req.data_update({
                 'page': page,
                 'gender': 2,
                 'modifiedSince': modified_since,

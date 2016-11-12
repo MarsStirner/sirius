@@ -37,7 +37,7 @@ class MatchingId(Model):
     )
 
     @classmethod
-    def first_local_id(cls, src_entity_code, src_id, dst_entity_code, remote_sys_code):
+    def first_local_id(cls, remote_entity_code, remote_id, local_entity_code, remote_sys_code):
         dst_id = None
         dst_param_name = None
         LocalEntity = aliased(Entity, name='LocalEntity')
@@ -53,10 +53,10 @@ class MatchingId(Model):
         ).join(
             RemoteSystem, RemoteSystem.id == RemoteEntity.system_id
         ).filter(
-            RemoteEntity.code == src_entity_code,
+            RemoteEntity.code == remote_entity_code,
             RemoteSystem.code == remote_sys_code,
-            cls.remote_id == str(src_id),
-            LocalEntity.code == dst_entity_code,
+            cls.remote_id == str(remote_id),
+            LocalEntity.code == local_entity_code,
             LocalSystem.code == SystemCode.LOCAL,
         ).first()
         if res:

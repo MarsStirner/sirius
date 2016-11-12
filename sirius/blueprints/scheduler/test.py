@@ -13,7 +13,7 @@ from sirius.blueprints.scheduler.api import Scheduler
 from sirius.blueprints.scheduler.models import ScheduleGroup
 
 
-class _TestSchedule:
+class TestSchedule:
 
     @beat_entry
     def test_execute(self):
@@ -21,5 +21,5 @@ class _TestSchedule:
             sch = Scheduler()
             schedule_groups = ScheduleGroup.query.all()
             for schedule_group in schedule_groups:
-                for req_data in schedule_group.get_requests():
+                for req_data in schedule_group.get_requests()[1:]:
                     sch.execute(req_data)

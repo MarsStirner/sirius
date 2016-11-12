@@ -46,13 +46,12 @@ class Reformer(IStreamMeta):
 
     @module_entry
     def reform_msg(self, msg):
-        addition_data = None
         header_meta = msg.get_header().meta
         if msg.is_to_local:
             self.check_sys_code(msg)
-            entities = self.get_local_entities(header_meta, msg.get_data(), addition_data)
+            entities = self.get_local_entities(header_meta, msg.get_data())
         elif msg.is_to_remote:
-            entities = self.get_remote_entities(header_meta, msg.get_data(), addition_data)
+            entities = self.get_remote_entities(header_meta, msg.get_data())
         else:
             raise InternalError('Undefined direct')
         for record in self.set_operation(entities, msg.is_to_local):
@@ -73,7 +72,7 @@ class Reformer(IStreamMeta):
         return request
 
     @abstractmethod
-    def get_local_entities(self, header_meta, data, addition_data):
+    def get_local_entities(self, header_meta, data):
         # реализация в регионе
         return RequestEntities()
 
@@ -88,6 +87,7 @@ class Reformer(IStreamMeta):
             answer_res = parser.get_params(
                 rec_meta['dst_entity_code'],
                 answer,
+                rec_meta['dst_id_url_param_name'],
             )
             rec_meta['dst_id'] = answer_res['main_id']
             # rec_meta['dst_id_url_param_name'] = answer_res['param_name']
@@ -137,7 +137,7 @@ class Reformer(IStreamMeta):
             )
 
     @abstractmethod
-    def get_remote_entities(self, header_meta, data, addition_data):
+    def get_remote_entities(self, header_meta, data):
         # реализация в регионе
         return {}
 
@@ -338,7 +338,7 @@ class Reformer(IStreamMeta):
     def get_remote_request(self, header_meta):
         raise NotImplementedError
 
-    def set_remote_request_params(self, req_data):
+    def set_remote_request_params(self, data_req):
         """
         Вход в req_meta
         dst_id
@@ -359,7 +359,7 @@ class Reformer(IStreamMeta):
         # Выход
         # dst_parents_params
         """
-        req_meta = req_data['meta']
+        req_meta = data_req.meta
         if req_meta['dst_id'] and not req_meta.get('dst_id_url_param_name'):
             matching_id_data = MatchingId.first_remote_param_name(
                 req_meta['dst_entity_code'],
@@ -396,7 +396,7 @@ class Reformer(IStreamMeta):
         #     else:
         #         raise ApiException(500, 'Entity (%s) has not yet passed' % src_entity_code)
 
-    def set_request_service(self, req_data, system_code):
+    def set_request_service(self, data_req):
         """
         Вход
         dst_operation_code
@@ -413,9 +413,9 @@ class Reformer(IStreamMeta):
         Выход
         dst_url
         """
-        req_meta = req_data['meta']
+        req_meta = data_req.meta
         method = self.get_api_method(
-            system_code,
+            req_meta['dst_system_code'],
             req_meta['dst_entity_code'],
             req_meta['dst_operation_code'],
         )
@@ -498,16 +498,6 @@ class Reformer(IStreamMeta):
                 msgs.append(msg)
         return msgs
 
-    @classmethod
-    def get_stream_meta(cls, obj):
-        if isinstance(obj, (Message, RequestEntities, EntitiesPackage)):
-            res = obj.get_stream_meta()
-        elif isinstance(obj, dict):
-            res = {'dict len': len(obj)}
-        else:
-            raise InternalError('Unexpected stream type')
-        return res
-
     def get_local_id_by_remote(self, local_entity_code, remote_entity_code, remote_id):
         res = MatchingId.get_local_id(
             local_entity_code,
@@ -543,6 +533,21 @@ class Reformer(IStreamMeta):
         res = ApiMethod.get(
             system_code, entity_code, operation_code, self.version[system_code]
         )
+        if not res['method']:
+            res['method'] = self.get_method_by_operation_code(operation_code)
+        return res
+
+    def get_method_by_operation_code(self, operation_code):
+        if operation_code == OperationCode.ADD:
+            res = 'post'
+        elif operation_code == OperationCode.CHANGE:
+            res = 'put'
+        elif operation_code == OperationCode.DELETE:
+            res = 'delete'
+        elif operation_code in (OperationCode.READ_ONE, OperationCode.READ_MANY):
+            res = 'get'
+        else:
+            raise InternalError('Unexpected operation_code')
         return res
 
 
@@ -571,19 +576,18 @@ class Builder(object):
         return trans_res
 
     def build_remote_request_common(self, header_meta, dst_entity_code):
-        req_data = {
-            'meta': {
-                'src_entity_code': header_meta['local_entity_code'],
-                'src_id': header_meta['local_main_id'],
-                'src_parents_params': header_meta['local_parents_params'],
-                'dst_system_code': self.remote_sys_code,
-                'dst_entity_code': dst_entity_code,
-                'dst_operation_code': header_meta['local_operation_code'],
-                'dst_id': header_meta['remote_main_id'],
-                'dst_parents_params': header_meta['remote_parents_params'],
-            }
-        }
-        return req_data
+        data_req = DataRequest()
+        data_req.set_meta(
+            src_entity_code=header_meta['local_entity_code'],
+            src_id=header_meta['local_main_id'],
+            src_parents_params=header_meta['local_parents_params'],
+            dst_system_code=self.remote_sys_code,
+            dst_entity_code=dst_entity_code,
+            dst_operation_code=header_meta['local_operation_code'],
+            dst_id=header_meta['remote_main_id'],
+            dst_parents_params=header_meta['remote_parents_params'],
+        )
+        return data_req
 
     def reform_local_parents_params(self, header_meta, src_entity_code, params_map):
         for src_param_name, src_params in (header_meta.get('local_parents_params') or {}).items():
@@ -649,6 +653,58 @@ class Builder(object):
 
 
 class EntitiesPackage(object):
+    """
+    root_parent проставляется только для узла, у которого есть childs, но
+    сам этот узел не корневой.
+    is_changed - признак изменения пакета сущностей. ставится дефолт False
+    entities - сущности, по которым будут независимые передачи
+    addition - дополнительные данные (не дочерние), для построения запроса
+    operation_code - результирующая операция. проставляется так же в diff
+    main_param_name - для записи нового сопоставления ID
+
+    EntitiesPackage = {
+        'system_code': self.remote_sys_code,
+        'pack_entities': {
+            TambovEntityCode.PATIENT: [
+                {  # -> patient_node
+                    'is_changed': False,
+                    'operation_code': 'add',
+                    'main_id': patient_uid,
+                    *'main_param_name': '',
+                    'data': {...},
+                    'addition': {
+                        TambovEntityCode.????: [
+                            {
+                                'root_parent': patient_node,
+                                'method': req_data_method,
+                                'main_id': ind_addr_id,
+                                'data': {...},
+                            }
+                        ],
+                    },
+                    'childs': {
+                        TambovEntityCode.IND_ADDRESS: [
+                            {
+                                'root_parent': patient_node,
+                                'method': req_data_method,
+                                'main_id': ind_addr_id,
+                                'data': {...},
+                                'childs': {
+                                    EntityCode...
+                                },
+                            }
+                        ],
+                        TambovEntityCode.IND_DOCUMENTS: [
+                            {
+                                'data': {...},
+                            }
+                        ],
+                    },
+                },
+            ],
+        },
+    }
+    """
     system_code = None
     pack_entities = None
 
@@ -710,22 +766,25 @@ class EntitiesPackage(object):
 class RequestEntities(object):
     req_entities = None
     operation_order = None
+    level_count = None
+    levels = None
 
     def __init__(self):
         self.req_entities = {}
         self.operation_order = {}
+        self.levels = {}
 
     def get_data(self):
         return self.req_entities
 
     def get_stream_meta(self):
-        res = {'dict len': len(self.req_entities)}
+        res = {'list len': len(self.req_entities)}
         return res
 
     def set_main_entity(
         self, dst_entity_code, dst_parents_params,
         dst_main_id_name, src_operation_code, src_entity_code,
-        src_main_id_name, src_id, level, level_count, set_current_id_func=None
+        src_main_id_name, src_id, level_count, set_current_id_func=None
     ):
         def set_current_id_common_func(record):
             entity_meta = record['meta']
@@ -733,12 +792,12 @@ class RequestEntities(object):
             if src_operation_code != OperationCode.DELETE:
                 entity_body = record['body']
                 if entity_meta['dst_id']:
-                    entity_body[dst_main_id_name] = entity_meta['dst_id']
+                    entity_body[dst_main_id_name] = str(entity_meta['dst_id'])
             if callable(set_current_id_func):
                 set_current_id_func(entity_meta, entity_body)
 
-        item = {
-            'meta': {
+        item = ReqEntity(
+            meta={
                 # 'src_system_code': SystemCode.LOCAL,
                 'src_operation_code': src_operation_code,
                 'src_entity_code': src_entity_code,
@@ -748,19 +807,22 @@ class RequestEntities(object):
                 'dst_id_url_param_name': dst_main_id_name,
                 'dst_parents_params': dst_parents_params,
                 'set_current_id_func': set_current_id_common_func,
-            },
-        }
+            }
+        )
+        level = 1
+        self.levels[id(item)] = level
         self.req_entities.setdefault(dst_entity_code, []).append(item)
         if src_operation_code != OperationCode.DELETE:
             self.set_operation_order(dst_entity_code, level)
         else:
             self.set_operation_order(dst_entity_code, level_count - level + 1)
+        self.level_count = level_count
         return item
 
     def set_child_entity(
         self, parent_item, dst_entity_code, dst_parents_params,
         dst_main_id_name, dst_parent_id_name, src_operation_code,
-        src_entity_code, src_main_id_name, src_id, level, level_count,
+        src_entity_code, src_main_id_name, src_id,
         set_current_id_func=None, set_parent_id_func=None
     ):
         def set_current_id_common_func(record):
@@ -769,7 +831,7 @@ class RequestEntities(object):
             if src_operation_code != OperationCode.DELETE:
                 entity_body = record['body']
                 if entity_meta['dst_id']:
-                    entity_body[dst_main_id_name] = entity_meta['dst_id']
+                    entity_body[dst_main_id_name] = str(entity_meta['dst_id'])
             if callable(set_current_id_func):
                 set_current_id_func(entity_meta, entity_body)
 
@@ -779,7 +841,7 @@ class RequestEntities(object):
             parent_meta = entity_meta['parent_entity']['meta']
             if src_operation_code != OperationCode.DELETE:
                 entity_body = record['body']
-                entity_body[dst_parent_id_name] = parent_meta['dst_id']
+                entity_body[dst_parent_id_name] = str(parent_meta['dst_id'])
             entity_meta['dst_parents_params'][
                 parent_meta['dst_id_url_param_name']
             ] = {
@@ -789,8 +851,8 @@ class RequestEntities(object):
             if callable(set_parent_id_func):
                 set_parent_id_func(parent_meta, entity_meta, entity_body)
 
-        item = {
-            'meta': {
+        item = ReqEntity(
+            meta={
                 'src_operation_code': src_operation_code,
                 'src_entity_code': src_entity_code,
                 'src_id_url_param_name': src_main_id_name,
@@ -801,14 +863,82 @@ class RequestEntities(object):
                 'set_current_id_func': set_current_id_common_func,
                 'set_parent_id_func': set_parent_id_common_func,
                 'parent_entity': parent_item,
-            },
-        }
+            }
+        )
+        level = self.levels[id(parent_item)] + 1
+        self.levels[id(item)] = level
         self.req_entities.setdefault(dst_entity_code, []).append(item)
         if src_operation_code != OperationCode.DELETE:
             self.set_operation_order(dst_entity_code, level)
         else:
-            self.set_operation_order(dst_entity_code, level_count - level + 1)
+            self.set_operation_order(dst_entity_code, self.level_count - level + 1)
         return item
 
     def set_operation_order(self, entity, order):
         self.operation_order.setdefault(order, []).append(entity)
+
+
+class ReqEntity(dict):
+    def get_stream_meta(self):
+        res = {'meta': self['meta']}
+        return res
+
+
+class DataRequest(object):
+    req_data = None
+
+    def __init__(self):
+        self.req_data = {
+            'meta': {},
+            'body': {},
+        }
+
+    def set_meta(
+        self, dst_system_code, dst_entity_code, dst_operation_code, dst_id,
+        dst_parents_params, src_entity_code=None, src_id=None,
+        src_parents_params=None
+    ):
+        self.req_data['meta'] = {
+            'src_entity_code': src_entity_code,
+            'src_id': src_id,
+            'src_parents_params': src_parents_params,
+            'dst_system_code': dst_system_code,
+            'dst_entity_code': dst_entity_code,
+            'dst_operation_code': dst_operation_code,
+            'dst_id': dst_id,
+            'dst_parents_params': dst_parents_params,
+        }
+
+    def set_req_params(self, url, method, data):
+        self.req_data['body'].update(data)
+        self.req_data['meta'].update({
+            'dst_url': url,
+            'dst_method': method,
+        })
+
+    def get_stream_meta(self):
+        return self.req_data
+
+    def data_update(self, data):
+        self.req_data['body'].update(data)
+
+    def copy(self):
+        new_self = self.__class__()
+        new_self.req_data = self.req_data.copy()
+        return new_self
+
+    @property
+    def meta(self):
+        return self.req_data['meta']
+
+    @property
+    def url(self):
+        return self.req_data['meta']['dst_url']
+
+    @property
+    def method(self):
+        return self.req_data['meta']['dst_method']
+
+    @property
+    def data(self):
+        return self.req_data['body']

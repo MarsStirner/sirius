@@ -29,6 +29,11 @@ class MISClient(object):
         # transport_with_basic_auth = HttpAuthenticated(**credentials)
         self.client = Client(url, transport=transport_with_basic_auth)
 
+    def check_error(self, result):
+        err = getattr(result, 'error', None)
+        if err:
+            raise ExternalError(err.code, err.message)
+
     def searchPatient(self, **kw):
         result = self.client.service.searchPatient(**kw)
         """
@@ -47,39 +52,3 @@ class MISClient(object):
         """
         self.check_error(result)
         return getattr(result, 'patientCard', {})
-
-    def sendCase(self, **kw):
-        try:
-            result = self.client.service.sendCase(**kw)
-        except:
-            result = '16015476'
-        """
-        string
-        """
-        return result
-
-    def sendServiceRend(self, **kw):
-        result = self.client.service.sendServiceRend(**kw)
-        """
-        string
-        """
-        return result
-
-    def sendVisit(self, **kw):
-        result = self.client.service.sendVisit(**kw)
-        """
-        string
-        """
-        return result
-
-    def sendReferral(self, **kw):
-        result = self.client.service.sendReferral(**kw)
-        """
-        string
-        """
-        return result
-
-    def check_error(self, result):
-        err = getattr(result, 'error', None)
-        if err:
-            raise ExternalError(err.code, err.message)

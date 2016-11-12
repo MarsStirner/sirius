@@ -56,12 +56,12 @@ class LocalProducer(object):
         self.send_msgs(msgs, rmt_sys_code, queue_name, skip_err=skip_err)
         # diff.commit_all_changes()
 
-    def send_msgs(self, msgs, rmt_sys_code, queue_name, async=False, skip_err=False, callback=None):
+    def send_msgs(self, msgs, rmt_sys_code, queue_name=None, async=False, skip_err=False, callback=None):
         if callback:
             res = []
             for msg in msgs:
                 try:
-                    r = self.task_run(msg, rmt_sys_code, queue_name, async)
+                    r = self.task_run(msg, rmt_sys_code, async, queue_name)
                     res.append(r)
                     if callable(callback):
                         callback(msg)
@@ -69,10 +69,10 @@ class LocalProducer(object):
                     if not skip_err:
                         raise
         else:
-            res = [self.task_run(msg, rmt_sys_code, queue_name, async) for msg in msgs]
+            res = [self.task_run(msg, rmt_sys_code, async, queue_name) for msg in msgs]
         return res
 
-    def task_run(self, msg, rmt_sys_code, queue_name, async):
+    def task_run(self, msg, rmt_sys_code, async, queue_name=None):
         res = None
         # todo: на время тестирования без обработки исключений
         if not async or os.environ.get('TESTING') == '1':

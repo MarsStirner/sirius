@@ -22,14 +22,14 @@ class TulaReformer(Reformer):
     ##################################################################
     ##  reform entities
 
-    def get_local_entities(self, header_meta, data, addition_data):
+    def get_local_entities(self, header_meta, data):
         remote_entity_code = header_meta['remote_entity_code']
         if remote_entity_code == TulaEntityCode.CLIENT:
-            res = ClientTulaBuilder(self).build_local_client(header_meta, data, addition_data)
+            res = ClientTulaBuilder(self).build_local_client(header_meta, data)
         else:
             raise InternalError('Unexpected remote_entity_code')
         return res
 
-    def get_remote_entities(self, header_meta, data, addition_data):
+    def get_remote_entities(self, header_meta, data):
         # реализация в регионе
         return {}

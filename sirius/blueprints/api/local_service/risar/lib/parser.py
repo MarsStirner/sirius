@@ -51,17 +51,20 @@ class RequestLocalData(object):
 
 
 class LocalAnswerParser(object):
-    def get_params(self, entity_code, response):
+    def get_params(self, entity_code, response, param_name):
         # разбирает ответ локальной системы и достает полезные данные
-        res = None
         result = self.get_data(response)
         if entity_code == RisarEntityCode.CLIENT:
+            param_name = 'client_id'
             res = {
-                'main_id': result['client_id'],
-                'param_name': 'client_id',
+                'main_id': result[param_name],
+                'param_name': param_name,
             }
         else:
-            raise InternalError('Unexpected entity_code')
+            res = {
+                'main_id': result[param_name],
+                'param_name': param_name,
+            }
         return res
 
     def get_data(self, response):
@@ -75,6 +78,8 @@ class LocalAnswerParser(object):
                 meta = j['meta']
                 if 'errors' in meta:
                     message = u'{0}: {1}. Errors: {2}. Traceback: {3}'.format(meta['code'], meta['name'], meta['errors'], meta['traceback'])
+                elif 'reason' in meta:
+                    message = u'{0}: {1}. Reason: {2}. Traceback: {3}'.format(meta['code'], meta['name'], meta['reason'], meta['traceback'])
                 else:
                     message = u'{0}: {1}'.format(j['meta']['code'], j['meta']['name'])
             except Exception, e:

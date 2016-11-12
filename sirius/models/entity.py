@@ -114,6 +114,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
                         for x in vals
                     )),
                 }))
+            cls.set_deleted_data(r['root_external_id'])
 
     @classmethod
     def drop_temp_table(cls):
@@ -189,7 +190,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
         db.session.execute(set_query)
 
     @classmethod
-    def set_deleted_data(cls):
+    def set_deleted_data(cls, root_external_id):
         # content, -- убрать, если не понадобится
         set_query = '''
         insert into %(src_table_name)s
@@ -197,7 +198,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
           entity_id,
           root_external_id,
           external_id,
-          content,
+          -- content,
           operation_code,
           level
         )
@@ -206,12 +207,13 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             chk.entity_id,
             chk.root_external_id,
             chk.external_id,
-            chk.content,
+            -- chk.content,
             '%(operation_code)s',
             chk.level
           from %(chk_table_name)s chk
           where
-            not exists(
+            chk.root_external_id = '%(root_external_id)s'
+            and not exists(
               select src.id
                 from %(src_table_name)s src
                 where
@@ -223,6 +225,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             'src_table_name': cls.temp_table_name,
             'chk_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.DELETE,
+            'root_external_id': root_external_id,
         })
         db.session.execute(set_query)
 

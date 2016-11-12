@@ -58,9 +58,9 @@ class ReferralTambovBuilder(Builder):
             )
 
     ##################################################################
-    ##  reform entities
+    ##  reform entities to remote
 
-    def build_remote_entities(self, header_meta, pack_entity, addition_data):
+    def build_remote_entities(self, header_meta, pack_entity):
         """
         Вход в header_meta
         local_operation_code
@@ -94,7 +94,6 @@ class ReferralTambovBuilder(Builder):
             src_entity_code=src_entity_code,
             src_main_id_name=header_meta['local_main_param_name'],
             src_id=header_meta['local_main_id'],
-            level=1,
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
@@ -103,6 +102,110 @@ class ReferralTambovBuilder(Builder):
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
                 'referralDate': to_date(measure_data['begin_datetime']),
                 'referralOrganizationId': '1434663',
+            }
+
+        return entities
+
+
+    ##################################################################
+    ##  reform entities to local
+
+    def build_local_entities(self, header_meta, pack_entity):
+        src_entity_code = header_meta['remote_entity_code']
+        src_operation_code = header_meta['remote_operation_code']
+        referral_data = pack_entity['data']
+
+        # сопоставление параметров родительских сущностей
+        params_map = {
+            TambovEntityCode.PATIENT: {
+                'entity': RisarEntityCode.CARD, 'param': 'card_id'
+            },
+        }
+        self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
+
+        entities = RequestEntities()
+        measure_items = {}
+        childs = pack_entity['childs']
+        service_list = childs[TambovEntityCode.SERVICE]
+        for item in service_list:
+            service_data = item['data']
+            srv_prototype__measure_type__map = {
+                '5338': 'lab_test',
+                '5339': 'func_test',
+            }
+            measure_type = srv_prototype__measure_type__map[service_data.prototypeId]
+
+            if measure_type in measure_items:
+                measure_item = measure_items[header_meta['remote_main_id']]
+            else:
+                measure_item = entities.set_main_entity(
+                    dst_entity_code=RisarEntityCode.MEASURE,
+                    dst_parents_params=header_meta['local_parents_params'],
+                    dst_main_id_name='measure_id',
+                    src_operation_code=src_operation_code,
+                    src_entity_code=src_entity_code,
+                    src_main_id_name=header_meta['remote_main_param_name'],
+                    src_id=header_meta['remote_main_id'],
+                    level_count=2,
+                )
+                measure_items[header_meta['remote_main_id']] = measure_item
+                if src_operation_code != OperationCode.DELETE:
+                    measure_item['body'] = {
+                        # 'measure_id': None,  # заполняется в set_current_id_func
+                        # пока считаем, что на одно направление
+                        # не может быть разных measure_type из услуг
+                        'measure_type_code': measure_type,
+                        'begin_datetime': encode(referral_data['referralDate']),
+                        'end_datetime': encode(referral_data['referralDate']),
+                        'status': referral_data['refStatusId'],
+                    }
+
+            research_meas_types = ('lab_test', 'func_test')
+            checkup_meas_types = ('checkup',)
+            if measure_type in research_meas_types:
+                self.build_local_measure_research(
+                    header_meta, entities, service_data,
+                    measure_item, measure_type
+                )
+            elif measure_type in checkup_meas_types:
+                self.build_local_measure_specialists_checkup(
+                    header_meta, entities, service_data,
+                    measure_item, measure_type
+                )
+            else:
+                # todo:
+                raise NotImplementedError()
+        return entities
+
+    def build_local_measure_research(
+        self, header_meta, entities, service_data, measure_item, measure_type
+    ):
+        src_operation_code = header_meta['remote_operation_code']
+
+        research_item = entities.set_child_entity(
+            parent_item=measure_item,
+            dst_entity_code=RisarEntityCode.MEASURE_RESEARCH,
+            dst_parents_params=header_meta['local_parents_params'],
+            dst_main_id_name='result_action_id',
+            dst_parent_id_name='measure_id',
+            src_operation_code=src_operation_code,
+            src_entity_code=TambovEntityCode.SERVICE,
+            src_main_id_name='id',
+            src_id=service_data['id'],
+        )
+        if src_operation_code != OperationCode.DELETE:
+            research_item['body'] = {
+                # 'result_action_id': None,  # заполняется в set_current_id_func
+                # 'measure_id':  # заполняется в set_parent_id_common_func
+                'external_id': service_data['id'],
+                'measure_type_code': measure_type,
+                'realization_date': encode(service_data['dateTo']),
+                # 'lpu_code': service_data[''] or Undefined,
+                # 'analysis_number': service_data[''] or Undefined,
+                'results': 'p1:1;p2:2',
+                # 'comment': service_data[''] or Undefined,
+                # 'doctor_code': service_data[''] or Undefined,
+                # 'status': service_data[''] or Undefined,
             }
 
         return entities

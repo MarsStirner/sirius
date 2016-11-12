@@ -15,6 +15,7 @@ import logging
 
 import flask
 from requests import ConnectionError
+from sirius.extensions import db
 from six import reraise
 
 from sirius.lib.apiutils import ApiException, jsonify_api_exception, \
@@ -55,13 +56,16 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
             try:
                 module = type(args[self_pos - 1])
                 obj = args[stream_pos - 1]
-                meta = module.get_stream_meta(obj)
+                meta = obj.get_stream_meta()
                 res = func(*args, **kwargs)
                 exit_time = time()
             except (StandardError, ZeepError) as exc:
                 error_datetime = datetime.today()
                 traceback.print_exc()
-                message = traceback.format_exception_only(type(exc), exc)[-1]
+                if isinstance(exc, ZeepError):
+                    message = ': '.join((exc.code, exc.message)).encode('utf-8')
+                else:
+                    message = traceback.format_exception_only(type(exc), exc)[-1]
                 params = {
                     'stream': get_stream_data(module, func, obj, meta),
                     'message': message,
@@ -121,16 +125,18 @@ def task_entry(function=None, stream_pos=2, self_pos=1):
                     res = func(*args, **kwargs)
                     exit_time = time()
                 except LoggedException as exc:
+                    db.session.rollback()
                     reraise(Exception, LoggedException(exc.args[0]), sys.exc_info()[2])
                 except SAOperationalError as exc:
                     logger.error(unicode(exc))
                     # logg_to_MonitorDB(params)
                     if retry_count > max_retry:
                         # todo: stop celery workers (back rabbit msg)
-                        pass
+                        db.session.rollback()
                     retry = True
                     sleep(sleep_timeout)
                 except Exception as exc:
+                    db.session.rollback()
                     error_datetime = datetime.today()
                     traceback.print_exc()
                     message = traceback.format_exception_only(type(exc), exc)[-1]
@@ -177,8 +183,10 @@ def beat_entry(function=None, self_pos=1):
                 res = func(*args, **kwargs)
                 exit_time = time()
             except LoggedException as exc:
+                db.session.rollback()
                 reraise(Exception, LoggedException(exc.args[0]), sys.exc_info()[2])
             except Exception as exc:
+                db.session.rollback()
                 error_datetime = datetime.today()
                 traceback.print_exc()
                 message = traceback.format_exception_only(type(exc), exc)[-1]

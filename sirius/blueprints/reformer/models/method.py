@@ -55,7 +55,7 @@ class ApiMethod(Model):
             ApiMethod.version == version,
         ).first()
         if not method:
-            raise InternalError('Service not registered in %s' % cls.__name__)
+            raise InternalError('Method not registered in %s' % cls.__name__)
         params_entities = ApiMethodURLParamEntity.get(method.id)
         sys_url = method.entity.system.host.rstrip('/')
         res = {

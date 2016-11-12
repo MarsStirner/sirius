@@ -15,7 +15,7 @@ from sirius.models.operation import OperationCode
 class ClientTulaBuilder(Builder):
     remote_sys_code = SystemCode.TULA
 
-    def build_local_client(self, header_meta, data, addition_data):
+    def build_local_client(self, header_meta, data):
         src_operation_code = self.get_operation_code_by_method(header_meta['remote_method'])
         entities = RequestEntities()
         main_item = entities.set_main_entity(

@@ -18,15 +18,15 @@ class TambovTransfer(Transfer):
     clients = {}
     answer = TambovAnswer()
 
-    # @module_entry
+    @module_entry
     def execute(self, req):
-        meta = req['meta']
-        data = req.get('body', {})
-        method = meta['dst_method']
-        wsdl = meta['dst_url']
-        client = self.get_client(wsdl)
-        req_method = getattr(client, method)
-        req_result = connect_entry(function=req_method)(**data)
+        def common_method(**kw):
+            service_method = getattr(client.client.service, req.method)
+            return service_method(**kw)
+
+        client = self.get_client(req.url)
+        req_method = getattr(client, req.method, common_method)
+        req_result = connect_entry(function=req_method)(**req.data)
         res = self.answer.process(req_result)
         return res
 

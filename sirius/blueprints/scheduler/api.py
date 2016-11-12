@@ -56,6 +56,64 @@ class Scheduler(object):
         meta['remote_system_code'] = system_code
         return msg
 
+    def get_measures_results_planned(self, system_code, entity_code):
+        from sirius.blueprints.api.local_service.producer import LocalProducer
+        from sirius.blueprints.api.remote_service.producer import RemoteProducer
+        from sirius.blueprints.api.local_service.risar.entities import \
+            RisarEntityCode
+
+        implement = Implementation()
+        reformer = implement.get_reformer(system_code)
+
+        # /api/integration/<int:api_version>/card/list/
+        card_list_method = reformer.get_api_method(
+            SystemCode.LOCAL, RisarEntityCode.CARD, OperationCode.READ_MANY
+        )
+        msg = Message(None)
+        msg.to_local_service()
+        msg.set_request_type()
+        msg.set_immediate_answer()
+        msg.set_method(card_list_method['method'], card_list_method['template_url'])
+        producer = RemoteProducer()
+        card_msg = producer.send(msg, async=False)
+        for card_data in card_msg.get_data():
+
+            # /api/integration/<int:api_version>/card/<card_id>/measures/list/
+            measures_list_method = reformer.get_api_method(
+                SystemCode.LOCAL, RisarEntityCode.MEASURE, OperationCode.READ_MANY
+            )
+            dst_url_params = {}
+            dst_url_params.update({
+                'card_id': {
+                    'entity': RisarEntityCode.CARD,
+                    'id': str(card_data['card_id']),
+                }
+            })
+            dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
+            dst_param_ids = [dst_url_entities[param_entity] for param_entity in measures_list_method['params_entities']]
+            dst_url = measures_list_method['template_url'].format(*dst_param_ids)
+
+            msg = Message(None)
+            msg.to_local_service()
+            msg.set_request_type()
+            msg.set_immediate_answer()
+            msg.set_method(
+                measures_list_method['method'],
+                dst_url,
+            )
+            producer = RemoteProducer()
+            measures_msg = producer.send(msg, async=False)
+            for measure_data in measures_msg.get_data():
+
+                msg = self.create_message(system_code, entity_code)  # searchServiceRend
+                meta = msg.get_header().meta
+                meta['local_parents_params'] = {
+                    'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
+                    'measure_id': {'entity': RisarEntityCode.MEASURE, 'id': measure_data['measure_id']},
+                }
+                producer = LocalProducer()
+                producer.send(msg)
+
     def get_measures_results(self, system_code, entity_code):
         from sirius.blueprints.api.local_service.producer import LocalProducer
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
@@ -75,33 +133,12 @@ class Scheduler(object):
         msg.set_immediate_answer()
         msg.set_method(card_list_method['method'], card_list_method['template_url'])
         producer = RemoteProducer()
-        card_msgs = producer.send(msg, async=False)
-        for card_msg in card_msgs:
-            card_data = card_msg.get_data()
-
-            # /api/integration/<int:api_version>/card/<card_id>/measures/list/
-            measures_list_method = reformer.get_api_method(
-                SystemCode.LOCAL, RisarEntityCode.MEASURE, OperationCode.READ_MANY
-            )
-            msg = Message(None)
-            msg.to_local_service()
-            msg.set_request_type()
-            msg.set_immediate_answer()
-            msg.set_method(
-                measures_list_method['method'],
-                measures_list_method['template_url'] % card_data['card_id'],
-            )
-            producer = RemoteProducer()
-            measures_msgs = producer.send(msg, async=False)
-            for measure_msg in measures_msgs:
-                measure_data = measure_msg.get_data()
-
-                msg = self.create_message(system_code, entity_code)  # searchServiceRend
-                meta = msg.get_header().meta
-                meta['local_parents_params'] = {
-                    'client_id': {'entity': RisarEntityCode.CLIENT, 'id': card_data['client_id']},
-                    'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
-                    'measure_id': {'entity': RisarEntityCode.MEASURE, 'id': measure_data['measure_id']},
-                }
-                producer = LocalProducer()
-                producer.send(msg)
+        card_msg = producer.send(msg, async=False)
+        for card_data in card_msg.get_data():
+            msg = self.create_message(system_code, entity_code)  # searchServiceRend
+            meta = msg.get_header().meta
+            meta['local_parents_params'] = {
+                'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
+            }
+            producer = LocalProducer()
+            producer.send(msg)

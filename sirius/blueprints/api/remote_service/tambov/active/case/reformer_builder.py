@@ -15,7 +15,7 @@ from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
 from sirius.blueprints.monitor.exception import InternalError
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
-    RequestEntities
+    RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.lib.apiutils import ApiException
 from sirius.models.operation import OperationCode
@@ -64,18 +64,18 @@ class CaseTambovBuilder(Builder):
                 data=ticket_data,
             )
 
-            req = {
-                'meta': {
-                    'dst_parents_params': msg_meta['src_parents_params'],
-                    'dst_entity_code': checkup_code,
-                    'dst_operation_code': OperationCode.READ_ONE,
-                    'dst_id_url_param_name': 'exam_obs_id',
-                    'dst_id': msg_meta['src_main_id'],
-                },
-            }
-            # self.reformer.set_local_id(req_data)
-            self.reformer.set_request_service(req, SystemCode.LOCAL)
-            checkup_data = self.reformer.local_request_by_req(req)
+            data_req = DataRequest()
+            data_req.set_meta(
+                dst_system_code=SystemCode.LOCAL,
+                dst_entity_code=checkup_code,
+                dst_operation_code=OperationCode.READ_ONE,
+                dst_id=msg_meta['src_main_id'],
+                dst_parents_params=msg_meta['src_parents_params'],
+            )
+
+            # self.reformer.set_local_id(data_req)
+            self.reformer.set_request_service(data_req)
+            checkup_data = self.reformer.local_request_by_req(data_req)
             package.add_addition_pack_entity(
                 root_item=root_item,
                 parent_item=main_item,
@@ -87,7 +87,7 @@ class CaseTambovBuilder(Builder):
     ##################################################################
     ##  reform entities
 
-    def build_remote_entities_first(self, header_meta, pack_entity, addition_data):
+    def build_remote_entities_first(self, header_meta, pack_entity):
         """
         Требует в header_meta
         local_operation_code
@@ -120,7 +120,6 @@ class CaseTambovBuilder(Builder):
             src_entity_code=src_entity_code,
             src_main_id_name=header_meta['local_main_param_name'],
             src_id=header_meta['local_main_id'],
-            level=1,
             level_count=2,
         )
         if src_operation_code != OperationCode.DELETE:
@@ -149,8 +148,6 @@ class CaseTambovBuilder(Builder):
                 src_entity_code=src_entity_code,
                 src_main_id_name=header_meta['local_main_param_name'],
                 src_id=header_meta['local_main_id'],
-                level=2,
-                level_count=2,
             )
             if src_operation_code != OperationCode.DELETE:
                 item['body'] = {
@@ -172,8 +169,6 @@ class CaseTambovBuilder(Builder):
             src_entity_code=src_entity_code,
             src_main_id_name=header_meta['local_main_param_name'],
             src_id=header_meta['local_main_id'],
-            level=2,
-            level_count=2,
         )
         if src_operation_code != OperationCode.DELETE:
             item['body'] = {
@@ -192,130 +187,6 @@ class CaseTambovBuilder(Builder):
         #     )
         #     body = record['body']
         #     body['parent_id'] = parent_meta['meta']['dst_id']
-        # for record in data['fetuses']:
-        #     item = {
-        #         'meta': {
-        #             'src_entity_code': src_entity_code,
-        #             'src_id': record['fetus_id'],
-        #             'dst_entity_code': TambovEntityCode.CHECKUP_FETUS,
-        #             'set_parent_id_func': set_parent_id,
-        #             'parent_entity': main_item,
-        #         },
-        #     }
-        #     res.setdefault(TambovEntityCode.CHECKUP_FETUS, []).append(item)
-        #     if src_operation_code != OperationCode.DELETE:
-        #         self.set_operation_order(res, TambovEntityCode.CHECKUP_FETUS, 2)
-        #         item['body'] = {
-        #             'code_1': record['code_1'],
-        #             'code_2': addition_data['src_service_code']['code_2'],
-        #         }
-        #     else:
-        #         self.set_operation_order(res, TambovEntityCode.CHECKUP_FETUS, 1)
-        return entities
-
-    def build_remote_entities_second_copy1(self, header_meta, entity_package, addition_data):
-        """
-        Требует в header_meta
-        local_operation_code
-        local_entity_code
-        local_main_param_name
-        local_main_id
-        local_parents_params
-
-        Устанавливает в entity
-        dst_entity_code
-        """
-        ticket_data = entity_package['data']
-        src_operation_code = header_meta['local_operation_code']
-        src_entity_code = header_meta['local_entity_code']
-
-        # сопоставление параметров родительских сущностей
-        params_map = {
-            RisarEntityCode.CARD: {
-                'entity': TambovEntityCode.PATIENT, 'param': 'patientUid'
-            }
-        }
-        self.reform_local_parents_params(header_meta, src_entity_code, params_map)
-
-        entities = RequestEntities()
-        main_item = entities.set_main_entity(
-            dst_entity_code=TambovEntityCode.CASE,
-            dst_parents_params=header_meta['remote_parents_params'],
-            dst_main_id_name='id',
-            src_operation_code=src_operation_code,
-            src_entity_code=src_entity_code,
-            src_main_id_name=header_meta['local_main_param_name'],
-            src_id=header_meta['local_main_id'],
-            level=1,
-            level_count=2,
-        )
-        if src_operation_code != OperationCode.DELETE:
-            main_item['body'] = {
-                # 'id': None,  # проставляется в set_current_id_func
-                # 'uid': ticket_data[''],
-                'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                # 'medicalOrganizationId': ticket_data[''],
-                # 'caseTypeId': ticket_data[''],
-                # 'careLevelId': ticket_data[''],
-                # 'fundingSourceTypeId': ticket_data[''],
-                # 'socialGroupId': ticket_data[''],
-                # 'paymentMethodId': ticket_data[''],
-                # 'careRegimenId': ticket_data[''],
-            }
-
-        for serv_code in ticket_data.get('medical_services', ()):
-            item = entities.set_child_entity(
-                parent_item=main_item,
-                dst_entity_code=TambovEntityCode.SERVICE,
-                dst_parents_params=header_meta['remote_parents_params'],
-                dst_main_id_name='id',
-                dst_parent_id_name='medicalCaseId',
-                src_operation_code=src_operation_code,
-                src_entity_code=src_entity_code,
-                src_main_id_name=header_meta['local_main_param_name'],
-                src_id=header_meta['local_main_id'],
-                level=2,
-                level_count=2,
-            )
-            if src_operation_code != OperationCode.DELETE:
-                item['body'] = {
-                    # 'id': None,  # проставляется в set_current_id_func
-                    'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                    # todo:
-                    # 'serviceId': serv_code,  # из дозапроса к справочной системе
-                }
-
-        checkup_node = entity_package['addition'][RisarEntityCode.CHECKUP_OBS_SECOND][0]
-        checkup_data = checkup_node['data']
-        item = entities.set_child_entity(
-            parent_item=main_item,
-            dst_entity_code=TambovEntityCode.VISIT,
-            dst_parents_params=header_meta['remote_parents_params'],
-            dst_main_id_name='id',
-            dst_parent_id_name='caseId',
-            src_operation_code=src_operation_code,
-            src_entity_code=src_entity_code,
-            src_main_id_name=header_meta['local_main_param_name'],
-            src_id=header_meta['local_main_id'],
-            level=2,
-            level_count=2,
-        )
-        if src_operation_code != OperationCode.DELETE:
-            item['body'] = {
-                # 'id': None,  # проставляется в set_current_id_func
-                # 'reasonId': checkup_data['reason_code'],  # из дозапроса к справочной системе
-            }
-
-        # def set_parent_id(record):
-        #     reform_meta = record['meta']
-        #     parent_meta = reform_meta['parent_entity']['meta']
-        #     reform_meta['dst_url'] = reform_meta['dst_url'].replace(
-        #         parent_meta['dst_id_url_param_name'], parent_meta['dst_id']
-        #     )
-        #     record['body'] = {
-        #         'parent_id': parent_meta['meta']['dst_id'],
-        #     }
-        #
         # for record in data['fetuses']:
         #     item = {
         #         'meta': {

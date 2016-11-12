@@ -21,8 +21,7 @@ def request_by_url(method, url, data, session=None):
 
 
 def request_by_req(req):
-    req_meta = req['meta']
-    parser, response = request_by_url(req_meta['dst_method'], req_meta['dst_url'], None)
+    parser, response = request_by_url(req.method, req.url, None)
     return parser.get_data(response)
 
 

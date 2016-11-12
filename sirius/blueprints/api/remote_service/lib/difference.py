@@ -29,7 +29,7 @@ class Difference(object):
         pack_entities = entity_package.get_pack_entities()
         self.build_flat_entities(flat_entities, pack_entities)
         self.set_diffs(system_code, flat_entities)
-        self.mark_entities(entity_package, pack_entities, flat_entities)
+        self.mark_entities(entity_package, flat_entities)
         db.session.commit()
         return entity_package
 
@@ -62,14 +62,13 @@ class Difference(object):
             DiffEntityImage.fill_temp_table(objects)
         DiffEntityImage.set_changed_data()
         DiffEntityImage.set_new_data()
-        DiffEntityImage.set_deleted_data()
 
-    def mark_entities(self, entity_package, pack_entities, flat_entities):
+    def mark_entities(self, entity_package, flat_entities):
         diff_records = DiffEntityImage.get_marked_data()
         for diff_rec in diff_records:
-            key = (diff_rec.level, diff_rec.entity.code)
-            fl_entity_dict = flat_entities[key]
             if diff_rec.operation_code != OperationCode.DELETE:
+                key = (diff_rec.level, diff_rec.entity.code)
+                fl_entity_dict = flat_entities[key]
                 package_record = fl_entity_dict[diff_rec.external_id]
                 root_parent = package_record.get('root_parent')
                 if root_parent:
