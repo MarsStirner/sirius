@@ -35,7 +35,14 @@ class ReferralTambovBuilder(Builder):
     def build_local_entity_packages(self, msg):
         package = EntitiesPackage(SystemCode.LOCAL)
         msg_meta = msg.get_relative_meta()
-        self.set_measures(msg.get_data(), package, msg_meta)
+        msg_meta['src_operation_code'] = self.get_operation_code_by_method(msg_meta['src_method'])
+        if msg_meta['src_operation_code'] == OperationCode.READ_MANY:
+            data = msg.get_data()
+        elif msg_meta['src_operation_code'] == OperationCode.READ_ONE:
+            data = [msg.get_data()]
+        else:
+            raise InternalError('Unexpected operation code')
+        self.set_measures(data, package, msg_meta)
         return package
 
     def set_measures(self, measures, package, msg_meta):
@@ -43,13 +50,12 @@ class ReferralTambovBuilder(Builder):
         params_meta = {'card_id': RisarEntityCode.CARD}
         self.set_src_parents_entity(msg_meta, params_meta)
 
-        src_operation_code = self.get_operation_code_by_method(msg_meta['src_method'])
         src_entity = msg_meta['src_entity_code']
 
         for measure_data in measures:
             measure_root = measure_item = package.add_main_pack_entity(
                 entity_code=src_entity,
-                operation_code=src_operation_code,
+                operation_code=msg_meta['src_operation_code'],
                 method=msg_meta['dst_method'],
                 main_param_name='measure_id',
                 main_id=measure_data['measure_id'],
@@ -130,8 +136,8 @@ class ReferralTambovBuilder(Builder):
         for item in service_list:
             service_data = item['data']
             srv_prototype__measure_type__map = {
-                '5338': 'lab_test',
-                '5339': 'func_test',
+                '5338': 'checkup',
+                '788': 'lab_test',
             }
             measure_type = srv_prototype__measure_type__map[service_data.prototypeId]
 
@@ -157,7 +163,7 @@ class ReferralTambovBuilder(Builder):
                         'measure_type_code': measure_type,
                         'begin_datetime': encode(referral_data['referralDate']),
                         'end_datetime': encode(referral_data['referralDate']),
-                        'status': referral_data['refStatusId'],
+                        'status': 'created',  # referral_data['refStatusId'],
                     }
 
             research_meas_types = ('lab_test', 'func_test')
@@ -206,6 +212,35 @@ class ReferralTambovBuilder(Builder):
                 # 'comment': service_data[''] or Undefined,
                 # 'doctor_code': service_data[''] or Undefined,
                 # 'status': service_data[''] or Undefined,
+            }
+
+        return entities
+
+    def build_local_measure_specialists_checkup(
+        self, header_meta, entities, service_data, measure_item, measure_type
+    ):
+        src_operation_code = header_meta['remote_operation_code']
+
+        research_item = entities.set_child_entity(
+            parent_item=measure_item,
+            dst_entity_code=RisarEntityCode.MEASURE_SPECIALISTS_CHECKUP,
+            dst_parents_params=header_meta['local_parents_params'],
+            dst_main_id_name='result_action_id',
+            dst_parent_id_name='measure_id',
+            src_operation_code=src_operation_code,
+            src_entity_code=TambovEntityCode.SERVICE,
+            src_main_id_name='id',
+            src_id=service_data['id'],
+        )
+        if src_operation_code != OperationCode.DELETE:
+            research_item['body'] = {
+                # 'result_action_id': None,  # заполняется в set_current_id_func
+                # 'measure_id': None,  # заполняется в set_parent_id_common_func
+                'external_id': service_data['id'],
+                'measure_type_code': measure_type,
+                'checkup_date': encode(service_data['dateTo']),
+                'lpu_code': '1246',
+                'doctor_code': '995',
             }
 
         return entities

@@ -6,6 +6,7 @@
 @date: 26.09.2016
 
 """
+from requests.auth import HTTPBasicAuth
 from sirius.blueprints.monitor.exception import ExternalError
 from sirius.lib.apiutils import ApiException
 from zeep import Client, Transport
@@ -14,18 +15,17 @@ from zeep.exceptions import Fault as WebFault
 # from suds import WebFault
 # from suds.transport.https import HttpAuthenticated
 
-tambov_soap_login = 'ekonyaev'
-tambov_soap_password = 'P9QP6V43'
+tambov_api_login = 'ekonyaev'
+tambov_api_password = 'P9QP6V43'
 
 
-class MISClient(object):
+class TambovSOAPClient(object):
     """Класс SOAP-клиента для взаимодействия с сервисом МИС"""
-    def __init__(self, url, user_key):
-        self.user_key = user_key
+    def __init__(self, url):
         transport_with_basic_auth = Transport(
-            http_auth=(tambov_soap_login, tambov_soap_password)
+            http_auth=(tambov_api_login, tambov_api_password)
         )
-        # credentials = dict(username=tambov_soap_login, password=tambov_soap_password)
+        # credentials = dict(username=tambov_api_login, password=tambov_api_password)
         # transport_with_basic_auth = HttpAuthenticated(**credentials)
         self.client = Client(url, transport=transport_with_basic_auth)
 
@@ -52,3 +52,7 @@ class MISClient(object):
         """
         self.check_error(result)
         return getattr(result, 'patientCard', {})
+
+
+class TambovRESTClient(object):
+    basic_auth = HTTPBasicAuth(tambov_api_login, tambov_api_password)

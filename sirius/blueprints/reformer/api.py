@@ -271,24 +271,27 @@ class Reformer(IStreamMeta):
                     trans_res = self.transfer.execute(record)
                     self.conformity_remote(record, trans_res)
 
-    @module_entry
     def send_to_local_data(self, entities, request_by_url):
+        @module_entry
+        def send_to_local_data_record(self, record):
+            rec_meta = record['meta']
+            set_parent_id_func = rec_meta.get('set_parent_id_func')
+            if set_parent_id_func:
+                set_parent_id_func(record)
+            if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
+                return
+            url = rec_meta['dst_url']
+            method = rec_meta['dst_method']
+            body = simplify(record.get('body'))
+            parser, answer = request_by_url(method, url, body)
+            self.conformity_local(record, parser, answer)
+
         soo = sorted(entities.operation_order.items(), key=lambda x: x[0])
         for order, entity_codes in soo:
             for entity_code in entity_codes:
                 records = entities.get_data()[entity_code]
                 for record in records:
-                    rec_meta = record['meta']
-                    set_parent_id_func = rec_meta.get('set_parent_id_func')
-                    if set_parent_id_func:
-                        set_parent_id_func(record)
-                    if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
-                        continue
-                    url = rec_meta['dst_url']
-                    method = rec_meta['dst_method']
-                    body = simplify(record.get('body'))
-                    parser, answer = request_by_url(method, url, body)
-                    self.conformity_local(record, parser, answer)
+                    send_to_local_data_record(self, record)
 
     def create_local_msgs(self, data, method):
         if method.upper() == 'POST':
@@ -567,6 +570,8 @@ class Builder(object):
             res = OperationCode.CHANGE
         elif method_code.upper() == 'DELETE':
             res = OperationCode.DELETE
+        elif method_code.upper() == 'GET':
+            res = OperationCode.READ_ONE
         else:
             raise InternalError('Unexpected method')
         return res
@@ -883,6 +888,18 @@ class ReqEntity(dict):
         res = {'meta': self['meta']}
         return res
 
+    @property
+    def url(self):
+        return self['meta']['dst_url']
+
+    @property
+    def method(self):
+        return self['meta']['dst_method']
+
+    @property
+    def data(self):
+        return self['body']
+
 
 class DataRequest(object):
     req_data = None
@@ -917,7 +934,7 @@ class DataRequest(object):
         })
 
     def get_stream_meta(self):
-        return self.req_data
+        return self.req_data['meta']
 
     def data_update(self, data):
         self.req_data['body'].update(data)

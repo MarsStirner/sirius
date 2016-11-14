@@ -11,7 +11,8 @@ from sirius.blueprints.api.local_service.risar.active.request import \
     request_by_url as risar_request_by_url
 from .test_data import request_tambov_patient_1, request_risar_first_checkup_2159, \
     request_tambov_register_patient_card, request_risar_second_checkup_2159, \
-    request_risar_measures_139, create_risar_card_1
+    request_risar_measures_139, create_risar_card_1, \
+    get_request_risar_get_measure_research
 from .request import request_remote, request_local, \
     request_client_local_id_by_remote_id, request_register_card_idents
 from sirius.blueprints.api.test.connect import make_login, release_token
@@ -86,5 +87,10 @@ class TestLocalApi:
 
     def _test_change_risar_checkup(self, testapp):
         result = request_local(testapp, session, request_risar_second_checkup_2159)
+        code = result['meta']['code']
+        assert code == 200
+
+    def _test_create_measure_research(self, testapp):
+        result = request_local(testapp, session, get_request_risar_get_measure_research(139, 5637))
         code = result['meta']['code']
         assert code == 200

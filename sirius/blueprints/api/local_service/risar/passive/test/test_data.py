@@ -56,3 +56,16 @@ request_risar_second_checkup_2159 = {
     'main_param_name': 'exam_obs_id',
     'method': 'post' if False else 'put',
 }
+
+
+def get_request_risar_get_measure_research(card_id, main_id):
+    request_risar_get_measure_research = {
+        'service_method': 'api_measure_get',
+        'request_url': 'http://localhost:6600/risar/api/integration/0/card/%s/measures/%s' % (card_id, main_id),
+        'request_method': 'get',
+        'request_params': {'card_id': card_id},
+        'main_id': main_id,
+        'main_param_name': 'measure_id',
+        'method': 'get',
+    }
+    return request_risar_get_measure_research

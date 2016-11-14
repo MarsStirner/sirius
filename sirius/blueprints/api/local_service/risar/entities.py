@@ -20,3 +20,4 @@ class RisarEntityCode(Enum):
     MEASURE_RESEARCH = 'measure_research'
     MEASURE_HOSPITALIZATION = 'measure_hospitalization'
     MEASURE_SPECIALISTS_CHECKUP = 'measure_specialists_checkup'
+    EPICRISIS = 'epicrisis'

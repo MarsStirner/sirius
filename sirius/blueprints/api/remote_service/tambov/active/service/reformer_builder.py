@@ -113,7 +113,7 @@ class ServiceTambovBuilder(Builder):
                 main_item = package.add_main_pack_entity(
                     entity_code=TambovEntityCode.REFERRAL,
                     method=req.method,
-                    main_param_name='referralId',
+                    main_param_name='id',
                     main_id=referralId,
                     parents_params=req_meta['dst_parents_params'],
                     data=referral_data,
