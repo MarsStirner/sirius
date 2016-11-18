@@ -21,5 +21,5 @@ class TestSchedule:
             sch = Scheduler()
             schedule_groups = ScheduleGroup.query.all()
             for schedule_group in schedule_groups:
-                for req_data in schedule_group.get_requests()[1:]:
+                for req_data in schedule_group.get_requests()[:1]:
                     sch.execute(req_data)

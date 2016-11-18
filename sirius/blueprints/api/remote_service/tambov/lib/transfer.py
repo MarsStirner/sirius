@@ -18,13 +18,13 @@ class TambovTransfer(Transfer):
 
     @module_entry
     def execute(self, req):
-        def common_method(**kw):
+        def common_method(*a, **kw):
             service_method = getattr(client.client.service, req.method)
-            return service_method(**kw)
+            return service_method(*a, **kw)
 
         client = self.get_client(req.url)
         req_method = getattr(client, req.method, common_method)
-        req_result = connect_entry(function=req_method)(**req.data)
+        req_result = connect_entry(function=req_method)(*req.options, **req.data)
         res = self.answer.process(req_result)
         return res
 

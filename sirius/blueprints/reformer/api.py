@@ -9,7 +9,8 @@
 from abc import ABCMeta, abstractmethod
 
 from sirius.blueprints.monitor.api import IStreamMeta
-from sirius.blueprints.monitor.exception import module_entry, InternalError
+from sirius.blueprints.monitor.exception import module_entry, InternalError, \
+    LoggedException
 from sirius.lib.xform import simplify
 from sirius.models.protocol import ProtocolCode
 from .models.matching import MatchingId
@@ -712,10 +713,13 @@ class EntitiesPackage(object):
     """
     system_code = None
     pack_entities = None
+    builder = None
+    root_item = None
 
-    def __init__(self, system_code):
+    def __init__(self, builder):
         self.pack_entities = {}
-        self.system_code = system_code
+        self.system_code = builder.remote_sys_code
+        self.builder = builder
 
     def get_pack_entities(self):
         return self.pack_entities
@@ -738,6 +742,7 @@ class EntitiesPackage(object):
             'operation_code': operation_code,  # зачем?
         }
         self.pack_entities.setdefault(entity_code, []).append(item)
+        self.root_item = item
         return item
 
     def add_child_pack_entity(
@@ -766,6 +771,106 @@ class EntitiesPackage(object):
 
     def get_entities(self, entity_code):
         return self.pack_entities[entity_code]
+
+    def add_main(self, entity_code, main_id_name, main_id, parents_params):
+        api_method = self.builder.reformer.get_api_method(
+            self.system_code,
+            entity_code,
+            OperationCode.READ_ONE,
+        )
+        req = DataRequest()
+        if main_id_name:
+            req.set_req_params(
+                url=api_method['template_url'],
+                method=api_method['method'],
+                data={main_id_name: main_id},
+            )
+        else:
+            req.set_req_params(
+                url=api_method['template_url'],
+                method=api_method['method'],
+                options=(main_id,),
+            )
+        try:
+            data = self.builder.transfer__send_request(req)
+        except LoggedException:
+            data = None
+        item = self.add_main_pack_entity(
+            entity_code=entity_code,
+            method=req.method,
+            main_param_name=main_id_name,
+            main_id=main_id,
+            parents_params=parents_params,
+            data=data,
+        )
+        return item, data
+
+    def add_child(self, parent_item, entity_code, main_id_name, main_id):
+        api_method = self.builder.reformer.get_api_method(
+            self.system_code,
+            entity_code,
+            OperationCode.READ_ONE,
+        )
+        req = DataRequest()
+        if main_id_name:
+            req.set_req_params(
+                url=api_method['template_url'],
+                method=api_method['method'],
+                data={main_id_name: main_id},
+            )
+        else:
+            req.set_req_params(
+                url=api_method['template_url'],
+                method=api_method['method'],
+                options=(main_id,),
+            )
+        try:
+            data = self.builder.transfer__send_request(req)
+        except LoggedException:
+            data = None
+        item = self.add_child_pack_entity(
+            root_item=self.root_item,
+            parent_item=parent_item,
+            entity_code=entity_code,
+            method=req.method,
+            main_id=main_id,
+            data=data,
+        )
+        return item, data
+
+    def add_addition(self, parent_item, entity_code, main_id_name, main_id):
+        if not main_id:
+            return None
+        api_method = self.builder.reformer.get_api_method(
+            self.system_code,
+            entity_code,
+            OperationCode.READ_ONE,
+        )
+        req = DataRequest()
+        if main_id_name:
+            req.set_req_params(
+                url=api_method['template_url'],
+                method=api_method['method'],
+                data={main_id_name: main_id},
+            )
+        else:
+            req.set_req_params(
+                url=api_method['template_url'],
+                method=api_method['method'],
+                options=(main_id,),
+            )
+        try:
+            data = self.builder.transfer__send_request(req)
+        except LoggedException:
+            data = None
+        self.add_addition_pack_entity(
+            root_item=self.root_item,
+            parent_item=parent_item,
+            entity_code=entity_code,
+            main_id=main_id,
+            data=data,
+        )
+        return data
 
 
 class RequestEntities(object):
@@ -796,7 +901,7 @@ class RequestEntities(object):
             entity_body = None
             if src_operation_code != OperationCode.DELETE:
                 entity_body = record['body']
-                if entity_meta['dst_id']:
+                if entity_meta['dst_id'] and not entity_body.get(dst_main_id_name):
                     entity_body[dst_main_id_name] = str(entity_meta['dst_id'])
             if callable(set_current_id_func):
                 set_current_id_func(entity_meta, entity_body)
@@ -835,7 +940,7 @@ class RequestEntities(object):
             entity_body = None
             if src_operation_code != OperationCode.DELETE:
                 entity_body = record['body']
-                if entity_meta['dst_id']:
+                if entity_meta['dst_id'] and not entity_body.get(dst_main_id_name):
                     entity_body[dst_main_id_name] = str(entity_meta['dst_id'])
             if callable(set_current_id_func):
                 set_current_id_func(entity_meta, entity_body)
@@ -908,6 +1013,7 @@ class DataRequest(object):
         self.req_data = {
             'meta': {},
             'body': {},
+            'options': tuple(),
         }
 
     def set_meta(
@@ -926,15 +1032,19 @@ class DataRequest(object):
             'dst_parents_params': dst_parents_params,
         }
 
-    def set_req_params(self, url, method, data):
+    def set_req_params(self, url, method, data=None, options=None):
+        assert data or options
+        data = data or {}
+        options = options or tuple()
         self.req_data['body'].update(data)
         self.req_data['meta'].update({
             'dst_url': url,
             'dst_method': method,
         })
+        self.req_data['options'] = options
 
     def get_stream_meta(self):
-        return self.req_data['meta']
+        return self.req_data
 
     def data_update(self, data):
         self.req_data['body'].update(data)
@@ -959,3 +1069,7 @@ class DataRequest(object):
     @property
     def data(self):
         return self.req_data['body']
+
+    @property
+    def options(self):
+        return self.req_data['options']

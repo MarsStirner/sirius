@@ -37,8 +37,11 @@ class Difference(object):
         for entity_code, records in pack_entities.iteritems():
             for record in records:
                 flat_entities.setdefault((level, entity_code), {}).update(
-                    {record['main_id']: record}
+                    {str(record['main_id']): record}
                 )
+                additions = record.get('addition')
+                if additions:
+                    self.build_flat_entities(flat_entities, additions, level + 1)
                 childs = record.get('childs')
                 if childs:
                     self.build_flat_entities(flat_entities, childs, level + 1)
@@ -88,6 +91,12 @@ class Difference(object):
                         operation_code=diff_rec.operation_code,
                         is_changed=True,
                     )
+                else:
+                    key = (diff_rec.level, diff_rec.entity.code)
+                    fl_entity_dict = flat_entities[key]
+                    package_record = fl_entity_dict[diff_rec.external_id]
+                    root_parent = package_record.get('root_parent')
+                    root_parent['operation_code'] = OperationCode.CHANGE
 
     # def save_all_changes(self):
     #     # вносит изменения в EntityImage, удаляет временные таблицы
@@ -109,13 +118,14 @@ class Difference(object):
         else:
             assert operation_code == OperationCode.DELETE
             DiffEntityImage.save_deleted_data(main_id)
+        db.session.commit()
 
     def commit_all_changes(self):
         # удаляет временные таблицы
         # DiffEntityImage.drop_temp_table()
         DiffEntityImage.clear_temp_table()
         # фиксирует изменения в EntityImage, EntityImageDiff
-        # todo: убрать комиты в conformity_local..
+        # todo: убрать комиты в conformity_local.. (разные сессии по сторонам селери)
         # todo: комит по каждой записи отдельно - save_change. совместно с conformity_local, (conformity_remote?)
         db.session.commit()
 

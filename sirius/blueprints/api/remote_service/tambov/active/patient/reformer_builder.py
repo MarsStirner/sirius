@@ -14,7 +14,7 @@ from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
-    RequestEntities
+    RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.method import ApiMethod
 from sirius.lib.xform import Undefined
 from sirius.models.system import SystemCode
@@ -32,6 +32,158 @@ class PatientTambovBuilder(Builder):
     def build_remote_request(self, header_meta, dst_entity_code):
         req_data = self.build_remote_request_common(header_meta, dst_entity_code)
         return req_data
+
+
+    ##################################################################
+    ##  build packages by req
+
+    def build_remote_entity_packages(self, reformed_req):
+        package = EntitiesPackage(self.remote_sys_code)
+        req_meta = reformed_req.meta
+        if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
+            api_method = self.reformer.get_api_method(
+                self.remote_sys_code,
+                TambovEntityCode.PATIENT,
+                OperationCode.READ_ONE,
+            )
+            all_patients = self.get_all_patients(reformed_req)
+            changed_patients = self.get_changed_patients(reformed_req)
+            self.set_patient_cards(changed_patients, package, api_method, req_meta)
+            self.inject_all_patients(package, all_patients, api_method)
+        elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
+            api_method = self.reformer.get_api_method(
+                self.remote_sys_code,
+                TambovEntityCode.PATIENT,
+                OperationCode.READ_ONE,
+            )
+            self.set_patient_cards([req_meta['dst_id']], package, api_method, req_meta)
+        return package
+
+    def get_all_patients(self, reformed_req):
+        req = reformed_req.copy()
+        patients_uids = set()
+        res = None
+        page = 1
+        while res or page == 1:
+            req.data_update({'page': page, 'gender': 2})
+            res = self.transfer__send_request(req)
+            patients_uids.update(res)
+            page += 1
+            # for test just 2 pages
+            if page > 1:
+                break
+        return patients_uids
+
+    def get_changed_patients(self, reformed_req):
+        req = reformed_req.copy()
+        patient_uids = []
+        res = None
+        page = 1
+        # todo: брать из даты начала работы планировщика по сущности
+        modified_since = date(2016, 11, 1)
+        while res or page == 1:
+            req.data_update({
+                'page': page,
+                'gender': 2,
+                'modifiedSince': modified_since,
+            })
+            res = self.transfer__send_request(req)
+            patient_uids.extend(res)
+            page += 1
+            # for test just 2 pages
+            if page > 1:
+                break
+        return patient_uids
+
+    def inject_all_patients(self, package, all_patients, api_method):
+        # Добавляемые uid нужны будут для определения удаленных пациентов
+        nodes = package.get_entities(TambovEntityCode.PATIENT)
+        for patient_node in nodes:
+            if patient_node['main_id'] in all_patients:
+                all_patients.remove(patient_node['main_id'])
+        for pat_uid in all_patients:
+            package.add_main_pack_entity(
+                entity_code=TambovEntityCode.PATIENT,
+                method=api_method['method'],
+                main_param_name='patientUid',
+                main_id=pat_uid,
+                parents_params=None,
+                data=None,
+            )
+
+    def set_patient_cards(self, changed_patients, package, api_method, req_meta):
+        for patient_uid in changed_patients:
+            # отброс мусора с тестовой БД
+            if not patient_uid:
+                continue
+            req = DataRequest()
+            req.set_req_params(
+                url=api_method['template_url'],
+                method=api_method['method'],
+                data={'patientUid': patient_uid},
+            )
+            patient_data = self.transfer__send_request(req)
+            main_item = package.add_main_pack_entity(
+                entity_code=TambovEntityCode.PATIENT,
+                method=req.method,
+                main_param_name='patientUid',
+                main_id=patient_uid,
+                parents_params=req_meta['dst_parents_params'],
+                data=patient_data,
+            )
+
+            # образец работы с дозапросами
+            # individuals_url = 'http://develop.r-mis.ru/individuals-ws/individuals?wsdl'
+            # req = {
+            #     'meta': {
+            #         'dst_method': 'getIndividualAddresses',
+            #         'dst_url': individuals_url,
+            #         'dst_id_url_param_name': 'uid',
+            #         'dst_id': patient_uid,
+            #     },
+            # }
+            # patient_childs = patient_node.setdefault('childs', {})
+            # if patient_node != root_parent:
+            #     patient_node['root_parent'] = root_parent
+            # IndividualAddresses_list = self.transfer__send_request(req)
+            # for ind_addr_item in IndividualAddresses_list:
+            #     ind_address_node = {'data': ind_addr_item, 'main_id': ind_addr_item.id}
+            #     patient_childs.setdefault(
+            #         TambovEntityCode.IND_ADDRESS, []
+            #     ).append(ind_address_node)
+            #     # req = {
+            #     #     'meta': {
+            #     #         'dst_method': 'getAddressAllInfo',
+            #     #         'dst_url': fl_data_url,
+            #     #         'dst_id_url_param_name': 'uid',
+            #     #         'dst_id': ind_addr_item,
+            #     #     },
+            #     # }
+            #     # AddressAllInfo_data = self.transfer__send_request(req)
+            #
+            # req = {
+            #     'meta': {
+            #         'dst_method': 'getIndividualDocuments',
+            #         'dst_url': individuals_url,
+            #         'dst_id_url_param_name': 'uid',
+            #         'dst_id': patient_uid,
+            #     },
+            # }
+            # IndividualDocuments_list = self.transfer__send_request(req)
+            # for ind_doc_item in IndividualDocuments_list:
+            #     ind_documents_data = {'data': ind_doc_item, 'main_id': ind_doc_item.id}
+            #     patient_childs.setdefault(
+            #         TambovEntityCode.IND_DOCUMENTS, []
+            #     ).append(ind_documents_data)
+            #     # req = {
+            #     #     'meta': {
+            #     #         'dst_method': 'getDocument',
+            #     #         'dst_url': fl_data_url,
+            #     #         'dst_id_url_param_name': 'uid',
+            #     #         'dst_id': ind_doc_item,
+            #     #     },
+            #     # }
+            #     # Document_data = self.transfer__send_request(req)
 
     ##################################################################
     ##  reform entities
@@ -250,157 +402,3 @@ class PatientTambovBuilder(Builder):
         #     "medicine_intolerance_info": {  # в мис вроде нет инфы такой
         #     }
         # }
-
-    ##################################################################
-    ##  build packages by req
-
-    def build_remote_entity_packages(self, reformed_req):
-        package = EntitiesPackage(self.remote_sys_code)
-        req_meta = reformed_req.meta
-        if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
-            api_method = self.reformer.get_api_method(
-                self.remote_sys_code,
-                TambovEntityCode.PATIENT,
-                OperationCode.READ_ONE,
-            )
-            all_patients = self.get_all_patients(reformed_req)
-            changed_patients = self.get_changed_patients(reformed_req)
-            self.set_patient_cards(changed_patients, package, api_method, req_meta)
-            self.inject_all_patients(package, all_patients, api_method)
-        elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
-            api_method = self.reformer.get_api_method(
-                self.remote_sys_code,
-                TambovEntityCode.PATIENT,
-                OperationCode.READ_ONE,
-            )
-            self.set_patient_cards([req_meta['dst_id']], package, api_method, req_meta)
-        return package
-
-    def get_all_patients(self, reformed_req):
-        req = reformed_req.copy()
-        patients_uids = set()
-        res = None
-        page = 1
-        while res or page == 1:
-            req.data_update({'page': page, 'gender': 2})
-            res = self.transfer__send_request(req)
-            patients_uids.update(res)
-            page += 1
-            # for test just 2 pages
-            if page > 1:
-                break
-        return patients_uids
-
-    def get_changed_patients(self, reformed_req):
-        req = reformed_req.copy()
-        patient_uids = []
-        res = None
-        page = 1
-        # todo: брать из даты начала работы планировщика по сущности
-        modified_since = date(2016, 11, 1)
-        while res or page == 1:
-            req.data_update({
-                'page': page,
-                'gender': 2,
-                'modifiedSince': modified_since,
-            })
-            res = self.transfer__send_request(req)
-            patient_uids.extend(res)
-            page += 1
-            # for test just 2 pages
-            if page > 1:
-                break
-        return patient_uids
-
-    def inject_all_patients(self, package, all_patients, api_method):
-        # Добавляемые uid нужны будут для определения удаленных пациентов
-        nodes = package.get_entities(TambovEntityCode.PATIENT)
-        for patient_node in nodes:
-            if patient_node['main_id'] in all_patients:
-                all_patients.remove(patient_node['main_id'])
-        for pat_uid in all_patients:
-            package.add_main_pack_entity(
-                entity_code=TambovEntityCode.PATIENT,
-                method=api_method['method'],
-                main_param_name='patientUid',
-                main_id=pat_uid,
-                parents_params=None,
-                data=None,
-            )
-
-    def set_patient_cards(self, changed_patients, package, api_method, req_meta):
-        for patient_uid in changed_patients:
-            # отброс мусора с тестовой БД
-            if not patient_uid:
-                continue
-            req = {
-                'meta': {
-                    'dst_method': api_method['method'],
-                    'dst_url': api_method['template_url'],
-                },
-                'body': {
-                    'patientUid': patient_uid,
-                },
-            }
-            patient_data = self.transfer__send_request(req)
-            main_item = package.add_main_pack_entity(
-                entity_code=TambovEntityCode.PATIENT,
-                method=req['meta']['dst_method'],
-                main_param_name='patientUid',
-                main_id=patient_uid,
-                parents_params=req_meta['dst_parents_params'],
-                data=patient_data,
-            )
-
-            # образец работы с дозапросами
-            # individuals_url = 'http://develop.r-mis.ru/individuals-ws/individuals?wsdl'
-            # req = {
-            #     'meta': {
-            #         'dst_method': 'getIndividualAddresses',
-            #         'dst_url': individuals_url,
-            #         'dst_id_url_param_name': 'uid',
-            #         'dst_id': patient_uid,
-            #     },
-            # }
-            # patient_childs = patient_node.setdefault('childs', {})
-            # if patient_node != root_parent:
-            #     patient_node['root_parent'] = root_parent
-            # IndividualAddresses_list = self.transfer__send_request(req)
-            # for ind_addr_item in IndividualAddresses_list:
-            #     ind_address_node = {'data': ind_addr_item, 'main_id': ind_addr_item.id}
-            #     patient_childs.setdefault(
-            #         TambovEntityCode.IND_ADDRESS, []
-            #     ).append(ind_address_node)
-            #     # req = {
-            #     #     'meta': {
-            #     #         'dst_method': 'getAddressAllInfo',
-            #     #         'dst_url': fl_data_url,
-            #     #         'dst_id_url_param_name': 'uid',
-            #     #         'dst_id': ind_addr_item,
-            #     #     },
-            #     # }
-            #     # AddressAllInfo_data = self.transfer__send_request(req)
-            #
-            # req = {
-            #     'meta': {
-            #         'dst_method': 'getIndividualDocuments',
-            #         'dst_url': individuals_url,
-            #         'dst_id_url_param_name': 'uid',
-            #         'dst_id': patient_uid,
-            #     },
-            # }
-            # IndividualDocuments_list = self.transfer__send_request(req)
-            # for ind_doc_item in IndividualDocuments_list:
-            #     ind_documents_data = {'data': ind_doc_item, 'main_id': ind_doc_item.id}
-            #     patient_childs.setdefault(
-            #         TambovEntityCode.IND_DOCUMENTS, []
-            #     ).append(ind_documents_data)
-            #     # req = {
-            #     #     'meta': {
-            #     #         'dst_method': 'getDocument',
-            #     #         'dst_url': fl_data_url,
-            #     #         'dst_id_url_param_name': 'uid',
-            #     #         'dst_id': ind_doc_item,
-            #     #     },
-            #     # }
-            #     # Document_data = self.transfer__send_request(req)

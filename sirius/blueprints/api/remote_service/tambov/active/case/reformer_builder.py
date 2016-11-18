@@ -125,9 +125,9 @@ class CaseTambovBuilder(Builder):
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = {
                 # 'id': None,  # проставляется в set_current_id_func
-                'uid': '2',
+                'uid': str(header_meta['local_main_id']),
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                'medicalOrganizationId': '1434663',
+                'medicalOrganizationId': '1434663',  # ticket_data['hospital']
                 'caseTypeId': '1',
                 'initGoalId': '7',
                 # 'careLevelId': ticket_data[''],

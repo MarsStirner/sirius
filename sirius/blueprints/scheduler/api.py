@@ -56,6 +56,10 @@ class Scheduler(object):
         meta['remote_system_code'] = system_code
         return msg
 
+    ################
+    ## Тамбов
+    ## todo: убрать методы Тамбова к себе. Возможность построения дозапроса параметров для запроса данных
+
     def get_measures_results_planned(self, system_code, entity_code):
         from sirius.blueprints.api.local_service.producer import LocalProducer
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
@@ -139,6 +143,63 @@ class Scheduler(object):
             meta = msg.get_header().meta
             meta['local_parents_params'] = {
                 'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
+            }
+            producer = LocalProducer()
+            producer.send(msg)
+
+    def get_doctors(self, system_code, entity_code):
+        from sirius.blueprints.api.local_service.producer import LocalProducer
+        from sirius.blueprints.api.remote_service.producer import RemoteProducer
+        from sirius.blueprints.api.local_service.risar.entities import \
+            RisarEntityCode
+
+        implement = Implementation()
+        reformer = implement.get_reformer(system_code)
+
+        org_list_method = reformer.get_api_method(
+            SystemCode.LOCAL, RisarEntityCode.ORGANISATION, OperationCode.READ_MANY
+        )
+        msg = Message(None)
+        msg.to_local_service()
+        msg.set_request_type()
+        msg.set_immediate_answer()
+        msg.set_method(org_list_method['method'], org_list_method['template_url'])
+        producer = RemoteProducer()
+        org_msg = producer.send(msg, async=False)
+        for org_data in org_msg.get_data():
+            msg = self.create_message(system_code, entity_code)  # getLocations
+            meta = msg.get_header().meta
+            meta['local_parents_params'] = {
+                'TFOMSCode': {'entity': RisarEntityCode.ORGANISATION, 'id': org_data['TFOMSCode']},
+            }
+            producer = LocalProducer()
+            producer.send(msg)
+
+    def get_times(self, system_code, entity_code):
+        from sirius.blueprints.api.local_service.producer import LocalProducer
+        from sirius.blueprints.api.remote_service.producer import RemoteProducer
+        from sirius.blueprints.api.local_service.risar.entities import \
+            RisarEntityCode
+
+        implement = Implementation()
+        reformer = implement.get_reformer(system_code)
+
+        doc_list_method = reformer.get_api_method(
+            SystemCode.LOCAL, RisarEntityCode.DOCTOR, OperationCode.READ_MANY
+        )
+        msg = Message(None)
+        msg.to_local_service()
+        msg.set_request_type()
+        msg.set_immediate_answer()
+        msg.set_method(doc_list_method['method'], doc_list_method['template_url'])
+        producer = RemoteProducer()
+        doc_msg = producer.send(msg, async=False)
+        for doc_data in doc_msg.get_data():
+            msg = self.create_message(system_code, entity_code)  # getTimes
+            meta = msg.get_header().meta
+            meta['local_parents_params'] = {
+                'regional_code': {'entity': RisarEntityCode.DOCTOR, 'id': doc_data['regional_code']},
+                'organization': {'entity': RisarEntityCode.ORGANISATION, 'id': doc_data['organization']},
             }
             producer = LocalProducer()
             producer.send(msg)

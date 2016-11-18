@@ -7,6 +7,8 @@
 
 """
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
+from sirius.blueprints.api.remote_service.tambov.active.clinic.reformer_builder import \
+    ClinicTambovBuilder
 from sirius.blueprints.reformer.models.method import ServiceMethod
 from ..active.case.reformer_builder import CaseTambovBuilder
 from ..active.patient.reformer_builder import PatientTambovBuilder
@@ -33,6 +35,8 @@ class TambovReformer(Reformer):
             res = PatientTambovBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TambovEntityCode.REFERRAL:
             res = ReferralTambovBuilder(self).build_local_entities(header_meta, data)
+        elif remote_entity_code == TambovEntityCode.CLINIC:
+            res = ClinicTambovBuilder(self).build_local_entities(header_meta, data)
         else:
             raise InternalError('Unexpected remote_entity_code')
         return res
@@ -63,6 +67,8 @@ class TambovReformer(Reformer):
                 RisarEntityCode.MEASURE_SPECIALISTS_CHECKUP,
         ) or remote_entity_code == TambovEntityCode.SERVICE:
             data_req = ServiceTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.SERVICE)
+        elif local_entity_code == RisarEntityCode.ORGANISATION or remote_entity_code == TambovEntityCode.CLINIC:
+            data_req = ClinicTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.CLINIC)
         else:
             raise InternalError('Unexpected local_entity_code')
         self.set_remote_request_params(data_req)
@@ -109,6 +115,8 @@ class TambovReformer(Reformer):
             res = PatientTambovBuilder(self).build_remote_entity_packages(req)
         elif dst_entity == TambovEntityCode.SERVICE:
             res = ServiceTambovBuilder(self).build_remote_entity_packages(req)
+        elif dst_entity == TambovEntityCode.CLINIC:
+            res = ClinicTambovBuilder(self).build_remote_entity_packages(req)
         else:
             raise InternalError('Unexpected entity code')
         return res

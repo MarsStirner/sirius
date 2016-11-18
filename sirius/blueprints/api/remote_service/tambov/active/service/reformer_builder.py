@@ -104,6 +104,8 @@ class ServiceTambovBuilder(Builder):
                 referral_data = self.transfer__send_request(req)
             else:
                 continue
+                if not service_data['prototypeId']:
+                    continue
                 referralId = '_'.join(('serviceId', service_id))
                 referral_data = {}
 

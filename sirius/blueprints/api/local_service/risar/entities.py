@@ -21,3 +21,6 @@ class RisarEntityCode(Enum):
     MEASURE_HOSPITALIZATION = 'measure_hospitalization'
     MEASURE_SPECIALISTS_CHECKUP = 'measure_specialists_checkup'
     EPICRISIS = 'epicrisis'
+    ORGANISATION = 'organisation'
+    DOCTOR = 'doctor'
+    SCHEDULE = 'schedule'
