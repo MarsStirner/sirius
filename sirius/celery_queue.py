@@ -8,7 +8,8 @@
 """
 from hitsl_utils.safe import safe_traverse
 from kombu import Queue, Exchange
-
+from sirius.models.system import RegionCode
+from sirius.app import app
 
 main_queue_name = 'sir_test_risar_main_queue'
 error_1_queue_name = 'sir_test_risar_error_1_queue'
@@ -16,10 +17,18 @@ error_2_queue_name = 'sir_test_risar_error_2_queue'
 mis_tula_queue_name = 'sir_test_mis_tula_queue'
 mis_tambov_queue_name = 'sir_test_mis_tambov_queue'
 
-remote_queue_name_list = [
-    # mis_tula_queue_name,
-    mis_tambov_queue_name,
-]
+# на каждую МИС региона своя очередь
+remote_queues = {
+    RegionCode.TULA: [
+        mis_tula_queue_name,
+    ],
+    RegionCode.TAMBOV: [
+        mis_tambov_queue_name,
+    ],
+}
+
+region_code = app.config.get('REGION_CODE')
+remote_queue_name_list = remote_queues[region_code]
 
 
 def get_celery_queues(conf):

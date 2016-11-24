@@ -108,6 +108,7 @@ subsystems:
       DEFAULT_ENDPOINT: sirius.index_html
       WSF_CSRF_ENABLED: True
       SECRET_KEY: "Жил бы цитрус в чаще юга? Да! Но фальшивый экземпляр."
+      REGION_CODE: tula
 
       BCRYPT_LOG_ROUNDS: 13
       ASSETS_DEBUG: False

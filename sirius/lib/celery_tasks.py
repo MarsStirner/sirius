@@ -30,7 +30,8 @@ def local_task(self, msg):
 def remote_task(self, msg, rmt_sys_code):
     from sirius.blueprints.api.remote_service.consumer import RemoteConsumer
     receiver = RemoteConsumer()
-    receiver.process(msg, rmt_sys_code)
+    res = receiver.process(msg, rmt_sys_code)
+    return res
 
 
 # @periodic_task(run_every=datetime.timedelta(minutes=5), queue='sir_test_celerybeat_queue')

@@ -18,6 +18,7 @@ class RequestLocalData(object):
     method = None
     main_id = None
     main_param_name = None
+    body = None
     # разбирает запрос локальной системы и достает полезные данные
 
     def __init__(self, data):
@@ -38,6 +39,7 @@ class RequestLocalData(object):
         self.method = data.get('method')
         self.main_id = data.get('main_id')
         self.main_param_name = data.get('main_param_name')
+        self.body = data.get('data')
 
     def get_msg_meta(self):
         meta = {

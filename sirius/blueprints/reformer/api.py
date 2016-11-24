@@ -10,8 +10,10 @@ from abc import ABCMeta, abstractmethod
 
 from sirius.blueprints.monitor.api import IStreamMeta
 from sirius.blueprints.monitor.exception import module_entry, InternalError, \
-    LoggedException
+    LoggedException, check_point
+from sirius.extensions import db
 from sirius.lib.xform import simplify
+from sirius.models.entity import Entity
 from sirius.models.protocol import ProtocolCode
 from .models.matching import MatchingId
 from .models.method import ApiMethod
@@ -77,7 +79,31 @@ class Reformer(IStreamMeta):
         # реализация в регионе
         return RequestEntities()
 
-    @module_entry
+    def pre_conformity_local(self, record):
+        # делаем предварительный запрос по сущностям, чтобы
+        # при ошибке настройки не ушел запрос в локалку
+        # todo: добавить проверку наличия ID источника в meta
+        rec_meta = record['meta']
+        rec_meta['src_entity_id'] = Entity.get_id(
+            self.remote_sys_code, rec_meta['src_entity_code']
+        )
+        rec_meta['dst_entity_id'] = Entity.get_id(
+            SystemCode.LOCAL, rec_meta['dst_entity_code']
+        )
+
+    def pre_conformity_remote(self, record):
+        # делаем предварительный запрос по сущностям, чтобы
+        # при ошибке настройки не ушел запрос в удаленку
+        # todo: добавить проверку наличия ID источника в meta
+        rec_meta = record['meta']
+        rec_meta['src_entity_id'] = Entity.get_id(
+            SystemCode.LOCAL, rec_meta['src_entity_code']
+        )
+        rec_meta['dst_entity_id'] = Entity.get_id(
+            self.remote_sys_code, rec_meta['dst_entity_code']
+        )
+
+    @check_point
     def conformity_local(self, record, parser, answer):
         # сопоставление ID в БД при добавлении данных
         # в record пишем полученное ID для дочерних запросов
@@ -85,19 +111,21 @@ class Reformer(IStreamMeta):
 
         rec_meta = record['meta']
         if rec_meta['dst_operation_code'] == OperationCode.ADD:
-            answer_res = parser.get_params(
-                rec_meta['dst_entity_code'],
-                answer,
-                rec_meta['dst_id_url_param_name'],
-            )
-            rec_meta['dst_id'] = answer_res['main_id']
+            if rec_meta['dst_id_url_param_name'] in rec_meta['dst_parents_params']:
+                rec_meta['dst_id'] = rec_meta['dst_parents_params'][rec_meta['dst_id_url_param_name']]['id']
+            else:
+                answer_res = parser.get_params(
+                    rec_meta['dst_entity_code'],
+                    answer,
+                    rec_meta['dst_id_url_param_name'],
+                )
+                rec_meta['dst_id'] = answer_res['main_id']
             # rec_meta['dst_id_url_param_name'] = answer_res['param_name']
             MatchingId.add(
-                local_entity_code=rec_meta['dst_entity_code'],
+                local_entity_id=rec_meta['dst_entity_id'],
                 local_id=rec_meta['dst_id'],
                 local_param_name=rec_meta['dst_id_url_param_name'],
-                remote_sys_code=self.remote_sys_code,
-                remote_entity_code=rec_meta['src_entity_code'],
+                remote_entity_id=rec_meta['src_entity_id'],
                 remote_id=rec_meta['src_id'],
                 remote_param_name=rec_meta['src_id_url_param_name'],
             )
@@ -117,14 +145,16 @@ class Reformer(IStreamMeta):
 
         rec_meta = record['meta']
         if rec_meta['dst_operation_code'] == OperationCode.ADD:
-            rec_meta['dst_id'] = trans_res
+            if rec_meta['dst_id_url_param_name'] in rec_meta['dst_parents_params']:
+                rec_meta['dst_id'] = rec_meta['dst_parents_params'][rec_meta['dst_id_url_param_name']]['id']
+            else:
+                rec_meta['dst_id'] = trans_res
             # rec_meta['dst_id_url_param_name'] = answer_res['param_name']
             MatchingId.add(
-                local_entity_code=rec_meta['src_entity_code'],
+                local_entity_id=rec_meta['src_entity_id'],
                 local_id=rec_meta['src_id'],
                 local_param_name=rec_meta['src_id_url_param_name'],
-                remote_sys_code=self.remote_sys_code,
-                remote_entity_code=rec_meta['dst_entity_code'],
+                remote_entity_id=rec_meta['dst_entity_id'],
                 remote_id=rec_meta['dst_id'],
                 remote_param_name=rec_meta['dst_id_url_param_name'],
             )
@@ -214,6 +244,7 @@ class Reformer(IStreamMeta):
 
                 yield record
 
+    @check_point
     def set_service(self, record, is_to_local):
         """
         Вход
@@ -237,7 +268,12 @@ class Reformer(IStreamMeta):
         if method['protocol'] == ProtocolCode.REST:
             dst_url_params = (meta.get('dst_parents_params') or {}).copy()
             if meta['dst_operation_code'] != OperationCode.ADD:
-                if meta['dst_id_url_param_name']:
+                # todo: изворот с ключем по name зашло далеко.
+                # todo: сделать ключ сущностью. вынести сущности в локалку.
+                # todo: убрать здесь проверку на вхождение.
+                # todo: убрать из builders дозаполнение нехватающей сущности.
+                # todo: удалить таблицу ServiceMethod.
+                if meta['dst_id_url_param_name'] and meta['dst_id_url_param_name'] not in dst_url_params:
                     dst_url_params.update({
                         meta['dst_id_url_param_name']: {
                             'entity': meta['dst_entity_code'],
@@ -266,14 +302,22 @@ class Reformer(IStreamMeta):
             for entity_code in entity_codes:
                 records = entities.get_data()[entity_code]
                 for record in records:
-                    set_parent_id_func = record['meta'].get('set_parent_id_func')
+                    rec_meta = record['meta']
+                    set_parent_id_func = rec_meta.get('set_parent_id_func')
                     if set_parent_id_func:
                         set_parent_id_func(record)
-                    trans_res = self.transfer.execute(record)
+                    if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
+                        return
+                    self.pre_conformity_remote(record)
+                    # trans_res = self.transfer.execute(record)
+                    # todo: для отладки без удаленки
+                    trans_res = 222
                     self.conformity_remote(record, trans_res)
+        return True
 
+    @module_entry
     def send_to_local_data(self, entities, request_by_url):
-        @module_entry
+        @check_point
         def send_to_local_data_record(self, record):
             rec_meta = record['meta']
             set_parent_id_func = rec_meta.get('set_parent_id_func')
@@ -284,6 +328,7 @@ class Reformer(IStreamMeta):
             url = rec_meta['dst_url']
             method = rec_meta['dst_method']
             body = simplify(record.get('body'))
+            self.pre_conformity_local(record)
             parser, answer = request_by_url(method, url, body)
             self.conformity_local(record, parser, answer)
 
@@ -446,6 +491,9 @@ class Reformer(IStreamMeta):
         if method['protocol'] == ProtocolCode.REST:
             dst_url_params = (req_meta.get('dst_parents_params') or {}).copy()
             if req_meta['dst_operation_code'] != OperationCode.READ_MANY:
+                # может помочь, если вместо главного параметра родитель и здесь перетирается
+                # но до выполнения todo в set_service
+                # if meta['dst_id_url_param_name'] and meta['dst_id_url_param_name'] not in dst_url_params:
                 if req_meta['dst_id_url_param_name']:
                     dst_url_params.update({
                         req_meta['dst_id_url_param_name']: {
@@ -617,7 +665,8 @@ class Builder(object):
                                           'id': matching_id_data['dst_id']}}
                     )
                 else:
-                    raise ApiException(500, 'Entity (%s) has not yet passed' % src_entity_code)
+                    raise ApiException(500, 'Entity (%s, %s) has not yet passed' %
+                                       (src_param_entity_code, src_param_id))
             else:
                 raise InternalError('Unexpected src_param_entity_code')
 
@@ -643,7 +692,8 @@ class Builder(object):
                                           'id': matching_id_data['dst_id']}}
                     )
                 else:
-                    raise ApiException(500, 'Entity (%s) has not yet passed' % src_entity_code)
+                    raise ApiException(500, 'Entity (%s, %s) has not yet passed' %
+                                       (src_param_entity_code, src_param_id))
             else:
                 raise InternalError('Unexpected src_param_entity_code')
 
@@ -716,9 +766,9 @@ class EntitiesPackage(object):
     builder = None
     root_item = None
 
-    def __init__(self, builder):
+    def __init__(self, builder, system_code):
         self.pack_entities = {}
-        self.system_code = builder.remote_sys_code
+        self.system_code = system_code
         self.builder = builder
 
     def get_pack_entities(self):

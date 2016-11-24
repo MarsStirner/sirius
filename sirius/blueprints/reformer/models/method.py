@@ -12,7 +12,7 @@ from sirius.database import Column, Model, db, reference_col, relationship, \
 from sirius.models.entity import Entity
 from sirius.models.operation import Operation
 from sirius.models.protocol import Protocol, ProtocolCode
-from sirius.models.system import System
+from sirius.models.system import System, Host
 from sqlalchemy import UniqueConstraint, CheckConstraint
 
 # todo: 1. разделить хранение разных протоколов,
@@ -31,6 +31,8 @@ class ApiMethod(Model):
     method = Column(db.String(80), unique=False, nullable=False)  # service method/rest method
     template_url = Column(db.Text(), unique=False, nullable=False)  # wsdl uri/rest url template
     version = Column(db.Integer, unique=False, nullable=False, server_default='0')
+    host_id = reference_col('host', unique=False, nullable=False)
+    host = relationship('Host', backref='set_api_method')
 
     __table_args__ = (
         # CheckConstraint("protocol_code = '%s' OR wsdl_uri > ''" % ProtocolCode.REST, name='_wsdl_uri_chk'),
@@ -48,6 +50,8 @@ class ApiMethod(Model):
             ApiMethodOperation, ApiMethodOperation.api_method_id == cls.id
         ).join(
             Operation, Operation.id == ApiMethodOperation.operation_id
+        ).join(
+            Host, Host.id == cls.host_id
         ).filter(
             Entity.code == entity_code,
             Operation.code == operation_code,
@@ -57,7 +61,7 @@ class ApiMethod(Model):
         if not method:
             raise InternalError('Method not registered in %s' % cls.__name__)
         params_entities = ApiMethodURLParamEntity.get(method.id)
-        sys_url = method.entity.system.host.rstrip('/')
+        sys_url = method.host.url.rstrip('/')
         res = {
             'protocol': method.protocol.code,
             'method': method.method,

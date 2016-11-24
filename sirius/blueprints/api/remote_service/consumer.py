@@ -25,8 +25,8 @@ class RemoteConsumer(object):
 
         # сценарий обработки сообщения
         if msg.is_to_remote:
-            if remote_system.is_passive(rmt_sys_code):
-                if msg.is_send_data:
+            if msg.is_send_data:
+                if remote_system.is_passive(rmt_sys_code):
                     reformed_data = reformer.reform_msg(msg)
                     reformer.send_to_remote_data(reformed_data)
                     hdr = msg.get_header()
@@ -34,20 +34,7 @@ class RemoteConsumer(object):
                     result_msg = op_res.check(hdr.method, hdr.url)
                     if result_msg:
                         self.producer_send_msgs([result_msg])
-                elif msg.is_send_event:
-                    reformed_data = reformer.reform_msg(msg)
-                    reformer.send_to_remote_data(reformed_data)
-                elif msg.is_result:
-                    remote_data = msg.get_source_data()
-                    reformer.conformity_local(remote_data, msg)
-                elif msg.is_request:
-                    reformed_req = reformer.reform_req(msg)
-                    entity_package = reformer.get_entity_package_by_req(reformed_req)
-                    self.send_diff_data(entity_package, reformer, msg)
-                else:
-                    raise InternalError('Unexpected message type')
-            elif remote_system.is_active(rmt_sys_code):
-                if msg.is_send_data:
+                elif remote_system.is_active(rmt_sys_code):
                     # todo: не готов вариант взаимодействия с мис
                     miss_req_msgs = reformer.get_missing_requests(msg)
                     miss_data_msgs = self.producer_send_msgs(miss_req_msgs)
@@ -55,15 +42,22 @@ class RemoteConsumer(object):
                     data_store = Difference()
                     data_store.place(remote_reformed_data)
                     data_store.commit_all_changes()
-                elif msg.is_result:
-                    remote_data = msg.get_source_data()
-                    reformer.conformity_local(remote_data, msg)
                 else:
-                    raise InternalError('Unexpected message type')
+                    raise InternalError(
+                        'Type of remote system is not define: %s' % rmt_sys_code
+                    )
+            elif msg.is_send_event:
+                reformed_data = reformer.reform_msg(msg)
+                res = reformer.send_to_remote_data(reformed_data)
+            elif msg.is_result:
+                remote_data = msg.get_source_data()
+                reformer.conformity_local(remote_data, msg)
+            elif msg.is_request:
+                reformed_req = reformer.reform_req(msg)
+                entity_package = reformer.get_entity_package_by_req(reformed_req)
+                self.send_diff_data(entity_package, reformer, msg)
             else:
-                raise InternalError(
-                    'Type of remote system is not define: %s' % rmt_sys_code
-                )
+                raise InternalError('Unexpected message type')
         elif msg.is_to_local:
             raise InternalError('Wrong message direct')
         else:

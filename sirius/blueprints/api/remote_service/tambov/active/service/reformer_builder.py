@@ -53,7 +53,7 @@ class ServiceTambovBuilder(Builder):
         т.к. список сущностей разбивается на сообщения, в которых нужно решать,
         что делать с направлением.
         """
-        package = EntitiesPackage(self.remote_sys_code)
+        package = EntitiesPackage(self, self.remote_sys_code)
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
             services_ids = self.get_services_ids(reformed_req)

@@ -8,3 +8,10 @@
 """
 
 from .client import *
+from .organization import *
+from .doctor import *
+from .specialists_checkup import *
+from .hospitalization import *
+from .research import *
+from .childbirth import *
+from .checkup_first_ticket25 import *

@@ -33,7 +33,7 @@ class ReferralTambovBuilder(Builder):
     ##  build packages by msg
 
     def build_local_entity_packages(self, msg):
-        package = EntitiesPackage(SystemCode.LOCAL)
+        package = EntitiesPackage(self, SystemCode.LOCAL)
         msg_meta = msg.get_relative_meta()
         msg_meta['src_operation_code'] = self.get_operation_code_by_method(msg_meta['src_method'])
         if msg_meta['src_operation_code'] == OperationCode.READ_MANY:

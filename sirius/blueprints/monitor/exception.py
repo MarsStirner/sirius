@@ -92,6 +92,46 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
     return decorator
 
 
+def check_point(function=None, stream_pos=2, self_pos=1):
+    """
+    Ловит ошибку в ходе итерации, собирая данные по элементу
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            res = meta = module = obj = None
+            enter_datetime = datetime.today()
+            enter_time = time()
+            try:
+                module = type(args[self_pos - 1])
+                obj = args[stream_pos - 1]
+                meta = obj.get_stream_meta()
+                res = func(*args, **kwargs)
+                exit_time = time()
+            except (StandardError, ZeepError) as exc:
+                error_datetime = datetime.today()
+                traceback.print_exc()
+                if isinstance(exc, ZeepError):
+                    message = ': '.join((exc.code, exc.message)).encode('utf-8')
+                else:
+                    message = traceback.format_exception_only(type(exc), exc)[-1]
+                params = {
+                    'stream': get_stream_data(module, func, obj, meta),
+                    'message': message,
+                    'enter_time': enter_datetime,
+                    'error_time': error_datetime,
+                    'traceback': traceback.format_exc(),
+                }
+                logger.error(params_to_str(params))
+                # logg_to_MonitorDB(params)
+                reraise(Exception, LoggedException(params), sys.exc_info()[2])
+            return res
+        return wrapper
+    if callable(function):
+        return decorator(function)
+    return decorator
+
+
 def params_to_str(params):
     r = '\n'.join([': '.join((k.upper(), str(v))) for k, v in params.items()])
     return r.decode('utf-8')

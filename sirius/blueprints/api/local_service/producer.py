@@ -21,6 +21,7 @@ class LocalProducer(object):
     def send(self, msg):
         assert isinstance(msg, Message)
 
+        res = True
         if msg.is_to_local:
             local_task.apply_async(args=(msg,), queue=main_queue_name)
         elif msg.is_to_remote:
@@ -32,8 +33,12 @@ class LocalProducer(object):
                     entity_package = reformer.get_entity_package_by_msg(msg)
                     self.send_diff_data(entity_package, reformer, msg, rmt_sys_code, queue_name)
             elif msg.is_send_event:
+                implement = Implementation()
                 rmt_sys_code = remote_system.get_event_system_code()
-                remote_task(msg, rmt_sys_code)
+                reformer = implement.get_reformer(rmt_sys_code)
+                entity_package = reformer.get_entity_package_by_msg(msg)
+                msgs = reformer.create_to_remote_messages(entity_package)
+                res = all(self.send_msgs(msgs, rmt_sys_code))
             elif msg.is_request:
                 rmt_sys_code = msg.get_header().meta['remote_system_code']
                 remote_task(msg, rmt_sys_code)
@@ -44,7 +49,7 @@ class LocalProducer(object):
                 raise InternalError('Unexpected message type')
         else:
             raise InternalError('Message direct missing')
-        return True
+        return res
 
     def send_diff_data(self, entity_packages, reformer, msg, rmt_sys_code, queue_name):
         # diff = Difference()

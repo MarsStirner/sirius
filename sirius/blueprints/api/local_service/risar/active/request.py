@@ -25,10 +25,25 @@ def request_by_req(req):
     return parser.get_data(response)
 
 
-def create(data):
-    from sirius.app import app
-    url = u'/risar/api/integration/0/card/%s/checkup/obs/first/' % card_id
-    with app.app_context():
-        with make_login() as session:
-            result = make_api_request('post', url, session, data)
-    return result
+
+# def make_appointment(session, data):
+#     host = 'http://127.0.0.1:6600'
+#     url = u'/risar/api/appointment.json'
+#     # result = make_test_api_request(testapp, 'put', url, session, data)
+#     result = make_api_request('post', host + url, session, data)
+#     return result
+
+
+# def create_card(session, client_id, ticket_id):
+#     url = u'/risar/api/0/gyn/'
+#     args = {'client_id': client_id, 'ticket_id': ticket_id}
+#     # result = make_test_api_request(testapp, 'put', url, session, data)
+#     result = make_api_request('post', url, session, url_args=args)
+#     return result
+
+
+# def create_first_checkup(session, event_id, data):
+#     url = u'/risar/api/0/pregnancy/checkup/%s' % event_id
+#     # result = make_test_api_request(testapp, 'put', url, session, data)
+#     result = make_api_request('post', url, session, data)
+#     return result

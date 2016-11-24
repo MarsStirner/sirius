@@ -117,7 +117,7 @@ class XForm(object):
                 errors=errors,
             )
 
-    def send_messages(self, entity_id, param_name, data, service_name, method_code):
+    def send_messages(self, entity_id, param_name, data, service_name, method_code, parents_params=None):
         msg = Message(data)
         msg.to_local_service()
         msg.set_send_data_type()
@@ -128,12 +128,14 @@ class XForm(object):
             'remote_main_id': entity_id,
             'remote_main_param_name': param_name,
             'remote_method': method_code,
+            'remote_parents_params': parents_params,
         })
 
         # todo: цикл вложенных дозапросов и связывание ответов
+        # todo: строить пакет. рассмотреть объединение сценариев этот и remote.consumer в remote.producer
         # from sirius.lib.implement import Implementation
         # implement = Implementation()
-        # reformer = implement.get_reformer(remote_system_code)
+        # reformer = implement.get_reformer(self.remote_system_code)
         # miss_reqs = reformer.get_missing_requests(msg)
         # miss_data = reformer.transfer_give_data(miss_reqs)
         # msg.add_missing_data(miss_data)

@@ -196,16 +196,13 @@ class MatchingId(Model):
     @classmethod
     def add(
         cls,
-        local_entity_code=None,
+        local_entity_id=None,
         local_id=None,
         local_param_name=None,
-        remote_sys_code=None,
-        remote_entity_code=None,
+        remote_entity_id=None,
         remote_id=None,
         remote_param_name=None,
     ):
-        local_entity_id = Entity.get_id(SystemCode.LOCAL, local_entity_code)
-        remote_entity_id = Entity.get_id(remote_sys_code, remote_entity_code)
         cls.create(
             local_entity_id=local_entity_id,
             local_id=local_id,

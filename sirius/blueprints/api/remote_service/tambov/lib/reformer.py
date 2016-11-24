@@ -67,7 +67,7 @@ class TambovReformer(Reformer):
                 RisarEntityCode.MEASURE_SPECIALISTS_CHECKUP,
         ) or remote_entity_code == TambovEntityCode.SERVICE:
             data_req = ServiceTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.SERVICE)
-        elif local_entity_code == RisarEntityCode.ORGANISATION or remote_entity_code == TambovEntityCode.CLINIC:
+        elif local_entity_code == RisarEntityCode.ORGANIZATION or remote_entity_code == TambovEntityCode.CLINIC:
             data_req = ClinicTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.CLINIC)
         else:
             raise InternalError('Unexpected local_entity_code')

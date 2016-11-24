@@ -157,7 +157,7 @@ class Scheduler(object):
         reformer = implement.get_reformer(system_code)
 
         org_list_method = reformer.get_api_method(
-            SystemCode.LOCAL, RisarEntityCode.ORGANISATION, OperationCode.READ_MANY
+            SystemCode.LOCAL, RisarEntityCode.ORGANIZATION, OperationCode.READ_MANY
         )
         msg = Message(None)
         msg.to_local_service()
@@ -170,7 +170,7 @@ class Scheduler(object):
             msg = self.create_message(system_code, entity_code)  # getLocations
             meta = msg.get_header().meta
             meta['local_parents_params'] = {
-                'TFOMSCode': {'entity': RisarEntityCode.ORGANISATION, 'id': org_data['TFOMSCode']},
+                'TFOMSCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': org_data['TFOMSCode']},
             }
             producer = LocalProducer()
             producer.send(msg)
@@ -199,7 +199,7 @@ class Scheduler(object):
             meta = msg.get_header().meta
             meta['local_parents_params'] = {
                 'regional_code': {'entity': RisarEntityCode.DOCTOR, 'id': doc_data['regional_code']},
-                'organization': {'entity': RisarEntityCode.ORGANISATION, 'id': doc_data['organization']},
+                'organization': {'entity': RisarEntityCode.ORGANIZATION, 'id': doc_data['organization']},
             }
             producer = LocalProducer()
             producer.send(msg)

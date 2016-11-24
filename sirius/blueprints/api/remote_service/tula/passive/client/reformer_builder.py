@@ -15,7 +15,7 @@ from sirius.models.operation import OperationCode
 class ClientTulaBuilder(Builder):
     remote_sys_code = SystemCode.TULA
 
-    def build_local_client(self, header_meta, data):
+    def build_local_entities(self, header_meta, data):
         src_operation_code = self.get_operation_code_by_method(header_meta['remote_method'])
         entities = RequestEntities()
         main_item = entities.set_main_entity(
@@ -26,13 +26,9 @@ class ClientTulaBuilder(Builder):
             src_entity_code=header_meta['remote_entity_code'],
             src_main_id_name=header_meta['remote_main_param_name'],
             src_id=header_meta['remote_main_id'],
-            level=1,
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = data
-            if 'document' in main_item['body']:
-                document = main_item['body'].pop('document')
-                main_item['body']['documents'] = [document]
 
         return entities

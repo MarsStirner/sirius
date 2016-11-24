@@ -41,7 +41,7 @@ class CaseTambovBuilder(Builder):
             checkup_code = RisarEntityCode.CHECKUP_OBS_SECOND
         ticket_code = src_entity
 
-        package = EntitiesPackage(SystemCode.LOCAL)
+        package = EntitiesPackage(self, SystemCode.LOCAL)
         msg_meta = msg.get_relative_meta()
         self.set_tickets([msg.get_data()], package, msg_meta, ticket_code, checkup_code)
         return package

@@ -3,8 +3,7 @@
 
 
 @author: BARS Group
-@date: 27.09.2016
+@date: 13.10.2016
 
 """
 
-__all__ = ['views']

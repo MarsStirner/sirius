@@ -6,6 +6,7 @@
 @date: 10.10.2016
 
 """
+from sirius.blueprints.monitor.exception import InternalError
 from sirius.database import Column, Model, db, reference_col, relationship
 from sirius.models.operation import OperationCode
 from sirius.models.system import System
@@ -34,6 +35,8 @@ class Entity(Model):
             cls.code == entity_code,
             System.code == system_code,
         ).value(cls.id)
+        if not entity_id:
+            raise InternalError('Entity not exist (%s, %s)' % (system_code, entity_code))
         return entity_id
 
 
