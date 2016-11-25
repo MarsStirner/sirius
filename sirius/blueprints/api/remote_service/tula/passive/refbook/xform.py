@@ -8,11 +8,11 @@
 """
 from sirius.lib.xform import XForm
 from sirius.blueprints.api.remote_service.tula.entities import TulaEntityCode
-from sirius.blueprints.api.remote_service.tula.passive.checkup_second_ticket25.schemas import \
-    CheckupsTicket25XFormSchema
+from sirius.blueprints.api.remote_service.tula.passive.refbook.schemas import \
+    RefbookSchema
 from sirius.models.system import SystemCode
 
 
-class CheckupSecondTicket25TulaXForm(CheckupsTicket25XFormSchema, XForm):
+class RefbookTulaXForm(RefbookSchema, XForm):
     remote_system_code = SystemCode.TULA
-    entity_code = TulaEntityCode.CHECKUP_OBS_FIRST_TICKET
+    entity_code = TulaEntityCode.REFBOOK

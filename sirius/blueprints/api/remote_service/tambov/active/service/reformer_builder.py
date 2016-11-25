@@ -222,7 +222,7 @@ class ServiceTambovBuilder(Builder):
 #     ##  build packages
 #
 #     def build_remote_entity_packages(self, reformed_req):
-#         package = EntitiesPackage(self.remote_sys_code)
+#         package = EntitiesPackage(self, self.remote_sys_code)
 #         req_meta = reformed_req['meta']
 #         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
 #             api_method = self.reformer.get_api_method(

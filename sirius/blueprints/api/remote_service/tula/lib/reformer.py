@@ -38,6 +38,8 @@ from sirius.blueprints.api.remote_service.tula.passive.hospitalization.reformer_
     HospitalizationTulaBuilder
 from sirius.blueprints.api.remote_service.tula.passive.organization.reformer_builder import \
     OrganizationTulaBuilder
+from sirius.blueprints.api.remote_service.tula.passive.refbook.reformer_builder import \
+    RefbookTulaBuilder
 from sirius.blueprints.api.remote_service.tula.passive.research.reformer_builder import \
     ResearchTulaBuilder
 from sirius.blueprints.api.remote_service.tula.passive.specialists_checkup.reformer_builder import \
@@ -65,6 +67,8 @@ class TulaReformer(Reformer):
             res = OrganizationTulaBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TulaEntityCode.DOCTOR:
             res = DoctorTulaBuilder(self).build_local_entities(header_meta, data)
+        elif remote_entity_code == TulaEntityCode.REFBOOK:
+            res = RefbookTulaBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TulaEntityCode.MEASURE_SPECIALISTS_CHECKUP:
             res = SpecialistsCheckupTulaBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TulaEntityCode.MEASURE_HOSPITALIZATION:

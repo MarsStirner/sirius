@@ -28,3 +28,4 @@ class TulaEntityCode(Enum):
     CHECKUP_PC_TICKET = 'checkup_pc_ticket'
     # CHECKUP_PC = 'checkup_pc'
     SCHEDULE = 'schedule'
+    REFBOOK = 'refbook'

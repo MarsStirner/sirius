@@ -50,7 +50,7 @@ risar_session = None
 sirius_session = (None, None)
 
 
-class TestTula:
+class _TestTula:
 
     def test_mr_auth(self):
         global risar_session

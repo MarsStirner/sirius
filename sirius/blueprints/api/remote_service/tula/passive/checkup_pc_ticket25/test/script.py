@@ -7,15 +7,15 @@
 
 """
 from sirius.app import app
-from .request import edit_checkup_first_ticket25
-from .test_data import test_checkup_first_ticket25_data_error_1, test_checkup_first_ticket25_data_1, \
-    test_checkup_first_ticket25_data_2
+from .request import edit_checkup_pc_ticket25
+from .test_data import test_checkup_pc_ticket25_data_error_1, test_checkup_pc_ticket25_data_1, \
+    test_checkup_pc_ticket25_data_2
 from sirius.blueprints.api.test.connect import make_login, release_token
 
 session = None
 
 
-class _TestCheckupFirstTicket25:
+class _TestCheckupPCTicket25:
 
     def test_auth(self):
         global session
@@ -29,21 +29,21 @@ class _TestCheckupFirstTicket25:
     def test_validation_error(self, testapp):
         print 'test_validation', session
         remote_card_id = 324
-        remote_checkup_first_ticket25_id = 324
-        # test_checkup_first_ticket25_data_2['card_id'] = remote_card_id
-        # test_checkup_first_ticket25_data_error_1['result_action_id'] = remote_checkup_first_ticket25_id
-        result = edit_checkup_first_ticket25(testapp, session, remote_card_id,
-                                             remote_checkup_first_ticket25_id, test_checkup_first_ticket25_data_error_1)
+        remote_checkup_pc_ticket25_id = 324
+        # test_checkup_pc_ticket25_data_2['card_id'] = remote_card_id
+        # test_checkup_pc_ticket25_data_error_1['result_action_id'] = remote_checkup_pc_ticket25_id
+        result = edit_checkup_pc_ticket25(testapp, session, remote_card_id,
+                                             remote_checkup_pc_ticket25_id, test_checkup_pc_ticket25_data_error_1)
         code = result['meta']['code']
         assert code == 400
 
     def test_edit(self, testapp):
         remote_card_id = 324
-        remote_checkup_first_ticket25_id = 324
-        # test_checkup_first_ticket25_data_2['card_id'] = remote_card_id
-        # test_checkup_first_ticket25_data_2['result_action_id'] = remote_checkup_first_ticket25_id
-        result = edit_checkup_first_ticket25(testapp, session, remote_card_id,
-                                             remote_checkup_first_ticket25_id, test_checkup_first_ticket25_data_2)
+        remote_checkup_pc_ticket25_id = 324
+        # test_checkup_pc_ticket25_data_2['card_id'] = remote_card_id
+        # test_checkup_pc_ticket25_data_2['result_action_id'] = remote_checkup_pc_ticket25_id
+        result = edit_checkup_pc_ticket25(testapp, session, remote_card_id,
+                                             remote_checkup_pc_ticket25_id, test_checkup_pc_ticket25_data_2)
         code = result['meta']['code']
         assert code == 200
 

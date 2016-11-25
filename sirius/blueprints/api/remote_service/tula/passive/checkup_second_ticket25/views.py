@@ -11,8 +11,8 @@ import sys
 from flask import request
 from sirius.blueprints.api.remote_service.tula.app import module
 from sirius.blueprints.api.remote_service.tula.entities import TulaEntityCode
-from sirius.blueprints.api.remote_service.tula.passive.checkup_first_ticket25.xform import \
-    CheckupFirstTicket25TulaXForm
+from sirius.blueprints.api.remote_service.tula.passive.checkup_second_ticket25.xform import \
+    CheckupSecondTicket25TulaXForm
 from sirius.blueprints.monitor.exception import remote_api_method
 from sirius.blueprints.monitor.logformat import hook
 
@@ -20,15 +20,15 @@ main_id_name = 'exam_obs_id'
 parent_id_name = 'card_id'
 
 
-@module.route('/api/integration/<int:api_version>/card/<' + parent_id_name + '>/obs/first/<' + main_id_name + '>/ticket25',
+@module.route('/api/integration/<int:api_version>/card/<' + parent_id_name + '>/obs/second/<' + main_id_name + '>/ticket25',
               methods=['PUT'])
 @remote_api_method(hook=hook)
-def api_checkup_first_ticket25_change(api_version, **kwargs):
+def api_checkup_second_ticket25_change(api_version, **kwargs):
     # main_id = kwargs.get(main_id_name)
     parent_id = kwargs.get(parent_id_name)
     data = None
     delete = request.method == 'DELETE'
-    xform = CheckupFirstTicket25TulaXForm(api_version)
+    xform = CheckupSecondTicket25TulaXForm(api_version)
     if not delete:
         data = request.get_json()
         xform.validate(data)

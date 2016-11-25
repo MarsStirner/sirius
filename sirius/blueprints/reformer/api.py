@@ -123,9 +123,11 @@ class Reformer(IStreamMeta):
             # rec_meta['dst_id_url_param_name'] = answer_res['param_name']
             MatchingId.add(
                 local_entity_id=rec_meta['dst_entity_id'],
+                local_id_prefix=rec_meta['dst_id_prefix'],
                 local_id=rec_meta['dst_id'],
                 local_param_name=rec_meta['dst_id_url_param_name'],
                 remote_entity_id=rec_meta['src_entity_id'],
+                remote_id_prefix=rec_meta['src_id_prefix'],
                 remote_id=rec_meta['src_id'],
                 remote_param_name=rec_meta['src_id_url_param_name'],
             )
@@ -133,8 +135,10 @@ class Reformer(IStreamMeta):
             MatchingId.remove(
                 remote_sys_code=self.remote_sys_code,
                 remote_entity_code=rec_meta['src_entity_code'],
+                remote_id_prefix=rec_meta['src_id_prefix'],
                 remote_id=rec_meta['src_id'],
                 local_entity_code=rec_meta['dst_entity_code'],
+                local_id_prefix=rec_meta['dst_id_prefix'],
                 local_id=rec_meta['dst_id'],
             )
 
@@ -209,6 +213,7 @@ class Reformer(IStreamMeta):
                         meta['src_id'],
                         meta['dst_entity_code'],
                         self.remote_sys_code,
+                        remote_id_prefix=meta['src_id_prefix'],
                     )
                 else:
                     matching_id_data = MatchingId.first_remote_id(
@@ -216,6 +221,7 @@ class Reformer(IStreamMeta):
                         meta['src_id'],
                         meta['dst_entity_code'],
                         self.remote_sys_code,
+                        src_id_prefix=meta['src_id_prefix'],
                     )
                 meta['skip_resend'] = False
                 if meta['src_operation_code'] == OperationCode.ADD:
@@ -564,11 +570,12 @@ class Reformer(IStreamMeta):
         local_entity_code, local_main_id,
         remote_entity_code, remote_main_id
     ):
+        local_entity_id = Entity.get_id(SystemCode.LOCAL, local_entity_code)
+        remote_entity_id = Entity.get_id(self.remote_sys_code, remote_entity_code)
         res = MatchingId.add(
-            local_entity_code=local_entity_code,
+            local_entity_id=local_entity_id,
             local_id=local_main_id,
-            remote_sys_code=self.remote_sys_code,
-            remote_entity_code=remote_entity_code,
+            remote_entity_id=remote_entity_id,
             remote_id=remote_main_id,
         )
         return res
@@ -944,7 +951,8 @@ class RequestEntities(object):
     def set_main_entity(
         self, dst_entity_code, dst_parents_params,
         dst_main_id_name, src_operation_code, src_entity_code,
-        src_main_id_name, src_id, level_count, set_current_id_func=None
+        src_main_id_name, src_id, level_count, set_current_id_func=None,
+            src_id_prefix=None, dst_id_prefix=None
     ):
         def set_current_id_common_func(record):
             entity_meta = record['meta']
@@ -962,9 +970,11 @@ class RequestEntities(object):
                 'src_operation_code': src_operation_code,
                 'src_entity_code': src_entity_code,
                 'src_id_url_param_name': src_main_id_name,
+                'src_id_prefix': src_id_prefix,
                 'src_id': src_id,
                 'dst_entity_code': dst_entity_code,
                 'dst_id_url_param_name': dst_main_id_name,
+                'dst_id_prefix': dst_id_prefix,
                 'dst_parents_params': dst_parents_params,
                 'set_current_id_func': set_current_id_common_func,
             }
