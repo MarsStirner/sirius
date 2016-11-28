@@ -10,6 +10,8 @@ from datetime import date, datetime
 
 from hitsl_utils.safe import safe_traverse, safe_int
 from hitsl_utils.wm_api import WebMisJsonEncoder
+from safe import safe_date
+
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
@@ -127,14 +129,16 @@ class CaseTambovBuilder(Builder):
                 # 'id': None,  # проставляется в set_current_id_func
                 'uid': str(header_meta['local_main_id']),
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                'medicalOrganizationId': '1434663',  # ticket_data['hospital']
+                'medicalOrganizationId': ticket_data.get('hospital', ''),
                 'caseTypeId': '1',
+                # todo: у нас нет этого поля в наших методах, надо будет добавлять.
                 'initGoalId': '7',
                 # 'careLevelId': ticket_data[''],
-                # 'fundingSourceTypeId': ticket_data[''],
+                'fundingSourceTypeId': '1',
                 # 'socialGroupId': ticket_data[''],
                 # 'paymentMethodId': ticket_data[''],
-                # 'careRegimenId': ticket_data[''],
+                'careRegimenId': '1',
+                'establishmentDate': to_date(ticket_data.get('date_open', '')),
             }
 
         for serv_code in ticket_data.get('medical_services', ()):
@@ -153,8 +157,10 @@ class CaseTambovBuilder(Builder):
                 item['body'] = {
                     # 'id': None,  # проставляется в set_current_id_func
                     'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                    # todo:
-                    # 'serviceId': serv_code,  # из дозапроса к справочной системе
+                    'serviceId': serv_code.get('medical_service', ''),
+                    'dateFrom': safe_date(ticket_data.get('date_open', '')),
+                    'isRendered': True,
+                    'orgId': ticket_data.get('hospital', ''),
                 }
 
         checkup_node = pack_entity['addition'][RisarEntityCode.CHECKUP_OBS_FIRST][0]
@@ -176,6 +182,7 @@ class CaseTambovBuilder(Builder):
                 'admissionDate': to_date(checkup_data['general_info']['date']),
                 'goalId': '7',
                 'placeId': '1',
+                'diagnosId': safe_traverse(ticket_data, 'medical_report', 'diagnosis_osn', default=''),
                 # 'reasonId': checkup_data['reason_code'],  # из дозапроса к справочной системе
             }
 
