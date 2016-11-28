@@ -158,7 +158,7 @@ class CaseTambovBuilder(Builder):
                     # 'id': None,  # проставляется в set_current_id_func
                     'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
                     'serviceId': serv_code.get('medical_service', ''),
-                    'dateFrom': safe_date(ticket_data.get('date_open', '')),
+                    'dateFrom': to_date(ticket_data.get('date_open', '')),
                     'isRendered': True,
                     'orgId': ticket_data.get('hospital', ''),
                 }

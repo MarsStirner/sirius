@@ -109,7 +109,7 @@ class ClinicTambovBuilder(Builder):
             'TFOMSCode': str(header_meta['remote_main_id']),  # id/code двух систем будут совпадать
             'full_name': clinic_data['name'],
             'short_name': clinic_data['name'],
-            'address': safe_traverse_attrs(clinic_data, 'legalAddress', 'addressText'),
+            'address': clinic_data.get('actualAddress', ''),
             'area': town_kladr,
             'is_LPU': 1,
         }
