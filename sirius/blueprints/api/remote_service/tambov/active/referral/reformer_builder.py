@@ -109,7 +109,7 @@ class ReferralTambovBuilder(Builder):
                 'referralDate': to_date(measure_data['begin_datetime']),
                 # todo: либо дозапрос нужен, либо поле в схему добавлять
                 'referralOrganizationId': '1434663',
-                'refServiceId': 'measure_type_code',
+                'refServiceId': measure_data.get('measure_type_code', ''),
             }
 
         return entities
@@ -242,7 +242,7 @@ class ReferralTambovBuilder(Builder):
                 'measure_type_code': measure_type,
                 'checkup_date': encode(service_data['dateTo']),
                 'lpu_code': safe_traverse(service_data, 'orgId', default=''),
-                'doctor_code': '995',
+                'doctor_code': safe_traverse(service_data, 'resourceGroupId', default=''),
             }
 
         return entities

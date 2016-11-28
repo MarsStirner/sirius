@@ -240,6 +240,13 @@ class PatientTambovBuilder(Builder):
         for document_data in patient_data.identifiers:
             if not document_data.type:
                 continue
+
+            # Получаем код организации
+            document_issuing_authority = Undefined
+            for code in safe_traverse(document_data, 'issueOrganization', 'codes', default=()):
+                if code['type'] == 'CODE_OMS':
+                    document_issuing_authority = code['code']
+                    break
             if document_data.type == '19':  # SNILS
                 main_item['body']['SNILS'] = document_data.number
             # elif document_data.codeType == '1' and not main_item['body']['SNILS'] is None:  # SNILS
@@ -254,8 +261,8 @@ class PatientTambovBuilder(Builder):
                     # todo: error: has no method get
                     # 'document_issuing_authority': safe_traverse(document_data, 'issueOrganization', 'code'),
                     # todo: синхронизация справочников
-                    # 'insurance_document_issuing_authority': document_data.issueOrganization and document_data.issueOrganization.code or '',
-                    'insurance_document_issuing_authority': '64014',    # —
+                    # Поле определяется ниже
+                    'insurance_document_issuing_authority': document_issuing_authority,    # —
                 })
             elif document_data.type == '13':  # passport
                 # todo: в схеме рисар document будет переделан на список documents. зачем?
@@ -265,9 +272,8 @@ class PatientTambovBuilder(Builder):
                     'document_number': document_data.number,
                     'document_beg_date': encode(document_data.issueDate) or '',
                     'document_series': document_data.series or Undefined,
-                    # todo: error: has no method get
-                    # 'document_issuing_authority': safe_traverse(document_data, 'issueOrganization', 'code'),
-                    'document_issuing_authority': document_data.issueOrganization and document_data.issueOrganization.code or Undefined,
+                    # Поле определяется ниже
+                    'document_issuing_authority': document_issuing_authority,
                 })
             else:
                 pass
