@@ -129,19 +129,18 @@ class CaseTambovBuilder(Builder):
                 # 'id': None,  # проставляется в set_current_id_func
                 'uid': str(header_meta['local_main_id']),
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                'medicalOrganizationId': ticket_data.get('hospital', ''),
+                'medicalOrganizationId': safe_traverse(ticket_data, 'hospital', default=''),
                 'caseTypeId': '1',
-                # todo: у нас нет этого поля в наших методах, надо будет добавлять.
-                'initGoalId': '7',
+                'initGoalId': safe_traverse(ticket_data, 'visit_type', default=''),
                 # 'careLevelId': ticket_data[''],
                 'fundingSourceTypeId': '1',
                 # 'socialGroupId': ticket_data[''],
                 # 'paymentMethodId': ticket_data[''],
                 'careRegimenId': '1',
-                'establishmentDate': to_date(ticket_data.get('date_open', '')),
+                'establishmentDate': to_date(safe_traverse(ticket_data, 'date_open')),
             }
 
-        for serv_code in ticket_data.get('medical_services', ()):
+        for serv_code in safe_traverse(ticket_data, 'medical_services', default=()):
             item = entities.set_child_entity(
                 parent_item=main_item,
                 dst_entity_code=TambovEntityCode.SERVICE,
@@ -157,10 +156,10 @@ class CaseTambovBuilder(Builder):
                 item['body'] = {
                     # 'id': None,  # проставляется в set_current_id_func
                     'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                    'serviceId': serv_code.get('medical_service', ''),
-                    'dateFrom': to_date(ticket_data.get('date_open', '')),
+                    'serviceId': safe_traverse(serv_code, 'medical_service', default=''),
+                    'dateFrom': to_date(safe_traverse(ticket_data, 'date_open')),
                     'isRendered': True,
-                    'orgId': ticket_data.get('hospital', ''),
+                    'orgId': safe_traverse(ticket_data, 'hospital', default=''),
                 }
 
         checkup_node = pack_entity['addition'][RisarEntityCode.CHECKUP_OBS_FIRST][0]

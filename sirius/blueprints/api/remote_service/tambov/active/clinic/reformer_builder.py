@@ -8,7 +8,7 @@
 """
 from datetime import date
 
-from hitsl_utils.safe import safe_traverse_attrs, safe_int
+from hitsl_utils.safe import safe_traverse_attrs, safe_int, safe_traverse
 from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
@@ -71,7 +71,7 @@ class ClinicTambovBuilder(Builder):
 
     def build_local_entities(self, header_meta, pack_entity):
         clinic_data = pack_entity['data']
-        clinic_addition = pack_entity.get('addition', {})
+        clinic_addition = safe_traverse(pack_entity, 'addition', default={})
         AddressAllInfos = clinic_addition.get(TambovEntityCode.ADDRESS_ALL_INFO)
         entities = RequestEntities()
 
@@ -109,7 +109,7 @@ class ClinicTambovBuilder(Builder):
             'TFOMSCode': str(header_meta['remote_main_id']),  # id/code двух систем будут совпадать
             'full_name': clinic_data['name'],
             'short_name': clinic_data['name'],
-            'address': clinic_data.get('actualAddress', ''),
+            'address': safe_traverse(clinic_data, 'actualAddress', default=''),
             'area': town_kladr,
             'is_LPU': 1,
         }

@@ -232,9 +232,10 @@ class PatientTambovBuilder(Builder):
             'birthday_date': encode(patient['birthDate']),
             'gender': gender,
             # 'SNILS': None,  # заполняется в документах
-            'blood_type_info': {
-                'blood_type': patient.get('bloodGroup', ''),
-            },
+            # todo: для bloodGroup указан метод "patients-ws getPatient" вместо "getPatient"
+            # 'blood_type_info': {
+            #     'blood_type': safe_traverse(patient, 'bloodGroup', default=''),
+            # },
         }
         for document_data in patient_data.identifiers:
             if not document_data.type:

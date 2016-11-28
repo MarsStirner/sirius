@@ -107,6 +107,7 @@ class ReferralTambovBuilder(Builder):
                 # 'id': None,  # проставляется в set_current_id_func
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
                 'referralDate': to_date(measure_data['begin_datetime']),
+                # todo: либо дозапрос нужен, либо поле в схему добавлять
                 'referralOrganizationId': '1434663',
                 'refServiceId': 'measure_type_code',
             }
@@ -207,7 +208,7 @@ class ReferralTambovBuilder(Builder):
                 'external_id': service_data['id'],
                 'measure_type_code': measure_type,
                 'realization_date': encode(service_data['dateFrom']),
-                'lpu_code': service_data.get('orgId', ''),
+                'lpu_code': safe_traverse(service_data, 'orgId', default=''),
                 # 'analysis_number': service_data[''] or Undefined,
                 'results': 'p1:1;p2:2',
                 # 'comment': service_data[''] or Undefined,
@@ -240,7 +241,7 @@ class ReferralTambovBuilder(Builder):
                 'external_id': service_data['id'],
                 'measure_type_code': measure_type,
                 'checkup_date': encode(service_data['dateTo']),
-                'lpu_code': service_data.get('orgId', ''),
+                'lpu_code': safe_traverse(service_data, 'orgId', default=''),
                 'doctor_code': '995',
             }
 
