@@ -81,11 +81,11 @@ test_client_data_2 = {
         {'insurance_document_type': '3',
          'insurance_document_number': '15978645',
          'insurance_document_beg_date': '2015-04-06',
-         'insurance_document_issuing_authority': '1246'},
+         'insurance_document_issuing_authority': '324'},
         {'insurance_document_type': '6',
          'insurance_document_number': '000',
          'insurance_document_beg_date': '2015-04-06',
-         'insurance_document_issuing_authority': '1246'}
+         'insurance_document_issuing_authority': '324'}
     ],
     'residential_address': {
         'KLADR_locality': '6400000500000',

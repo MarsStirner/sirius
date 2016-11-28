@@ -46,7 +46,7 @@ class MatchingId(Model):
 
     @classmethod
     def first_local_id(cls, remote_entity_code, remote_id,
-                       local_entity_code, remote_sys_code, remote_id_prefix=''):
+                       local_entity_code, remote_sys_code, remote_id_prefix=None):
         dst_id = None
         dst_param_name = None
         LocalEntity = aliased(Entity, name='LocalEntity')
@@ -65,7 +65,7 @@ class MatchingId(Model):
             RemoteEntity.code == remote_entity_code,
             RemoteSystem.code == remote_sys_code,
             cls.remote_id == str(remote_id),
-            cls.remote_id_prefix == remote_id_prefix,
+            cls.remote_id_prefix == (remote_id_prefix or ''),
             LocalEntity.code == local_entity_code,
             LocalSystem.code == SystemCode.LOCAL,
         ).first()
@@ -80,7 +80,7 @@ class MatchingId(Model):
 
     @classmethod
     def first_remote_id(cls, src_entity_code, src_id, dst_entity_code,
-                        remote_sys_code, src_id_prefix=''):
+                        remote_sys_code, src_id_prefix=None):
         dst_id = None
         dst_param_name = None
         LocalEntity = aliased(Entity, name='LocalEntity')
@@ -99,7 +99,7 @@ class MatchingId(Model):
             LocalEntity.code == src_entity_code,
             LocalSystem.code == SystemCode.LOCAL,
             cls.local_id == str(src_id),
-            cls.local_id_prefix == src_id_prefix,
+            cls.local_id_prefix == (src_id_prefix or ''),
             RemoteEntity.code == dst_entity_code,
             RemoteSystem.code == remote_sys_code,
         ).first()
@@ -113,7 +113,7 @@ class MatchingId(Model):
         return res
 
     @classmethod
-    def shortest_first_remote_id(cls, src_entity_code, src_id, remote_sys_code, src_id_prefix=''):
+    def shortest_first_remote_id(cls, src_entity_code, src_id, remote_sys_code, src_id_prefix=None):
         dst_id = None
         dst_param_name = None
         LocalEntity = aliased(Entity, name='LocalEntity')
@@ -132,7 +132,7 @@ class MatchingId(Model):
             LocalEntity.code == src_entity_code,
             LocalSystem.code == SystemCode.LOCAL,
             cls.local_id == str(src_id),
-            cls.local_id_prefix == src_id_prefix,
+            cls.local_id_prefix == (src_id_prefix or ''),
             RemoteSystem.code == remote_sys_code,
         ).first()
         if res:
@@ -145,7 +145,7 @@ class MatchingId(Model):
         return res
 
     @classmethod
-    def first_remote_param_name(cls, remote_entity_code, remote_id, remote_sys_code, remote_id_prefix=''):
+    def first_remote_param_name(cls, remote_entity_code, remote_id, remote_sys_code, remote_id_prefix=None):
         dst_param_name = None
         RemoteEntity = aliased(Entity, name='RemoteEntity')
         RemoteSystem = aliased(System, name='RemoteSystem')
@@ -155,7 +155,7 @@ class MatchingId(Model):
             RemoteSystem, RemoteSystem.id == RemoteEntity.system_id
         ).filter(
             cls.remote_id == str(remote_id),
-            cls.remote_id_prefix == remote_id_prefix,
+            cls.remote_id_prefix == (remote_id_prefix or ''),
             RemoteEntity.code == remote_entity_code,
             RemoteSystem.code == remote_sys_code,
         ).first()
@@ -167,7 +167,7 @@ class MatchingId(Model):
         return res
 
     @classmethod
-    def get_local_id(cls, local_entity_code, remote_entity_code, remote_id, remote_sys_code, remote_id_prefix=''):
+    def get_local_id(cls, local_entity_code, remote_entity_code, remote_id, remote_sys_code, remote_id_prefix=None):
         LocalEntity = aliased(Entity, name='LocalEntity')
         LocalSystem = aliased(System, name='LocalSystem')
         RemoteEntity = aliased(Entity, name='RemoteEntity')
@@ -184,7 +184,7 @@ class MatchingId(Model):
             LocalEntity.code == local_entity_code,
             LocalSystem.code == SystemCode.LOCAL,
             cls.remote_id == str(remote_id),
-            cls.remote_id_prefix == remote_id_prefix,
+            cls.remote_id_prefix == (remote_id_prefix or ''),
             RemoteEntity.code == remote_entity_code,
             RemoteSystem.code == remote_sys_code,
         ).one()
@@ -257,11 +257,11 @@ class MatchingId(Model):
         ).filter(
             RemoteSystem.code == remote_sys_code,
             RemoteEntity.code == remote_entity_code,
-            cls.remote_id_prefix == remote_id_prefix or '',
+            cls.remote_id_prefix == (remote_id_prefix or ''),
             cls.remote_id == str(remote_id),
             LocalSystem.code == SystemCode.LOCAL,
             LocalEntity.code == local_entity_code,
-            cls.local_id_prefix == local_id_prefix or '',
+            cls.local_id_prefix == (local_id_prefix or ''),
             cls.local_id == str(local_id),
         ).first()
         rec.delete()

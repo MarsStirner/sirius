@@ -111,7 +111,7 @@ class Reformer(IStreamMeta):
 
         rec_meta = record['meta']
         if rec_meta['dst_operation_code'] == OperationCode.ADD:
-            if rec_meta['dst_id_url_param_name'] in rec_meta['dst_parents_params']:
+            if rec_meta['dst_id_url_param_name'] in (rec_meta['dst_parents_params'] or ()):
                 rec_meta['dst_id'] = rec_meta['dst_parents_params'][rec_meta['dst_id_url_param_name']]['id']
             else:
                 answer_res = parser.get_params(
@@ -149,7 +149,7 @@ class Reformer(IStreamMeta):
 
         rec_meta = record['meta']
         if rec_meta['dst_operation_code'] == OperationCode.ADD:
-            if rec_meta['dst_id_url_param_name'] in rec_meta['dst_parents_params']:
+            if rec_meta['dst_id_url_param_name'] in (rec_meta['dst_parents_params'] or ()):
                 rec_meta['dst_id'] = rec_meta['dst_parents_params'][rec_meta['dst_id_url_param_name']]['id']
             else:
                 rec_meta['dst_id'] = trans_res

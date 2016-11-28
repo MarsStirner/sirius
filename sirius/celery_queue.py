@@ -11,11 +11,13 @@ from kombu import Queue, Exchange
 from sirius.models.system import RegionCode
 from sirius.app import app
 
-main_queue_name = 'sir_test_risar_main_queue'
-error_1_queue_name = 'sir_test_risar_error_1_queue'
-error_2_queue_name = 'sir_test_risar_error_2_queue'
-mis_tula_queue_name = 'sir_test_mis_tula_queue'
-mis_tambov_queue_name = 'sir_test_mis_tambov_queue'
+dep_prefix = 'sir_test'  # app.config.get('deployment.prefix')
+
+main_queue_name = dep_prefix + '_risar_main_queue'
+error_1_queue_name = dep_prefix + '_risar_error_1_queue'
+error_2_queue_name = dep_prefix + '_risar_error_2_queue'
+mis_tula_queue_name = dep_prefix + '_mis_tula_queue'
+mis_tambov_queue_name = dep_prefix + '_mis_tambov_queue'
 
 # на каждую МИС региона своя очередь
 remote_queues = {

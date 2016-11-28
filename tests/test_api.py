@@ -10,4 +10,6 @@
 from sirius.blueprints.api.local_service.risar.passive.test.script import *
 from sirius.blueprints.api.remote_service.tula.passive.client.test.script import *
 from sirius.blueprints.api.remote_service.tula.passive.refbook.test.script import *
+from sirius.blueprints.api.remote_service.tula.passive.organization.test.script import *
+from sirius.blueprints.api.remote_service.tula.passive.doctor.test.script import *
 from sirius.blueprints.api.remote_service.tula.test.script import *

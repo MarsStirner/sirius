@@ -26,37 +26,37 @@ class _TestClient:
                 session = sess
                 print 'test_auth', sess
 
-    def test_validation_error(self, testapp):
+    def _test_validation_error(self, testapp):
         print 'test_validation', session
-        remote_client_id = '324'
+        remote_client_id = '326'
         test_client_data_error_1['client_id'] = remote_client_id
         result = create_client(testapp, session, test_client_data_error_1)
         code = result['meta']['code']
         assert code == 400
 
     def test_create(self, testapp):
-        remote_client_id = '324'
+        remote_client_id = '326'
         test_client_data_1['client_id'] = remote_client_id
         result = create_client(testapp, session, test_client_data_1)
         code = result['meta']['code']
         assert code == 200
 
     def _test_resend(self, testapp):
-        remote_client_id = '324'
+        remote_client_id = '326'
         test_client_data_1['client_id'] = remote_client_id
         result = create_client(testapp, session, test_client_data_1)
         code = result['meta']['code']
         assert code == 200
 
     def test_edit(self, testapp):
-        remote_client_id = '324'
+        remote_client_id = '326'
         test_client_data_2['client_id'] = remote_client_id
         result = edit_client(testapp, session, remote_client_id, test_client_data_2)
         code = result['meta']['code']
         assert code == 200
 
     def _test_delete(self, testapp):
-        remote_client_id = '324'
+        remote_client_id = '326'
         result = delete_client(testapp, session, remote_client_id)
         code = result['meta']['code']
         assert code == 200

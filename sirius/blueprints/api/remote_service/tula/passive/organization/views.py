@@ -24,14 +24,14 @@ main_id_name = 'TFOMSCode'
               methods=['PUT', 'DELETE'])
 @remote_api_method(hook=hook)
 def api_organization_change(api_version, **kwargs):
-    # main_id = kwargs.get(main_id_name)
+    main_id = kwargs.get(main_id_name)
     data = None
     delete = request.method == 'DELETE'
     xform = OrganizationTulaXForm(api_version)
     if not delete:
         data = request.get_json()
         xform.validate(data)
-    main_id = data.get(main_id_name)
+        main_id = data.get(main_id_name)
     # xform.check_params(card_id, main_id, data)
     service_name = sys._getframe().f_code.co_name
     xform.send_messages(main_id, main_id_name, data, service_name, request.method)

@@ -23,14 +23,14 @@ client_id_name = 'client_id'
               methods=['PUT', 'DELETE'])
 @remote_api_method(hook=hook)
 def api_client_change(api_version, **kwargs):
-    # client_id = kwargs.get(client_id_name)
+    client_id = kwargs.get(client_id_name)
     data = None
     delete = request.method == 'DELETE'
     xform = ClientTulaXForm(api_version)
     if not delete:
         data = request.get_json()
         xform.validate(data)
-    client_id = data.get(client_id_name)
+        client_id = data.get(client_id_name)
     # xform.check_params(card_id, client_id, data)
     service_name = sys._getframe().f_code.co_name
     xform.send_messages(client_id, client_id_name, data, service_name, request.method)

@@ -28,7 +28,7 @@ class _TestRefbook:
     def test_validation_error(self, testapp):
         print 'test_validation', session
         rb_code = 'rbMeasureStatus'
-        main_id = 324
+        main_id = 326
         data = get_refbook_data_required(main_id)
         data['code'] = main_id
         result = create_refbook(testapp, session, rb_code, data)
@@ -37,28 +37,28 @@ class _TestRefbook:
 
     def test_create(self, testapp):
         rb_code = 'rbMeasureStatus'
-        main_id = '324'
+        main_id = '326'
         result = create_refbook(testapp, session, rb_code, get_refbook_data_required(main_id))
         code = result['meta']['code']
         assert code == 200
 
     def test_resend(self, testapp):
         rb_code = 'rbMeasureStatus'
-        main_id = '324'
+        main_id = '326'
         result = create_refbook(testapp, session, rb_code, get_refbook_data_required(main_id))
         code = result['meta']['code']
         assert code == 200
 
     def test_edit(self, testapp):
         rb_code = 'rbMeasureStatus'
-        main_id = '324'
+        main_id = '326'
         result = edit_refbook(testapp, session, rb_code, main_id, get_refbook_data_changed(main_id))
         code = result['meta']['code']
         assert code == 200
 
     def test_delete(self, testapp):
         rb_code = 'rbMeasureStatus'
-        main_id = '324'
+        main_id = '326'
         result = delete_refbook(testapp, session, rb_code, main_id)
         code = result['meta']['code']
         assert code == 200
