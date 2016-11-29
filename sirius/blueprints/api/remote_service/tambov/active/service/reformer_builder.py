@@ -268,3 +268,84 @@ class ServiceTambovBuilder(Builder):
 #                 parents_params=req_meta['dst_parents_params'],
 #                 data=service_data,
 #             )
+
+
+    ##################################################################
+    ##  build packages
+
+    def build_local_entity_packages_exch_card(self, msg):
+        package = EntitiesPackage(self, SystemCode.LOCAL)
+        msg_meta = msg.get_relative_meta()
+
+        # дополнение параметров сущностью, если не указана
+        params_meta = {'card_id': RisarEntityCode.CARD}
+        self.set_src_parents_entity(msg_meta, params_meta)
+
+        main_item = package.add_main_pack_entity(
+            entity_code=RisarEntityCode.EXCHANGE_CARD,
+            operation_code=msg_meta['src_operation_code'],
+            method=msg_meta['dst_method'],
+            main_param_name=msg_meta['src_main_param_name'],
+            main_id=msg_meta['src_main_id'],
+            parents_params=msg_meta['src_parents_params'],
+            data=msg.get_data(),
+        )
+
+        return package
+
+
+    ##################################################################
+    ##  reform entities
+
+    def build_remote_entities_exch_card(self, header_meta, pack_entity):
+        exch_card_data = pack_entity['data']
+        src_operation_code = header_meta['local_operation_code']
+        src_entity_code = header_meta['local_entity_code']
+
+        # сопоставление параметров родительских сущностей
+        params_map = {
+            RisarEntityCode.CARD: {
+                'entity': TambovEntityCode.PATIENT, 'param': 'patientUid',
+            },
+            RisarEntityCode.ORGANIZATION: {
+                'entity': TambovEntityCode.CLINIC, 'param': 'orgId',
+            },
+        }
+        self.reform_local_parents_params(header_meta, src_entity_code, params_map)
+
+        entities = RequestEntities()
+        main_item = entities.set_main_entity(
+            dst_entity_code=TambovEntityCode.SERVICE,
+            dst_parents_params=header_meta['remote_parents_params'],
+            dst_main_id_name='id',
+            src_operation_code=src_operation_code,
+            src_entity_code=src_entity_code,
+            src_main_id_name=header_meta['local_main_param_name'],
+            src_id=header_meta['local_main_id'],
+            level_count=2,
+        )
+        if src_operation_code != OperationCode.DELETE:
+            main_item['body'] = {
+                # 'id': None,  # проставляется в set_current_id_func
+                'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
+                'serviceId': '99999',
+                # 'prototypeId': '11245',  # prototypeId не нужен, если заполнена услуга
+                'isRendered': True,
+                'orgId': header_meta['remote_parents_params']['orgId']['id'],
+            }
+
+        child_item = entities.set_child_entity(
+            parent_item=main_item,
+            dst_entity_code=TambovEntityCode.SRV_PROTOCOL,
+            dst_parents_params=header_meta['remote_parents_params'],
+            dst_main_id_name=None,
+            dst_parent_id_name='id',
+            src_operation_code=src_operation_code,
+            src_entity_code=src_entity_code,
+            src_main_id_name=header_meta['local_main_param_name'],
+            src_id=header_meta['local_main_id'],
+        )
+        if src_operation_code != OperationCode.DELETE:
+            child_item['body'] = exch_card_data['exch_card']
+
+        return entities

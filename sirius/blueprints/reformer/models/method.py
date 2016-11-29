@@ -137,7 +137,8 @@ class ServiceMethod(Model):
             cls.method_code == method_code,
         ).first()
         if not method:
-            raise InternalError('Service method not registered in %s' % cls.__name__)
+            raise InternalError('Service method (%s) not registered in %s' %
+                                (method_code, cls.__name__))
         res = {
             'entity_code': method.entity.code,
             'system_code': method.entity.system.code,

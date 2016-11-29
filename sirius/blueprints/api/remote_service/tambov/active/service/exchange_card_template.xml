@@ -1,0 +1,1333 @@
+<version xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:type="ORIGINAL_VERSION">
+    <contribution>
+        <id xsi:type="HIER_OBJECT_ID">
+            <value xml:space="preserve">a3203421-09bd-4684-88fe-cf2fb4e40e45</value>
+        </id>
+        <namespace xml:space="preserve"/><type xml:space="preserve">CONTRIBUTION</type>
+    </contribution>
+    <commit_audit>
+        <system_id xml:space="preserve">68.r-mis.ru:443</system_id>
+        <committer xsi:type="PARTY_IDENTIFIED">
+            <name xml:space="preserve"/>
+            <identifiers>
+                <issuer xml:space="preserve"/><assigner xml:space="preserve"/><type xml:space="preserve"/>
+            </identifiers>
+        </committer>
+        <time_committed>
+            <value xml:space="preserve">2016-11-16T23:08:45.301+03:00</value>
+        </time_committed>
+        <change_type>
+            <value xml:space="preserve">creation</value>
+            <defining_code>
+                <terminology_id>
+                    <value xml:space="preserve">openehr</value>
+                </terminology_id>
+                <code_string xml:space="preserve">249</code_string>
+            </defining_code>
+        </change_type>
+    </commit_audit>
+    <uid>
+        <value xml:space="preserve">97b6f55a-9ab9-454c-8c26-38f3f865df1b</value>
+    </uid>
+    <data archetype_node_id="at0000" xsi:type="COMPOSITION">
+        <name>
+            <value xml:space="preserve">Осмотр на 32 (28) неделе</value>
+        </name>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Перенесенные общие, гинекологические заболевания, операции</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.perenes_zabolevaniya.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">_</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">краснуха, корь, в/оспа,аппендэктомия в 18 лет, хр. тонзиллит, миопия сл. степени(-1,5)</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Особенности течения прежних беременностей, родов, послеродового периода</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.ginekologic_operacii.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">_</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">1-2004-срочные роды, Д.3250/52, без осложнений; 2-2006-м/а, без осложнений, 3-настоящая</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Которая беременность и роды (для обменной карты)</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.beremennost_i_rody_kolichestvo.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">Которая беременность</value>
+                    </name>
+                    <value xsi:type="DV_QUANTITY">
+                        <magnitude>3.0</magnitude>
+                    </value>
+                </items>
+                <items archetype_node_id="at0003" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">Которые роды</value>
+                    </name>
+                    <value xsi:type="DV_QUANTITY">
+                        <magnitude>2.0</magnitude>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Было абортов</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.extra_data_x10.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">_</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">1(2006г.) 5-6 нед, б/о</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="OBSERVATION">
+            <name>
+                <value xml:space="preserve">Преждевременные роды</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-OBSERVATION.gestational_age.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001">
+                <name>
+                    <value xml:space="preserve">Event Series</value>
+                </name>
+                <events archetype_node_id="at0002" xsi:type="POINT_EVENT">
+                    <name>
+                        <value xml:space="preserve">Any event</value>
+                    </name>
+                    <data archetype_node_id="at0003" xsi:type="ITEM_TREE">
+                        <name>
+                            <value xml:space="preserve">Tree</value>
+                        </name>
+                        <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_</value>
+                            </name>
+                            <value xsi:type="DV_TEXT">
+                                <value xml:space="preserve">-</value>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0005" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">Срочные роды</value>
+                            </name>
+                            <value xsi:type="DV_TEXT">
+                                <value xml:space="preserve">2004</value>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0006" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">по шевелению</value>
+                            </name>
+                            <value xsi:type="DV_TEXT"/>
+                        </items>
+                        <items archetype_node_id="at0007" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">по 1 явке</value>
+                            </name>
+                            <value xsi:type="DV_TEXT"/>
+                        </items>
+                        <items archetype_node_id="at0008" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">по 1 УЗИ</value>
+                            </name>
+                            <value xsi:type="DV_TEXT"/>
+                        </items>
+                        <items archetype_node_id="at0009" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">по 2 УЗИ</value>
+                            </name>
+                            <value xsi:type="DV_TEXT"/>
+                        </items>
+                        <items archetype_node_id="at0010" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">по 3 УЗИ</value>
+                            </name>
+                            <value xsi:type="DV_TEXT"/>
+                        </items>
+                        <items archetype_node_id="at0011" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_описание</value>
+                            </name>
+                            <value xsi:type="DV_TEXT"/>
+                        </items>
+                    </data>
+                </events>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="ADMIN_ENTRY">
+            <name>
+                <value xml:space="preserve">Последняя менструация</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-ADMIN_ENTRY.birthdate.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">Дата</value>
+                    </name>
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">30.10.2016</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Срок беременности при первой явке (для обменной карты)</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.srok_beremennosti_pri_pervoy_yavke.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">Срок беременности в неделях</value>
+                    </name>
+                    <value xsi:type="DV_QUANTITY">
+                        <magnitude>8.0</magnitude>
+                        <units xml:space="preserve">wk</units>
+                    </value>
+                </items>
+                <items archetype_node_id="at0003" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">при первом посещении</value>
+                    </name>
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">10.10.2016</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Всего посетила</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.extra_data_x10.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">_</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">12</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Первое шевеление плода</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.fetus_first_movement.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">Дата</value>
+                    </name>
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">11.11.2016</value>
+                    </value>
+                </items>
+                <items archetype_node_id="at0003" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">_</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">в 16 нед.</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="OBSERVATION">
+            <name>
+                <value xml:space="preserve">Особенности течения данной беременности</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-OBSERVATION.additional_info.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001">
+                <name>
+                    <value xml:space="preserve">Event Series</value>
+                </name>
+                <events archetype_node_id="at0002" xsi:type="POINT_EVENT">
+                    <name>
+                        <value xml:space="preserve">Any event</value>
+                    </name>
+                    <data archetype_node_id="at0003" xsi:type="ITEM_TREE">
+                        <name>
+                            <value xml:space="preserve">Tree</value>
+                        </name>
+                        <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_</value>
+                            </name>
+                            <value xsi:type="DV_TEXT">
+                                <value xml:space="preserve">6-7 нед-угроза прерывания, 12-13 нед. -ОРЗ(t38,0)</value>
+                            </value>
+                        </items>
+                    </data>
+                </events>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="OBSERVATION">
+            <name>
+                <value xml:space="preserve">Размеры таза</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-OBSERVATION.pelvis_size.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001">
+                <name>
+                    <value xml:space="preserve">Event Series</value>
+                </name>
+                <events archetype_node_id="at0002" xsi:type="POINT_EVENT">
+                    <name>
+                        <value xml:space="preserve">Any event</value>
+                    </name>
+                    <data archetype_node_id="at0003" xsi:type="ITEM_TREE">
+                        <name>
+                            <value xml:space="preserve">Tree</value>
+                        </name>
+                        <items archetype_node_id="at0019" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_таз</value>
+                            </name>
+                            <value xsi:type="DV_CODED_TEXT">
+                                <defining_code>
+                                    <terminology_id/>
+                                </defining_code>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0011" xsi:type="CLUSTER">
+                            <name>
+                                <value xml:space="preserve">Размеры таза</value>
+                            </name>
+                            <items archetype_node_id="at0004"
+                                   xsi:type="ELEMENT">
+                                <name>
+                                    <value xml:space="preserve">D.Sp</value>
+                                </name>
+                                <value xsi:type="DV_QUANTITY">
+                                    <magnitude>26.0</magnitude>
+                                    <units xml:space="preserve">cm</units>
+                                </value>
+                            </items>
+                            <items archetype_node_id="at0005"
+                                   xsi:type="ELEMENT">
+                                <name>
+                                    <value xml:space="preserve">D.Cr</value>
+                                </name>
+                                <value xsi:type="DV_QUANTITY">
+                                    <magnitude>29.0</magnitude>
+                                    <units xml:space="preserve">cm</units>
+                                </value>
+                            </items>
+                            <items archetype_node_id="at0006"
+                                   xsi:type="ELEMENT">
+                                <name>
+                                    <value xml:space="preserve">D.Tr</value>
+                                </name>
+                                <value xsi:type="DV_QUANTITY">
+                                    <magnitude>32.0</magnitude>
+                                    <units xml:space="preserve">cm</units>
+                                </value>
+                            </items>
+                            <items archetype_node_id="at0007"
+                                   xsi:type="ELEMENT">
+                                <name>
+                                    <value xml:space="preserve">C.Ext</value>
+                                </name>
+                                <value xsi:type="DV_QUANTITY">
+                                    <magnitude>21.0</magnitude>
+                                    <units xml:space="preserve">cm</units>
+                                </value>
+                            </items>
+                            <items archetype_node_id="at0009"
+                                   xsi:type="ELEMENT">
+                                <name>
+                                    <value xml:space="preserve">C.Diag</value>
+                                </name>
+                                <value xsi:type="DV_QUANTITY">
+                                    <magnitude>14.0</magnitude>
+                                    <units xml:space="preserve">cm</units>
+                                </value>
+                            </items>
+                            <items archetype_node_id="at0010"
+                                   xsi:type="ELEMENT">
+                                <name>
+                                    <value xml:space="preserve">C.Vera</value>
+                                </name>
+                                <value xsi:type="DV_QUANTITY">
+                                    <magnitude>12.0</magnitude>
+                                    <units xml:space="preserve">cm</units>
+                                </value>
+                            </items>
+                            <items archetype_node_id="at0008"
+                                   xsi:type="ELEMENT">
+                                <name>
+                                    <value xml:space="preserve">Мыс недостижим</value>
+                                </name>
+                                <value xsi:type="DV_BOOLEAN"/>
+                            </items>
+                        </items>
+                        <items archetype_node_id="at0012" xsi:type="CLUSTER">
+                            <name>
+                                <value xml:space="preserve">Пояснично-крестцовый ромб</value>
+                            </name>
+                            <items archetype_node_id="at0017"
+                                   xsi:type="ELEMENT">
+                                <name>
+                                    <value xml:space="preserve">поперечный</value>
+                                </name>
+                                <value xsi:type="DV_QUANTITY"/>
+                            </items>
+                            <items archetype_node_id="at0018"
+                                   xsi:type="ELEMENT">
+                                <name>
+                                    <value xml:space="preserve">продольный</value>
+                                </name>
+                                <value xsi:type="DV_QUANTITY"/>
+                            </items>
+                        </items>
+                        <items archetype_node_id="at0015" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">Индекс Соловьева</value>
+                            </name>
+                            <value xsi:type="DV_TEXT"/>
+                        </items>
+                        <items archetype_node_id="at0016" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">Форма таза (заключение)</value>
+                            </name>
+                            <value xsi:type="DV_TEXT"/>
+                        </items>
+                    </data>
+                </events>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="OBSERVATION">
+            <name>
+                <value xml:space="preserve">Рост при первой явке</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-OBSERVATION.lenght.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001">
+                <name>
+                    <value xml:space="preserve">Event Series</value>
+                </name>
+                <events archetype_node_id="at0002" xsi:type="POINT_EVENT">
+                    <name>
+                        <value xml:space="preserve">Any event</value>
+                    </name>
+                    <data archetype_node_id="at0003" xsi:type="ITEM_TREE">
+                        <name>
+                            <value xml:space="preserve">Tree</value>
+                        </name>
+                        <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_Рост</value>
+                            </name>
+                            <value xsi:type="DV_QUANTITY">
+                                <magnitude>168.0</magnitude>
+                                <units xml:space="preserve">cm</units>
+                            </value>
+                        </items>
+                    </data>
+                </events>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="OBSERVATION">
+            <name>
+                <value xml:space="preserve">Масса(вес) при первой явке</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-OBSERVATION.mass_kg.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001">
+                <name>
+                    <value xml:space="preserve">Event Series</value>
+                </name>
+                <events archetype_node_id="at0002" xsi:type="POINT_EVENT">
+                    <name>
+                        <value xml:space="preserve">Any event</value>
+                    </name>
+                    <data archetype_node_id="at0003" xsi:type="ITEM_TREE">
+                        <name>
+                            <value xml:space="preserve">Tree</value>
+                        </name>
+                        <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_</value>
+                            </name>
+                            <value xsi:type="DV_QUANTITY">
+                                <magnitude>58.0</magnitude>
+                                <units xml:space="preserve">kg</units>
+                            </value>
+                        </items>
+                    </data>
+                </events>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Плод (для обменной карты)</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.plod_dlya_obmennoi_karty.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">Положение плода</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">продольное</value>
+                    </value>
+                </items>
+                <items archetype_node_id="at0003" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">Предлежащая часть</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">головка</value>
+                    </value>
+                </items>
+                <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">Сердцебиение плода</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">140 уд в минуту</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Исследования (для обменной карты 1-2 стр)</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.issledovaniya_dlya_obmen_karty_1_2str.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">_RW</value>
+                    </name>
+                    <items archetype_node_id="at0003" xsi:type="CLUSTER">
+                        <name>
+                            <value xml:space="preserve">RW1</value>
+                        </name>
+                        <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">дата</value>
+                            </name>
+                            <value xsi:type="DV_DATE">
+                                <value xml:space="preserve">17.08.2016</value>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0032" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_</value>
+                            </name>
+                            <value xsi:type="DV_TEXT">
+                                <value xml:space="preserve">отр</value>
+                            </value>
+                        </items>
+                    </items>
+                    <items archetype_node_id="at0006" xsi:type="CLUSTER">
+                        <name>
+                            <value xml:space="preserve">RW2</value>
+                        </name>
+                        <items archetype_node_id="at0007" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">датa</value>
+                            </name>
+                            <value xsi:type="DV_DATE">
+                                <value xml:space="preserve">26.10.2016</value>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0033" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_описание</value>
+                            </name>
+                            <value xsi:type="DV_TEXT">
+                                <value xml:space="preserve">отр</value>
+                            </value>
+                        </items>
+                    </items>
+                </items>
+                <items archetype_node_id="at0008" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">_группа крови</value>
+                    </name>
+                    <items archetype_node_id="at0009" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Группа крови</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">0(I)</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0013" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">резус-принадлежность</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">Rh(+)</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0010" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">тип крови</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">0(I)</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0011" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">тирт антител</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">0(I)</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0012" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Резус-принадлежность крови мужа</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">Rh(+)</value>
+                        </value>
+                    </items>
+                </items>
+                <items archetype_node_id="at0014" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">Токсоплазмоз</value>
+                    </name>
+                    <items archetype_node_id="at0015" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">РСК</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">отр</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0016" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">кожная проба</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">отр</value>
+                        </value>
+                    </items>
+                </items>
+                <items archetype_node_id="at0017" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">Клинические анализы</value>
+                    </name>
+                    <items archetype_node_id="at0018" xsi:type="CLUSTER">
+                        <name>
+                            <value xml:space="preserve">Крови</value>
+                        </name>
+                        <items archetype_node_id="at0019" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">дaта</value>
+                            </name>
+                            <value xsi:type="DV_DATE">
+                                <value xml:space="preserve">10.11.2016</value>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0020" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_результат</value>
+                            </name>
+                            <value xsi:type="DV_TEXT">
+                                <value xml:space="preserve">эр-4,2, ht-36,c/я -68</value>
+                            </value>
+                        </items>
+                    </items>
+                    <items archetype_node_id="at0023" xsi:type="CLUSTER">
+                        <name>
+                            <value xml:space="preserve">Мочи</value>
+                        </name>
+                        <items archetype_node_id="at0024" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">датa</value>
+                            </name>
+                            <value xsi:type="DV_DATE">
+                                <value xml:space="preserve">11.11.2016</value>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0025" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_результаты</value>
+                            </name>
+                            <value xsi:type="DV_TEXT">
+                                <value xml:space="preserve">белок-0,031, глюк.-0,8</value>
+                            </value>
+                        </items>
+                    </items>
+                </items>
+                <items archetype_node_id="at0026" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">Анализ содержимого влагалища (мазок)</value>
+                    </name>
+                    <items archetype_node_id="at0027" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">дата</value>
+                        </name>
+                        <value xsi:type="DV_DATE_TIME">
+                            <value xml:space="preserve">10.10.2016 09:00:00</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0028" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">_</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">гон., трих,гриб -abs</value>
+                        </value>
+                    </items>
+                </items>
+                <items archetype_node_id="at0029" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">Кал на яйца-глистов</value>
+                    </name>
+                    <items archetype_node_id="at0030" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">дата</value>
+                        </name>
+                        <value xsi:type="DV_DATE_TIME">
+                            <value xml:space="preserve">10.10.2016 00:00:00</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0031" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">_описание</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">отр</value>
+                        </value>
+                    </items>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="OBSERVATION">
+            <name>
+                <value xml:space="preserve">Физкультура</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-OBSERVATION.antitel_opisthorchis_felineus.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001">
+                <name>
+                    <value xml:space="preserve">Event Series</value>
+                </name>
+                <events archetype_node_id="at0002" xsi:type="POINT_EVENT">
+                    <name>
+                        <value xml:space="preserve">Any event</value>
+                    </name>
+                    <data archetype_node_id="at0003" xsi:type="ITEM_TREE">
+                        <name>
+                            <value xml:space="preserve">Tree</value>
+                        </name>
+                        <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_</value>
+                            </name>
+                            <value xsi:type="DV_TEXT">
+                                <value xml:space="preserve">занятия проводились</value>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0005" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">Число занятий</value>
+                            </name>
+                            <value xsi:type="DV_QUANTITY">
+                                <magnitude>5.0</magnitude>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0006" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">результат</value>
+                            </name>
+                            <value xsi:type="DV_CODED_TEXT">
+                                <defining_code>
+                                    <terminology_id/>
+                                </defining_code>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0010" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_дополнительно</value>
+                            </name>
+                            <value xsi:type="DV_TEXT"/>
+                        </items>
+                    </data>
+                </events>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="OBSERVATION">
+            <name>
+                <value xml:space="preserve">Психопрофилактическая подготовка</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-OBSERVATION.antitel_opisthorchis_felineus.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001">
+                <name>
+                    <value xml:space="preserve">Event Series</value>
+                </name>
+                <events archetype_node_id="at0002" xsi:type="POINT_EVENT">
+                    <name>
+                        <value xml:space="preserve">Any event</value>
+                    </name>
+                    <data archetype_node_id="at0003" xsi:type="ITEM_TREE">
+                        <name>
+                            <value xml:space="preserve">Tree</value>
+                        </name>
+                        <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_</value>
+                            </name>
+                            <value xsi:type="DV_TEXT">
+                                <value xml:space="preserve">прошла</value>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0005" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">Число занятий</value>
+                            </name>
+                            <value xsi:type="DV_QUANTITY">
+                                <magnitude>3.0</magnitude>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0006" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">результат</value>
+                            </name>
+                            <value xsi:type="DV_CODED_TEXT">
+                                <defining_code>
+                                    <terminology_id/>
+                                </defining_code>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0010" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_дополнительно</value>
+                            </name>
+                            <value xsi:type="DV_TEXT"/>
+                        </items>
+                    </data>
+                </events>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Школа матерей</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.extra_data_x10.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">_</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">прошла</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Дата введения стафилококкового анатоксина (для обменной карты)</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.stafilokokkovyi_anatoksin_dlya_obmen_karty.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">I раз</value>
+                    </name>
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">10.10.2016</value>
+                    </value>
+                </items>
+                <items archetype_node_id="at0003" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">II раза</value>
+                    </name>
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">13.10.2016</value>
+                    </value>
+                </items>
+                <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">III раза</value>
+                    </name>
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">15.11.2016</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">АД</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.extra_data_x10.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">_</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">110/70</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="ADMIN_ENTRY">
+            <name>
+                <value xml:space="preserve">Дата выдачи листка нетрудоспособности по дородовому отпуску</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-ADMIN_ENTRY.birthdate.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">_Дата</value>
+                    </name>
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">16.11.2016</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="ADMIN_ENTRY">
+            <name>
+                <value xml:space="preserve">Дата предполагаемых родов</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-ADMIN_ENTRY.birthdate.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">_Дата</value>
+                    </name>
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">01.02.2017</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="ADMIN_ENTRY">
+            <name>
+                <value xml:space="preserve">Врач акушер-гинеколог</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-ADMIN_ENTRY.doctor_initials.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">_</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">Иванов</value>
+                    </value>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Данные нескольких обследований с датами</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.dannye_nesk_obsledovanyi_s_datami.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0003" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">Обследование</value>
+                    </name>
+                    <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Дата обследования</value>
+                        </name>
+                        <value xsi:type="DV_DATE">
+                            <value xml:space="preserve">10.10.2016</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Данные обследования</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">110/70 , вес 61,2 моча N</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0005" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Подпись врача</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">Петров</value>
+                        </value>
+                    </items>
+                </items>
+                <items archetype_node_id="at0003" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">Обследование</value>
+                    </name>
+                    <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Дата обследования</value>
+                        </name>
+                        <value xsi:type="DV_DATE">
+                            <value xml:space="preserve">11.11.2016</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Данные обследования</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">110/60, вес 63,1, моча N</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0005" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Подпись врача</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">Иванов</value>
+                        </value>
+                    </items>
+                </items>
+                <items archetype_node_id="at0003" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">Обследование</value>
+                    </name>
+                    <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Дата обследования</value>
+                        </name>
+                        <value xsi:type="DV_DATE">
+                            <value xml:space="preserve">12.11.2016</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Данные обследования</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">вес 64, 110/70, моча N</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0005" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Подпись врача</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">Сидоров</value>
+                        </value>
+                    </items>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Данные нескольких обследований с датами</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.dannye_nesk_obsledovanyi_s_datami.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0003" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">Обследование</value>
+                    </name>
+                    <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Дата обследования</value>
+                        </name>
+                        <value xsi:type="DV_DATE">
+                            <value xml:space="preserve">16.11.2016</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Данные обследования</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">вес 64,2, 110/80, моча в норме</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0005" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Подпись врача</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">Тишкин</value>
+                        </value>
+                    </items>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="OBSERVATION">
+            <name>
+                <value xml:space="preserve">Прибавка веса во время беременности</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-OBSERVATION.weight_gain.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001">
+                <name>
+                    <value xml:space="preserve">Event Series</value>
+                </name>
+                <events archetype_node_id="at0002" xsi:type="POINT_EVENT">
+                    <name>
+                        <value xml:space="preserve">Any event</value>
+                    </name>
+                    <data archetype_node_id="at0003" xsi:type="ITEM_TREE">
+                        <name>
+                            <value xml:space="preserve">Tree</value>
+                        </name>
+                        <items archetype_node_id="at0005" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_</value>
+                            </name>
+                            <value xsi:type="DV_QUANTITY">
+                                <magnitude>7.5</magnitude>
+                                <units xml:space="preserve">kg</units>
+                            </value>
+                        </items>
+                        <items archetype_node_id="at0006" xsi:type="ELEMENT">
+                            <name>
+                                <value xml:space="preserve">_%</value>
+                            </name>
+                            <value xsi:type="DV_QUANTITY"/>
+                        </items>
+                    </data>
+                </events>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Предполагаемый вес плода</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.presumed_fetal_weight.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">Предполагаемый вес плода</value>
+                    </name>
+                    <value xsi:type="DV_QUANTITY">
+                        <magnitude>2800.0</magnitude>
+                        <units xml:space="preserve">gm</units>
+                    </value>
+                </items>
+            </data>
+        </content>
+    </data>
+    <lifecycle_state>
+        <value xml:space="preserve">complete</value>
+        <defining_code>
+            <terminology_id>
+                <value xml:space="preserve">openehr</value>
+            </terminology_id>
+            <code_string xml:space="preserve">532</code_string>
+        </defining_code>
+    </lifecycle_state>
+</version>

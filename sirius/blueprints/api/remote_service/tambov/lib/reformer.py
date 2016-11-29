@@ -49,6 +49,8 @@ class TambovReformer(Reformer):
             res = CaseTambovBuilder(self).build_remote_entities_second(header_meta, data)
         elif local_entity_code == RisarEntityCode.MEASURE:
             res = ReferralTambovBuilder(self).build_remote_entities(header_meta, data)
+        elif local_entity_code == RisarEntityCode.EXCHANGE_CARD:
+            res = ServiceTambovBuilder(self).build_remote_entities_exch_card(header_meta, data)
         else:
             raise InternalError('Unexpected local_entity_code')
         return res
@@ -83,10 +85,12 @@ class TambovReformer(Reformer):
         assert isinstance(msg, Message)
 
         meta = msg.get_header().meta
-        serv_method = ServiceMethod.get_entity(meta['local_service_code'])
-        src_system_code = serv_method['system_code']
-        src_entity = serv_method['entity_code']
-        meta['local_entity_code'] = src_entity
+        src_entity = meta['local_entity_code']
+        if not src_entity:
+            serv_method = ServiceMethod.get_entity(meta['local_service_code'])
+            src_system_code = serv_method['system_code']
+            src_entity = serv_method['entity_code']
+            meta['local_entity_code'] = src_entity
         if src_entity in (
             RisarEntityCode.CHECKUP_OBS_FIRST_TICKET,
             RisarEntityCode.CHECKUP_OBS_SECOND_TICKET,
@@ -94,6 +98,8 @@ class TambovReformer(Reformer):
             res = CaseTambovBuilder(self).build_local_entity_packages(msg)
         elif src_entity == RisarEntityCode.MEASURE:
             res = ReferralTambovBuilder(self).build_local_entity_packages(msg)
+        elif src_entity == RisarEntityCode.EXCHANGE_CARD:
+            res = ServiceTambovBuilder(self).build_local_entity_packages_exch_card(msg)
         else:
             raise InternalError('Unexpected entity code')
         return res

@@ -70,8 +70,12 @@ class LocalAnswerParser(object):
         return res
 
     def get_data(self, response):
-        data = response.json()
-        return data['result']
+        try:
+            data = response.json()
+            res = data['result']
+        except ValueError:
+            res = response.content
+        return res
 
     def check(self, response):
         if response.status_code != 200:

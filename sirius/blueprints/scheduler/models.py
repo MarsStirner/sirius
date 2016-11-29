@@ -120,7 +120,8 @@ class ScheduleGroup(Model):
         ).join(
             System, System.id == ScheduleGroupRequest.system_id
         ).filter(
-            ScheduleGroupRequest.schedule_group_id == self.id
+            ScheduleGroupRequest.schedule_group_id == self.id,
+            ScheduleGroupRequest.enabled == True,
         ).order_by(ScheduleGroupRequest.order).all()
         return res
 
@@ -138,6 +139,7 @@ class ScheduleGroupRequest(Model):
     system = relationship('System', backref='set_sch_group_request')
     sampling_method = Column(db.String(80), unique=False, nullable=True)
     order = Column(db.Integer, unique=False, nullable=False)
+    enabled = Column(db.Boolean, unique=False, nullable=False, server_default='false')
 
     __table_args__ = (
         UniqueConstraint('schedule_group_id', 'entity_id', 'system_id', name='_sch_group_entity_system_uc'),

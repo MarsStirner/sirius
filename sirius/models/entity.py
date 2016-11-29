@@ -53,6 +53,9 @@ class EntityImage(Model):
     external_id = Column(db.String(80), unique=False, nullable=False, index=True)
     content = Column(JSONB, unique=False, nullable=False)
     level = Column(db.Integer, unique=False, nullable=False)
+    created = Column(db.DateTime, unique=False, nullable=False, server_default='now()')
+    modified = Column(db.DateTime, unique=False, nullable=False,
+                      server_default='now()', server_onupdate='now()')
 
 
 class EntityImageDiff(Model):

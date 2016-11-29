@@ -30,3 +30,4 @@ class RisarEntityCode(Enum):
     RISAR_REFBOOK_NAME = 'risar_refbook_name'
     RISAR_REFBOOK = 'risar_refbook'
     VESTA_REFBOOK = 'vesta_refbook'
+    EXCHANGE_CARD = 'exchange_card'

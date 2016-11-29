@@ -271,6 +271,7 @@ class Reformer(IStreamMeta):
         )
         meta['dst_method'] = method['method']
         meta['dst_url'] = method['template_url']
+        meta['dst_protocol'] = method['protocol']
         if method['protocol'] == ProtocolCode.REST:
             dst_url_params = (meta.get('dst_parents_params') or {}).copy()
             if meta['dst_operation_code'] != OperationCode.ADD:
@@ -286,9 +287,10 @@ class Reformer(IStreamMeta):
                             'id': str(meta['dst_id']),
                         }
                     })
-            dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
-            dst_param_ids = [dst_url_entities[param_entity] for param_entity in method['params_entities']]
-            meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
+            meta['dst_params_entities'] = method['params_entities']
+            # dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
+            # dst_param_ids = [dst_url_entities[param_entity] for param_entity in method['params_entities']]
+            # meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
 
     def get_addition_data(self, missing_msgs):
         # пока считаем, что конвертировать локальные ID не придется
@@ -303,22 +305,28 @@ class Reformer(IStreamMeta):
 
     @module_entry
     def send_to_remote_data(self, entities):
+        @check_point
+        def send_to_remote_data_record(self, record):
+            rec_meta = record['meta']
+            set_parent_id_func = rec_meta.get('set_parent_id_func')
+            if set_parent_id_func:
+                set_parent_id_func(record)
+            if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
+                return
+            self.pre_conformity_remote(record)
+            try:
+                trans_res = self.transfer.execute(record)
+            except LoggedException:
+                # todo: для отладки без удаленки
+                trans_res = 222
+            self.conformity_remote(record, trans_res)
+
         soo = sorted(entities.operation_order.items(), key=lambda x: x[0])
         for order, entity_codes in soo:
             for entity_code in entity_codes:
                 records = entities.get_data()[entity_code]
                 for record in records:
-                    rec_meta = record['meta']
-                    set_parent_id_func = rec_meta.get('set_parent_id_func')
-                    if set_parent_id_func:
-                        set_parent_id_func(record)
-                    if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
-                        return
-                    self.pre_conformity_remote(record)
-                    # trans_res = self.transfer.execute(record)
-                    # todo: для отладки без удаленки
-                    trans_res = 222
-                    self.conformity_remote(record, trans_res)
+                    send_to_remote_data_record(self, record)
         return True
 
     @module_entry
@@ -494,6 +502,7 @@ class Reformer(IStreamMeta):
         #             str(src_id)
         #         )
 
+        req_meta['dst_protocol'] = method['protocol']
         if method['protocol'] == ProtocolCode.REST:
             dst_url_params = (req_meta.get('dst_parents_params') or {}).copy()
             if req_meta['dst_operation_code'] != OperationCode.READ_MANY:
@@ -675,7 +684,7 @@ class Builder(object):
                     raise ApiException(500, 'Entity (%s, %s) has not yet passed' %
                                        (src_param_entity_code, src_param_id))
             else:
-                raise InternalError('Unexpected src_param_entity_code')
+                raise InternalError('Unexpected src_param_entity_code (%s)' % src_param_entity_code)
 
     def reform_remote_parents_params(self, header_meta, src_entity_code, params_map):
         for src_param_name, src_params in (header_meta.get('remote_parents_params') or {}).items():
@@ -959,7 +968,7 @@ class RequestEntities(object):
             entity_body = None
             if src_operation_code != OperationCode.DELETE:
                 entity_body = record['body']
-                if entity_meta['dst_id'] and not entity_body.get(dst_main_id_name):
+                if entity_meta['dst_id'] and isinstance(entity_body, dict) and not entity_body.get(dst_main_id_name):
                     entity_body[dst_main_id_name] = str(entity_meta['dst_id'])
             if callable(set_current_id_func):
                 set_current_id_func(entity_meta, entity_body)
@@ -993,14 +1002,15 @@ class RequestEntities(object):
         self, parent_item, dst_entity_code, dst_parents_params,
         dst_main_id_name, dst_parent_id_name, src_operation_code,
         src_entity_code, src_main_id_name, src_id,
-        set_current_id_func=None, set_parent_id_func=None
+        set_current_id_func=None, set_parent_id_func=None,
+        src_id_prefix=None, dst_id_prefix=None
     ):
         def set_current_id_common_func(record):
             entity_meta = record['meta']
             entity_body = None
             if src_operation_code != OperationCode.DELETE:
                 entity_body = record['body']
-                if entity_meta['dst_id'] and not entity_body.get(dst_main_id_name):
+                if entity_meta['dst_id'] and isinstance(entity_body, dict) and not entity_body.get(dst_main_id_name):
                     entity_body[dst_main_id_name] = str(entity_meta['dst_id'])
             if callable(set_current_id_func):
                 set_current_id_func(entity_meta, entity_body)
@@ -1011,13 +1021,15 @@ class RequestEntities(object):
             parent_meta = entity_meta['parent_entity']['meta']
             if src_operation_code != OperationCode.DELETE:
                 entity_body = record['body']
-                entity_body[dst_parent_id_name] = str(parent_meta['dst_id'])
+                if isinstance(entity_body, dict):
+                    entity_body[dst_parent_id_name] = str(parent_meta['dst_id'])
             entity_meta['dst_parents_params'][
                 parent_meta['dst_id_url_param_name']
             ] = {
                 'entity': parent_meta['dst_entity_code'],
                 'id': parent_meta['dst_id'],
             }
+            self.set_rest_url_params(entity_meta)
             if callable(set_parent_id_func):
                 set_parent_id_func(parent_meta, entity_meta, entity_body)
 
@@ -1026,10 +1038,12 @@ class RequestEntities(object):
                 'src_operation_code': src_operation_code,
                 'src_entity_code': src_entity_code,
                 'src_id_url_param_name': src_main_id_name,
+                'src_id_prefix': src_id_prefix,
                 'src_id': src_id,
                 'dst_entity_code': dst_entity_code,
                 'dst_parents_params': dst_parents_params,
                 'dst_id_url_param_name': dst_main_id_name,
+                'dst_id_prefix': dst_id_prefix,
                 'set_current_id_func': set_current_id_common_func,
                 'set_parent_id_func': set_parent_id_common_func,
                 'parent_entity': parent_item,
@@ -1047,8 +1061,21 @@ class RequestEntities(object):
     def set_operation_order(self, entity, order):
         self.operation_order.setdefault(order, []).append(entity)
 
+    def set_rest_url_params(self, meta):
+        if meta['dst_protocol'] == ProtocolCode.REST:
+            dst_url_params = (meta.get('dst_parents_params') or {}).copy()
+            dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
+            dst_param_ids = [dst_url_entities[param_entity] for param_entity in meta['dst_params_entities']]
+            meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
+
 
 class ReqEntity(dict):
+    def __init__(self, *a, **k):
+        super(ReqEntity, self).__init__(*a, **k)
+        self['meta'] = self.get('meta', {})
+        self['body'] = self.get('body', {})
+        self['options'] = self.get('options', tuple())
+
     def get_stream_meta(self):
         res = {'meta': self['meta']}
         return res
@@ -1064,6 +1091,10 @@ class ReqEntity(dict):
     @property
     def data(self):
         return self['body']
+
+    @property
+    def options(self):
+        return self['options']
 
 
 class DataRequest(object):

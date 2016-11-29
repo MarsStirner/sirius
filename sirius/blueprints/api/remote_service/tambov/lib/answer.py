@@ -11,7 +11,9 @@ from sirius.blueprints.api.remote_service.lib.answer import RemoteAnswer
 
 class TambovAnswer(RemoteAnswer):
 
-    def process(self, result):
+    def process(self, result, meta=None):
+        # meta['dst_protocol']
+        # meta['dst_entity_code']
         return self.xml_to_dict(result)
 
     def xml_to_dict(self, data):
