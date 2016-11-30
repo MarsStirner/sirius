@@ -51,6 +51,7 @@ class ClinicTambovBuilder(Builder):
         return package
 
     def set_clinics(self, clinics, package, req_meta):
+        # todo: ограничение для тестов
         for clinic_id in clinics[:7]:
             clinic_item, clinic_data = package.add_main(
                 entity_code=TambovEntityCode.CLINIC,

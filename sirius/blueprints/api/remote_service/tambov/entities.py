@@ -23,6 +23,8 @@ class TambovEntityCode(Enum):
     INDIVIDUAL = 'individual'
     EMPLOYEE_SPECIALITIES = 'employee_specialities'
     TIME = 'time'
+    BIRTH = 'birth'
+    SRV_PROTOCOL = 'srv_protocol'
 
     # IND_ADDRESS = 'individual_address'
     # IND_DOCUMENTS = 'individual_document'
