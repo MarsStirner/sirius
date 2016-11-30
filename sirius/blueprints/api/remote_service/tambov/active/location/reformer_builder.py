@@ -210,9 +210,9 @@ class LocationTambovBuilder(Builder):
             'organization': header_meta['remote_main_id'],  # id/code двух систем будут совпадать
             'last_name': individual['surname'],
             'first_name': individual['name'],
+            'patr_name': individual['patrName'],
             'sex': individual['gender'],
-            'SNILS': '0',
-            'INN': '0',
+            'birth_date': encode(individual['birthDate']),
             'speciality': spec['speciality'],
             'post': empl_pos['position'],
         }
