@@ -15,7 +15,7 @@ from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
 from sirius.blueprints.monitor.exception import InternalError
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
-    RequestEntities
+    RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.lib.apiutils import ApiException
 from sirius.lib.xform import Undefined
@@ -23,7 +23,7 @@ from sirius.models.operation import OperationCode
 from sirius.models.system import SystemCode
 
 encode = WebMisJsonEncoder().default
-to_date = lambda x: datetime.strptime(x, '%Y-%m-%d')
+to_date = lambda x: x and datetime.strptime(x, '%Y-%m-%d')
 
 
 class ReferralTambovBuilder(Builder):
@@ -63,6 +63,26 @@ class ReferralTambovBuilder(Builder):
                 data=measure_data,
             )
 
+            data_req = DataRequest()
+            data_req.set_meta(
+                dst_system_code=SystemCode.LOCAL,
+                dst_entity_code=RisarEntityCode.APPOINTMENT,
+                dst_operation_code=OperationCode.READ_ONE,
+                dst_id=measure_data['appointment_id'],
+                dst_parents_params=msg_meta['src_parents_params'],
+            )
+
+            # self.reformer.set_local_id(data_req)
+            self.reformer.set_request_service(data_req)
+            appointment_data = self.reformer.local_request_by_req(data_req)
+            appointment_item = package.add_addition_pack_entity(
+                root_item=measure_root,
+                parent_item=measure_item,
+                entity_code=RisarEntityCode.APPOINTMENT,
+                main_id=measure_data['appointment_id'],
+                data=appointment_data,
+            )
+
     ##################################################################
     ##  reform entities to remote
 
@@ -80,6 +100,8 @@ class ReferralTambovBuilder(Builder):
         dst_main_param_name
         """
         measure_data = pack_entity['data']
+        appointment_node = pack_entity['addition'][RisarEntityCode.APPOINTMENT][0]
+        appoint_data = appointment_node['data']
         src_operation_code = header_meta['local_operation_code']
         src_entity_code = header_meta['local_entity_code']
 
@@ -106,10 +128,9 @@ class ReferralTambovBuilder(Builder):
             main_item['body'] = {
                 # 'id': None,  # проставляется в set_current_id_func
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                'referralDate': to_date(measure_data['begin_datetime']),
-                # todo: либо дозапрос нужен, либо поле в схему добавлять
-                'referralOrganizationId': '1434663',
-                'refServiceId': measure_data.get('measure_type_code', ''),
+                'referralDate': to_date(appoint_data.get('date')),
+                'referralOrganizationId': appoint_data.get('appointed_lpu'),
+                'refServiceId': measure_data.get('measure_type_code'),
             }
 
         return entities

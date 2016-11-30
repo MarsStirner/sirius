@@ -839,6 +839,7 @@ class EntitiesPackage(object):
         return self.pack_entities[entity_code]
 
     def add_main(self, entity_code, main_id_name, main_id, parents_params):
+        # реализовано только на передачу данных в remote
         api_method = self.builder.reformer.get_api_method(
             self.system_code,
             entity_code,
@@ -872,6 +873,7 @@ class EntitiesPackage(object):
         return item, data
 
     def add_child(self, parent_item, entity_code, main_id_name, main_id):
+        # реализовано только на передачу данных в remote
         api_method = self.builder.reformer.get_api_method(
             self.system_code,
             entity_code,
@@ -905,6 +907,7 @@ class EntitiesPackage(object):
         return item, data
 
     def add_addition(self, parent_item, entity_code, main_id_name, main_id):
+        # реализовано только на передачу данных в remote
         if not main_id:
             return None
         api_method = self.builder.reformer.get_api_method(

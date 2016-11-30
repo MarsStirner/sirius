@@ -10,7 +10,7 @@ from sirius.blueprints.monitor.exception import InternalError
 from sirius.database import Column, Model, db, reference_col, relationship
 from sirius.models.operation import OperationCode
 from sirius.models.system import System
-from sqlalchemy import UniqueConstraint, CheckConstraint
+from sqlalchemy import UniqueConstraint, CheckConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB
 
 
@@ -53,9 +53,9 @@ class EntityImage(Model):
     external_id = Column(db.String(80), unique=False, nullable=False, index=True)
     content = Column(JSONB, unique=False, nullable=False)
     level = Column(db.Integer, unique=False, nullable=False)
-    created = Column(db.DateTime, unique=False, nullable=False, server_default='now()')
+    created = Column(db.DateTime, unique=False, nullable=False, server_default=text('now()'))
     modified = Column(db.DateTime, unique=False, nullable=False,
-                      server_default='now()', server_onupdate='now()')
+                      server_default=text('now()'), server_onupdate=text('now()'))
 
 
 class EntityImageDiff(Model):

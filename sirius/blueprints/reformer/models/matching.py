@@ -9,7 +9,7 @@
 from sirius.database import Column, Model, db, reference_col, relationship
 from sirius.models.entity import Entity
 from sirius.models.system import System, SystemCode
-from sqlalchemy import UniqueConstraint, CheckConstraint
+from sqlalchemy import UniqueConstraint, CheckConstraint, text
 from sqlalchemy.orm import aliased
 
 
@@ -31,7 +31,7 @@ class MatchingId(Model):
     remote_id_prefix = Column(db.String(80), unique=False, nullable=False, index=False, server_default='')
     remote_id = Column(db.String(80), unique=False, nullable=False, index=True)
     remote_param_name = Column(db.String(80), unique=False, nullable=True)
-    created = Column(db.DateTime, unique=False, nullable=False, server_default='now()')
+    created = Column(db.DateTime, unique=False, nullable=False, server_default=text('now()'))
 
     __table_args__ = (
         UniqueConstraint(

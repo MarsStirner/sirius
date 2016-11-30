@@ -10,7 +10,6 @@ from datetime import date, datetime
 
 from hitsl_utils.safe import safe_traverse, safe_int
 from hitsl_utils.wm_api import WebMisJsonEncoder
-from safe import safe_date
 
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
@@ -132,10 +131,7 @@ class CaseTambovBuilder(Builder):
                 'medicalOrganizationId': safe_traverse(ticket_data, 'hospital', default=''),
                 'caseTypeId': '1',
                 'initGoalId': safe_traverse(ticket_data, 'visit_type', default=''),
-                # 'careLevelId': ticket_data[''],
                 'fundingSourceTypeId': '1',
-                # 'socialGroupId': ticket_data[''],
-                # 'paymentMethodId': ticket_data[''],
                 'careRegimenId': '1',
                 'establishmentDate': to_date(safe_traverse(ticket_data, 'date_open')),
             }
@@ -182,34 +178,6 @@ class CaseTambovBuilder(Builder):
                 'goalId': '7',
                 'placeId': '1',
                 'diagnosId': safe_traverse(ticket_data, 'medical_report', 'diagnosis_osn', default=''),
-                # 'reasonId': checkup_data['reason_code'],  # из дозапроса к справочной системе
             }
 
-        # def set_parent_id(record):
-        #     reform_meta = record['meta']
-        #     parent_meta = reform_meta['parent_entity']['meta']
-        #     reform_meta['dst_url'] = reform_meta['dst_url'].replace(
-        #         parent_meta['dst_id_url_param_name'], parent_meta['dst_id']
-        #     )
-        #     body = record['body']
-        #     body['parent_id'] = parent_meta['meta']['dst_id']
-        # for record in data['fetuses']:
-        #     item = {
-        #         'meta': {
-        #             'src_entity_code': src_entity_code,
-        #             'src_id': record['fetus_id'],
-        #             'dst_entity_code': TambovEntityCode.CHECKUP_FETUS,
-        #             'set_parent_id_func': set_parent_id,
-        #             'parent_entity': main_item,
-        #         },
-        #     }
-        #     res.setdefault(TambovEntityCode.CHECKUP_FETUS, []).append(item)
-        #     if src_operation_code != OperationCode.DELETE:
-        #         self.set_operation_order(res, TambovEntityCode.CHECKUP_FETUS, 2)
-        #         item['body'] = {
-        #             'code_1': record['code_1'],
-        #             'code_2': addition_data['src_service_code']['code_2'],
-        #         }
-        #     else:
-        #         self.set_operation_order(res, TambovEntityCode.CHECKUP_FETUS, 1)
         return entities
