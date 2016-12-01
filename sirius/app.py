@@ -65,8 +65,10 @@ def register_blueprints(app):
     app.register_blueprint(scheduler.app.module)
     app.register_blueprint(reformer.app.module)
     app.register_blueprint(api.local_service.risar.app.module)
-    app.register_blueprint(api.remote_service.tula.app.module)
-    app.register_blueprint(api.remote_service.tambov.app.module)
+    if app.config['REGION_CODE'] == 'tula':
+        app.register_blueprint(api.remote_service.tula.app.module)
+    elif app.config['REGION_CODE'] == 'tambov':
+        app.register_blueprint(api.remote_service.tambov.app.module)
     return None
 
 

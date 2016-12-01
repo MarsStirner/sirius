@@ -786,6 +786,7 @@ class EntitiesPackage(object):
         self.pack_entities = {}
         self.system_code = system_code
         self.builder = builder
+        self.api_methods = {}  # cache per package
 
     def get_pack_entities(self):
         return self.pack_entities
@@ -839,8 +840,8 @@ class EntitiesPackage(object):
         return self.pack_entities[entity_code]
 
     def add_main(self, entity_code, main_id_name, main_id, parents_params):
-        # реализовано только на передачу данных в remote
-        api_method = self.builder.reformer.get_api_method(
+        # реализовано только на сбор пакета в remote
+        api_method = self.get_api_method(
             self.system_code,
             entity_code,
             OperationCode.READ_ONE,
@@ -873,8 +874,8 @@ class EntitiesPackage(object):
         return item, data
 
     def add_child(self, parent_item, entity_code, main_id_name, main_id):
-        # реализовано только на передачу данных в remote
-        api_method = self.builder.reformer.get_api_method(
+        # реализовано только на сбор пакета в remote
+        api_method = self.get_api_method(
             self.system_code,
             entity_code,
             OperationCode.READ_ONE,
@@ -907,10 +908,10 @@ class EntitiesPackage(object):
         return item, data
 
     def add_addition(self, parent_item, entity_code, main_id_name, main_id):
-        # реализовано только на передачу данных в remote
+        # реализовано только на сбор пакета в remote
         if not main_id:
             return None
-        api_method = self.builder.reformer.get_api_method(
+        api_method = self.get_api_method(
             self.system_code,
             entity_code,
             OperationCode.READ_ONE,
@@ -940,6 +941,15 @@ class EntitiesPackage(object):
             data=data,
         )
         return data
+
+    def get_api_method(self, system_code, entity_code, operation_code):
+        key = system_code, entity_code, operation_code
+        if key not in self.api_methods:
+            api_method = self.builder.reformer.get_api_method(
+                system_code, entity_code, operation_code
+            )
+            self.api_methods[key] = api_method
+        return self.api_methods[key]
 
 
 class RequestEntities(object):

@@ -11,7 +11,9 @@ from hitsl_utils.enum import Enum
 
 class TambovEntityCode(Enum):
     PATIENT = 'patient'
+    SMART_PATIENT = 'smart_patient'
     REFERRAL = 'referral'
+    REND_SERVICE = 'rend_service'
     SERVICE = 'service'
     CASE = 'case'
     VISIT = 'visit'

@@ -81,7 +81,7 @@ class ClinicTambovBuilder(Builder):
 
         # сопоставление параметров родительских сущностей
         # params_map = {
-        #     TambovEntityCode.PATIENT: {
+        #     TambovEntityCode.SMART_PATIENT: {
         #         'entity': RisarEntityCode.CARD, 'param': 'card_id'
         #     }
         # }

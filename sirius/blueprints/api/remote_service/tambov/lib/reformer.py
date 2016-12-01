@@ -31,7 +31,7 @@ class TambovReformer(Reformer):
 
     def get_local_entities(self, header_meta, data):
         remote_entity_code = header_meta['remote_entity_code']
-        if remote_entity_code == TambovEntityCode.PATIENT:
+        if remote_entity_code == TambovEntityCode.SMART_PATIENT:
             res = PatientTambovBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TambovEntityCode.REFERRAL:
             res = ReferralTambovBuilder(self).build_local_entities(header_meta, data)
@@ -61,14 +61,14 @@ class TambovReformer(Reformer):
     def get_remote_request(self, header_meta):
         remote_entity_code = header_meta['remote_entity_code']
         local_entity_code = header_meta['local_entity_code']
-        if local_entity_code == RisarEntityCode.CLIENT or remote_entity_code == TambovEntityCode.PATIENT:
-            data_req = PatientTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.PATIENT)
+        if local_entity_code == RisarEntityCode.CLIENT or remote_entity_code == TambovEntityCode.SMART_PATIENT:
+            data_req = PatientTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.SMART_PATIENT)
         elif local_entity_code in (
                 RisarEntityCode.MEASURE_RESEARCH,
                 RisarEntityCode.MEASURE_HOSPITALIZATION,
                 RisarEntityCode.MEASURE_SPECIALISTS_CHECKUP,
-        ) or remote_entity_code == TambovEntityCode.SERVICE:
-            data_req = ServiceTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.SERVICE)
+        ) or remote_entity_code == TambovEntityCode.REND_SERVICE:
+            data_req = ServiceTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.REND_SERVICE)
         elif local_entity_code == RisarEntityCode.ORGANIZATION or remote_entity_code == TambovEntityCode.CLINIC:
             data_req = ClinicTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.CLINIC)
         else:
@@ -117,9 +117,9 @@ class TambovReformer(Reformer):
         # todo: рассмотреть возможность использования MatchingEntity для автосборки пакетов
         meta = req.meta
         dst_entity = meta['dst_entity_code']
-        if dst_entity == TambovEntityCode.PATIENT:
+        if dst_entity == TambovEntityCode.SMART_PATIENT:
             res = PatientTambovBuilder(self).build_remote_entity_packages(req)
-        elif dst_entity == TambovEntityCode.SERVICE:
+        elif dst_entity == TambovEntityCode.REND_SERVICE:
             res = ServiceTambovBuilder(self).build_remote_entity_packages(req)
         elif dst_entity == TambovEntityCode.CLINIC:
             res = ClinicTambovBuilder(self).build_remote_entity_packages(req)

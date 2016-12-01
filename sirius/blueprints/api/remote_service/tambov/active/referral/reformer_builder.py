@@ -11,6 +11,8 @@ from datetime import date, datetime
 from hitsl_utils.safe import safe_traverse, safe_int
 from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
+from sirius.blueprints.api.remote_service.tambov.active.referral.srv_prototype_match import \
+    SrvPrototypeMatch
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
 from sirius.blueprints.monitor.exception import InternalError
@@ -108,7 +110,7 @@ class ReferralTambovBuilder(Builder):
         # сопоставление параметров родительских сущностей
         params_map = {
             RisarEntityCode.CARD: {
-                'entity': TambovEntityCode.PATIENT, 'param': 'patientUid'
+                'entity': TambovEntityCode.SMART_PATIENT, 'param': 'patientUid'
             }
         }
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
@@ -124,13 +126,30 @@ class ReferralTambovBuilder(Builder):
             src_id=header_meta['local_main_id'],
             level_count=1,
         )
+        prototype_id = SrvPrototypeMatch.get_prototype_id(measure_data.get('measure_type_code'))
+        srv_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.SERVICE,
+            OperationCode.READ_MANY,
+        )
+        req = DataRequest()
+        req.set_req_params(
+            url=srv_api_method['template_url'],
+            method=srv_api_method['method'],
+            data={
+                'clinic': appoint_data.get('appointed_lpu'),
+                'prototype': prototype_id,
+            },
+        )
+        srvs_data = self.transfer__send_request(req)
+        srv_data = srvs_data and srvs_data[0]  # считаем, что будет одна
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = {
                 # 'id': None,  # проставляется в set_current_id_func
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
                 'referralDate': to_date(appoint_data.get('date')),
                 'referralOrganizationId': appoint_data.get('appointed_lpu'),
-                'refServiceId': measure_data.get('measure_type_code'),
+                'refServiceId': srv_data.serviceId,
             }
 
         return entities
@@ -146,7 +165,7 @@ class ReferralTambovBuilder(Builder):
 
         # сопоставление параметров родительских сущностей
         params_map = {
-            TambovEntityCode.PATIENT: {
+            TambovEntityCode.SMART_PATIENT: {
                 'entity': RisarEntityCode.CARD, 'param': 'card_id'
             },
         }
@@ -155,18 +174,16 @@ class ReferralTambovBuilder(Builder):
         entities = RequestEntities()
         measure_items = {}
         childs = pack_entity['childs']
-        service_list = childs[TambovEntityCode.SERVICE]
+        service_list = childs[TambovEntityCode.REND_SERVICE]
         for item in service_list:
             service_data = item['data']
-            srv_prototype__measure_type__map = {
-                '5338': 'checkup',
-                '788': 'lab_test',
-            }
-            measure_type = srv_prototype__measure_type__map[service_data.prototypeId]
+
+            measure_type = SrvPrototypeMatch.get_measure_type(service_data.prototypeId)
 
             if measure_type in measure_items:
                 measure_item = measure_items[header_meta['remote_main_id']]
             else:
+                # todo: возможно передавать MEASURE не нужно
                 measure_item = entities.set_main_entity(
                     dst_entity_code=RisarEntityCode.MEASURE,
                     dst_parents_params=header_meta['local_parents_params'],
@@ -178,12 +195,13 @@ class ReferralTambovBuilder(Builder):
                     level_count=2,
                 )
                 measure_items[header_meta['remote_main_id']] = measure_item
+                measure_id = SrvPrototypeMatch.get_measure_id(service_data.prototypeId)
                 if src_operation_code != OperationCode.DELETE:
                     measure_item['body'] = {
                         # 'measure_id': None,  # заполняется в set_current_id_func
                         # пока считаем, что на одно направление
-                        # не может быть разных measure_type из услуг
-                        'measure_type_code': measure_type,
+                        # не может быть разных measure_id из услуг
+                        'measure_type_code': measure_id,
                         'begin_datetime': encode(referral_data['referralDate']),
                         'end_datetime': encode(referral_data['referralDate']),
                         'status': 'created',  # referral_data['refStatusId'],
@@ -194,12 +212,12 @@ class ReferralTambovBuilder(Builder):
             if measure_type in research_meas_types:
                 self.build_local_measure_research(
                     header_meta, entities, service_data,
-                    measure_item, measure_type
+                    measure_item, measure_id
                 )
             elif measure_type in checkup_meas_types:
                 self.build_local_measure_specialists_checkup(
                     header_meta, entities, service_data,
-                    measure_item, measure_type
+                    measure_item, measure_id
                 )
             else:
                 # todo:
@@ -207,7 +225,7 @@ class ReferralTambovBuilder(Builder):
         return entities
 
     def build_local_measure_research(
-        self, header_meta, entities, service_data, measure_item, measure_type
+        self, header_meta, entities, service_data, measure_item, measure_id
     ):
         src_operation_code = header_meta['remote_operation_code']
 
@@ -218,7 +236,7 @@ class ReferralTambovBuilder(Builder):
             dst_main_id_name='result_action_id',
             dst_parent_id_name='measure_id',
             src_operation_code=src_operation_code,
-            src_entity_code=TambovEntityCode.SERVICE,
+            src_entity_code=TambovEntityCode.REND_SERVICE,
             src_main_id_name='id',
             src_id=service_data['id'],
         )
@@ -227,7 +245,7 @@ class ReferralTambovBuilder(Builder):
                 # 'result_action_id': None,  # заполняется в set_current_id_func
                 # 'measure_id':  # заполняется в set_parent_id_common_func
                 'external_id': service_data['id'],
-                'measure_type_code': measure_type,
+                'measure_type_code': measure_id,
                 'realization_date': encode(service_data['dateFrom']),
                 'lpu_code': safe_traverse(service_data, 'orgId', default=''),
                 # 'analysis_number': service_data[''] or Undefined,
@@ -240,7 +258,7 @@ class ReferralTambovBuilder(Builder):
         return entities
 
     def build_local_measure_specialists_checkup(
-        self, header_meta, entities, service_data, measure_item, measure_type
+        self, header_meta, entities, service_data, measure_item, measure_id
     ):
         src_operation_code = header_meta['remote_operation_code']
 
@@ -251,7 +269,7 @@ class ReferralTambovBuilder(Builder):
             dst_main_id_name='result_action_id',
             dst_parent_id_name='measure_id',
             src_operation_code=src_operation_code,
-            src_entity_code=TambovEntityCode.SERVICE,
+            src_entity_code=TambovEntityCode.REND_SERVICE,
             src_main_id_name='id',
             src_id=service_data['id'],
         )
@@ -260,7 +278,7 @@ class ReferralTambovBuilder(Builder):
                 # 'result_action_id': None,  # заполняется в set_current_id_func
                 # 'measure_id': None,  # заполняется в set_parent_id_common_func
                 'external_id': service_data['id'],
-                'measure_type_code': measure_type,
+                'measure_type_code': measure_id,
                 'checkup_date': encode(service_data['dateTo']),
                 'lpu_code': safe_traverse(service_data, 'orgId', default=''),
                 'doctor_code': safe_traverse(service_data, 'resourceGroupId', default=''),

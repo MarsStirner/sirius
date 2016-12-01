@@ -36,7 +36,7 @@ class BirthTambovBuilder(Builder):
         src_entity_code = header_meta['local_entity_code']
         params_map = {
             RisarEntityCode.CARD: {
-                'entity': TambovEntityCode.PATIENT, 'param': 'patientUid'
+                'entity': TambovEntityCode.SMART_PATIENT, 'param': 'patientUid'
             },
         }
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
@@ -72,7 +72,7 @@ class BirthTambovBuilder(Builder):
 
         # сопоставление параметров родительских сущностей
         params_map = {
-            TambovEntityCode.PATIENT: {
+            TambovEntityCode.SMART_PATIENT: {
                 'entity': RisarEntityCode.CARD, 'param': 'card_id'
             },
         }

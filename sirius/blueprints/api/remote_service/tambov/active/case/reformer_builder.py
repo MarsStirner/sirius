@@ -107,7 +107,7 @@ class CaseTambovBuilder(Builder):
         # сопоставление параметров родительских сущностей
         params_map = {
             RisarEntityCode.CARD: {
-                'entity': TambovEntityCode.PATIENT, 'param': 'patientUid'
+                'entity': TambovEntityCode.SMART_PATIENT, 'param': 'patientUid'
             }
         }
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
@@ -136,10 +136,15 @@ class CaseTambovBuilder(Builder):
                 'establishmentDate': to_date(safe_traverse(ticket_data, 'date_open')),
             }
 
+        srv_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.SERVICE,
+            OperationCode.READ_MANY,
+        )
         for serv_code in safe_traverse(ticket_data, 'medical_services', default=()):
             item = entities.set_child_entity(
                 parent_item=main_item,
-                dst_entity_code=TambovEntityCode.SERVICE,
+                dst_entity_code=TambovEntityCode.REND_SERVICE,
                 dst_parents_params=header_meta['remote_parents_params'],
                 dst_main_id_name='id',
                 dst_parent_id_name='medicalCaseId',
@@ -148,11 +153,22 @@ class CaseTambovBuilder(Builder):
                 src_main_id_name=header_meta['local_main_param_name'],
                 src_id=header_meta['local_main_id'],
             )
+            req = DataRequest()
+            req.set_req_params(
+                url=srv_api_method['template_url'],
+                method=srv_api_method['method'],
+                data={
+                    'clinic': safe_traverse(ticket_data, 'hospital', default=''),
+                    'prototype': safe_traverse(serv_code, 'medical_service', default=''),
+                },
+            )
+            srvs_data = self.transfer__send_request(req)
+            srv_data = srvs_data and srvs_data[0]  # считаем, что будет одна
             if src_operation_code != OperationCode.DELETE:
                 item['body'] = {
                     # 'id': None,  # проставляется в set_current_id_func
                     'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                    'serviceId': safe_traverse(serv_code, 'medical_service', default=''),
+                    'serviceId': srv_data.serviceId,
                     'dateFrom': to_date(safe_traverse(ticket_data, 'date_open')),
                     'isRendered': True,
                     'orgId': safe_traverse(ticket_data, 'hospital', default=''),

@@ -8,7 +8,7 @@
 """
 from datetime import date
 
-from hitsl_utils.safe import safe_traverse, safe_int
+from hitsl_utils.safe import safe_traverse_attrs, safe_int
 from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
@@ -35,7 +35,7 @@ class PatientTambovBuilder(Builder):
 
 
     ##################################################################
-    ##  build packages by req
+    ##  build remote packages by req
 
     def build_remote_entity_packages(self, reformed_req):
         package = EntitiesPackage(self, self.remote_sys_code)
@@ -43,20 +43,15 @@ class PatientTambovBuilder(Builder):
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
             api_method = self.reformer.get_api_method(
                 self.remote_sys_code,
-                TambovEntityCode.PATIENT,
+                TambovEntityCode.SMART_PATIENT,
                 OperationCode.READ_ONE,
             )
             all_patients = self.get_all_patients(reformed_req)
             changed_patients = self.get_changed_patients(reformed_req)
-            self.set_patient_cards(changed_patients, package, api_method, req_meta)
+            self.set_patient_cards(changed_patients, package, req_meta)
             self.inject_all_patients(package, all_patients, api_method)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
-            api_method = self.reformer.get_api_method(
-                self.remote_sys_code,
-                TambovEntityCode.PATIENT,
-                OperationCode.READ_ONE,
-            )
-            self.set_patient_cards([req_meta['dst_id']], package, api_method, req_meta)
+            self.set_patient_cards([req_meta['dst_id']], package, req_meta)
         return package
 
     def get_all_patients(self, reformed_req):
@@ -97,13 +92,13 @@ class PatientTambovBuilder(Builder):
 
     def inject_all_patients(self, package, all_patients, api_method):
         # Добавляемые uid нужны будут для определения удаленных пациентов
-        nodes = package.get_entities(TambovEntityCode.PATIENT)
+        nodes = package.get_entities(TambovEntityCode.SMART_PATIENT)
         for patient_node in nodes:
             if patient_node['main_id'] in all_patients:
                 all_patients.remove(patient_node['main_id'])
         for pat_uid in all_patients:
             package.add_main_pack_entity(
-                entity_code=TambovEntityCode.PATIENT,
+                entity_code=TambovEntityCode.SMART_PATIENT,
                 method=api_method['method'],
                 main_param_name='patientUid',
                 main_id=pat_uid,
@@ -111,91 +106,37 @@ class PatientTambovBuilder(Builder):
                 data=None,
             )
 
-    def set_patient_cards(self, changed_patients, package, api_method, req_meta):
+    def set_patient_cards(self, changed_patients, package, req_meta):
         for patient_uid in changed_patients:
             # отброс мусора с тестовой БД
             if not patient_uid:
                 continue
-            req = DataRequest()
-            req.set_req_params(
-                url=api_method['template_url'],
-                method=api_method['method'],
-                data={'patientUid': patient_uid},
-            )
-            patient_data = self.transfer__send_request(req)
-            main_item = package.add_main_pack_entity(
-                entity_code=TambovEntityCode.PATIENT,
-                method=req.method,
-                main_param_name='patientUid',
+            main_item = package.add_main(
+                entity_code=TambovEntityCode.SMART_PATIENT,
+                main_id_name='patientUid',
                 main_id=patient_uid,
                 parents_params=req_meta['dst_parents_params'],
-                data=patient_data,
             )
-
-            # образец работы с дозапросами
-            # individuals_url = 'http://develop.r-mis.ru/individuals-ws/individuals?wsdl'
-            # req = {
-            #     'meta': {
-            #         'dst_method': 'getIndividualAddresses',
-            #         'dst_url': individuals_url,
-            #         'dst_id_url_param_name': 'uid',
-            #         'dst_id': patient_uid,
-            #     },
-            # }
-            # patient_childs = patient_node.setdefault('childs', {})
-            # if patient_node != root_parent:
-            #     patient_node['root_parent'] = root_parent
-            # IndividualAddresses_list = self.transfer__send_request(req)
-            # for ind_addr_item in IndividualAddresses_list:
-            #     ind_address_node = {'data': ind_addr_item, 'main_id': ind_addr_item.id}
-            #     patient_childs.setdefault(
-            #         TambovEntityCode.IND_ADDRESS, []
-            #     ).append(ind_address_node)
-            #     # req = {
-            #     #     'meta': {
-            #     #         'dst_method': 'getAddressAllInfo',
-            #     #         'dst_url': fl_data_url,
-            #     #         'dst_id_url_param_name': 'uid',
-            #     #         'dst_id': ind_addr_item,
-            #     #     },
-            #     # }
-            #     # AddressAllInfo_data = self.transfer__send_request(req)
-            #
-            # req = {
-            #     'meta': {
-            #         'dst_method': 'getIndividualDocuments',
-            #         'dst_url': individuals_url,
-            #         'dst_id_url_param_name': 'uid',
-            #         'dst_id': patient_uid,
-            #     },
-            # }
-            # IndividualDocuments_list = self.transfer__send_request(req)
-            # for ind_doc_item in IndividualDocuments_list:
-            #     ind_documents_data = {'data': ind_doc_item, 'main_id': ind_doc_item.id}
-            #     patient_childs.setdefault(
-            #         TambovEntityCode.IND_DOCUMENTS, []
-            #     ).append(ind_documents_data)
-            #     # req = {
-            #     #     'meta': {
-            #     #         'dst_method': 'getDocument',
-            #     #         'dst_url': fl_data_url,
-            #     #         'dst_id_url_param_name': 'uid',
-            #     #         'dst_id': ind_doc_item,
-            #     #     },
-            #     # }
-            #     # Document_data = self.transfer__send_request(req)
+            package.add_addition(
+                parent_item=main_item,
+                entity_code=TambovEntityCode.PATIENT,
+                main_id_name=None,
+                main_id=patient_uid,
+            )
 
     ##################################################################
     ##  reform entities
 
     def build_local_entities(self, header_meta, pack_entity):
-        patient_data = pack_entity['data']
+        sm_patient_data = pack_entity['data']
+        patient_node = pack_entity['addition'][TambovEntityCode.PATIENT][0]
+        patient_data = patient_node['data']
         src_entity_code = header_meta['remote_entity_code']
         src_operation_code = header_meta['remote_operation_code']
 
         # сопоставление параметров родительских сущностей
         # params_map = {
-        #     TambovEntityCode.PATIENT: {
+        #     TambovEntityCode.SMART_PATIENT: {
         #         'entity': RisarEntityCode.CARD, 'param': 'card_id'
         #     }
         # }
@@ -213,12 +154,12 @@ class PatientTambovBuilder(Builder):
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
-            self.build_local_client_body(main_item, patient_data)
+            self.build_local_client_body(main_item, sm_patient_data, patient_data)
 
         return entities
 
-    def build_local_client_body(self, main_item, patient_data):
-        patient = patient_data['patient']
+    def build_local_client_body(self, main_item, sm_patient_data, patient_data):
+        patient = sm_patient_data['patient']
         gender = safe_int(patient.gender)
         # if gender != 2:
         #     main_item['meta']['skip_trash'] = True
@@ -232,18 +173,17 @@ class PatientTambovBuilder(Builder):
             'birthday_date': encode(patient['birthDate']),
             'gender': gender,
             # 'SNILS': None,  # заполняется в документах
-            # todo: для bloodGroup указан метод "patients-ws getPatient" вместо "getPatient"
-            # 'blood_type_info': {
-            #     'blood_type': safe_traverse(patient, 'bloodGroup', default=''),
-            # },
+            'blood_type_info': {
+                'blood_type': patient_data.bloodGroup or Undefined,
+            },
         }
-        for document_data in patient_data.identifiers:
+        for document_data in sm_patient_data.identifiers:
             if not document_data.type:
                 continue
 
             # Получаем код организации
             document_issuing_authority = Undefined
-            for code in safe_traverse(document_data, 'issueOrganization', 'codes', default=()):
+            for code in safe_traverse_attrs(document_data, 'issueOrganization', 'codes', default=()):
                 if code['type'] == 'CODE_OMS':
                     document_issuing_authority = code['code']
                     break
@@ -253,32 +193,25 @@ class PatientTambovBuilder(Builder):
             #     main_item['body']['SNILS'] = document_data.code
             elif document_data.type == '26':  # ENP
                 main_item['body'].setdefault('insurance_documents', []).append({
-                    # todo: синхронизация справочников
                     'insurance_document_type': document_data.type or '',
                     'insurance_document_number': document_data.number or '',
                     'insurance_document_beg_date': encode(document_data.issueDate) or '',
                     'insurance_document_series': document_data.series or Undefined,
-                    # todo: error: has no method get
-                    # 'document_issuing_authority': safe_traverse(document_data, 'issueOrganization', 'code'),
-                    # todo: синхронизация справочников
-                    # Поле определяется ниже
                     'insurance_document_issuing_authority': document_issuing_authority,    # —
                 })
             elif document_data.type == '13':  # passport
                 # todo: в схеме рисар document будет переделан на список documents. зачем?
                 main_item['body'].setdefault('document', {}).update({
-                    # todo: синхронизация справочников
                     'document_type_code': safe_int(document_data.type),
                     'document_number': document_data.number,
                     'document_beg_date': encode(document_data.issueDate) or '',
                     'document_series': document_data.series or Undefined,
-                    # Поле определяется ниже
                     'document_issuing_authority': document_issuing_authority,
                 })
             else:
                 pass
         # Женя: Берем только один адрес проживания, всё остальное пофиг. Если их несколько - берем первый
-        for address_data in patient_data['addresses']:
+        for address_data in sm_patient_data['addresses']:
             local_addr = {
                 'KLADR_locality': None,  # заполняется в entry
                 'KLADR_street': None,  # заполняется в entry
@@ -368,45 +301,3 @@ class PatientTambovBuilder(Builder):
         #             local_addr['KLADR_locality'] = entry['kladrCode']
         #         elif entry['level'] == '5':
         #             local_addr['KLADR_street'] = entry['kladrCode']
-
-        # todo: дозапросы будут переделаны в соответствии с новой wsdl
-        # todo: ждем доработку wsdl по группе крови
-        # schema = {
-        #     "blood_type_info": {  # добавят в patients-smart-ws позже
-        #         "type": "array",
-        #         "description": "Данные группы крови и резус-фактора пациентки",
-        #         "items": {
-        #             "type": "object",
-        #             "description": "Сведение о группе крови и резус-факторе",
-        #             "properties": {
-        #
-        #                 "blood_type": {
-        #                     "type": "string",
-        #                     "description": "Код группы крови",
-        #                     "enum":
-        #                         [
-        #                             "0(I)Rh-",
-        #                             "0(I)Rh+",
-        #                             "A(II)Rh-",
-        #                             "A(II)Rh+",
-        #                             "B(III)Rh-",
-        #                             "B(III)Rh+",
-        #                             "AB(IV)Rh-",
-        #                             "AB(IV)Rh+",
-        #                             "0(I)RhDu",
-        #                             "A(II)RhDu",
-        #                             "B(III)RhDu",
-        #                             "AB(IV)RhDu"
-        #                         ]
-        #                 }
-        #             },
-        #             "required": [
-        #                 "blood_type"
-        #             ]
-        #         }
-        #     },
-        #     "allergies_info": {  # в мис вроде нет инфы такой
-        #     },
-        #     "medicine_intolerance_info": {  # в мис вроде нет инфы такой
-        #     }
-        # }

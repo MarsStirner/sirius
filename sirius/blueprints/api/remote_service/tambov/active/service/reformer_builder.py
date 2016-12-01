@@ -36,7 +36,7 @@ class ServiceTambovBuilder(Builder):
         src_entity_code = header_meta['local_entity_code']
         params_map = {
             RisarEntityCode.CARD: {
-                'entity': TambovEntityCode.PATIENT, 'param': 'patientUid'
+                'entity': TambovEntityCode.SMART_PATIENT, 'param': 'patientUid'
             },
         }
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
@@ -69,10 +69,10 @@ class ServiceTambovBuilder(Builder):
         res = self.transfer__send_request(req)
         return res
 
-    def set_services(self, services_ids, package, req_meta):
-        service_api_method = self.reformer.get_api_method(
+    def set_services(self, rend_services_ids, package, req_meta):
+        rend_serv_api_method = self.reformer.get_api_method(
             self.remote_sys_code,
-            TambovEntityCode.SERVICE,
+            TambovEntityCode.REND_SERVICE,
             OperationCode.READ_ONE,
         )
         referral_api_method = self.reformer.get_api_method(
@@ -82,15 +82,15 @@ class ServiceTambovBuilder(Builder):
         )
 
         referral_items = {}
-        for service_id in services_ids:
+        for rend_service_id in rend_services_ids:
             req = DataRequest()
             req.set_req_params(
-                url=service_api_method['template_url'],
-                method=service_api_method['method'],
-                data={'id': service_id},
+                url=rend_serv_api_method['template_url'],
+                method=rend_serv_api_method['method'],
+                data={'id': rend_service_id},
             )
-            service_data = self.transfer__send_request(req)
-            referralId = service_data['referralId']
+            rend_service_data = self.transfer__send_request(req)
+            referralId = rend_service_data['referralId']
             # так как в мис направление не указано, а в мр его нужно создать
             # обозначим направление мис фейковым ID. если в мис проставят
             # направление, то в мр должны создать новое и перепривязать услугу
@@ -104,9 +104,9 @@ class ServiceTambovBuilder(Builder):
                 referral_data = self.transfer__send_request(req)
             else:
                 continue
-                if not service_data['prototypeId']:
+                if not rend_service_data['prototypeId']:
                     continue
-                referralId = '_'.join(('serviceId', service_id))
+                referralId = '_'.join(('rend_serviceId', rend_service_id))
                 referral_data = {}
 
             if referralId in referral_items:
@@ -122,17 +122,16 @@ class ServiceTambovBuilder(Builder):
                 )
                 referral_items[referralId] = main_item
 
-            child_item = package.add_child_pack_entity(
+            send_srv_item = package.add_child_pack_entity(
                 root_item=main_item,
                 parent_item=main_item,
-                entity_code=TambovEntityCode.SERVICE,
+                entity_code=TambovEntityCode.REND_SERVICE,
                 method=req.method,
-                main_id=service_id,
-                data=service_data,
+                main_id=rend_service_id,
+                data=rend_service_data,
             )
 
-
-# todo: удалить, когда объединение запланированных и внеплановых утвердится
+    # todo: удалить, когда объединение запланированных и внеплановых утвердится
 # class ServiceTambovBuilder__(Builder):
 #     remote_sys_code = SystemCode.TAMBOV
 #
@@ -144,7 +143,7 @@ class ServiceTambovBuilder(Builder):
 #         src_entity_code = header_meta['local_entity_code']
 #         params_map = {
 #             RisarEntityCode.CARD: {
-#                 'entity': TambovEntityCode.PATIENT, 'param': 'patientUid'
+#                 'entity': TambovEntityCode.SMART_PATIENT, 'param': 'patientUid'
 #             },
 #             RisarEntityCode.MEASURE: {
 #                 'entity': TambovEntityCode.REFERRAL, 'param': 'referralId'
@@ -182,7 +181,7 @@ class ServiceTambovBuilder(Builder):
 #
 #         # сопоставление параметров родительских сущностей
 #         params_map = {
-#             TambovEntityCode.PATIENT: {
+#             TambovEntityCode.SMART_PATIENT: {
 #                 'entity': RisarEntityCode.CARD, 'param': 'card_id'
 #             },
 #             TambovEntityCode.REFERRAL: {
@@ -227,7 +226,7 @@ class ServiceTambovBuilder(Builder):
 #         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
 #             api_method = self.reformer.get_api_method(
 #                 self.remote_sys_code,
-#                 TambovEntityCode.SERVICE,
+#                 TambovEntityCode.REND_SERVICE,
 #                 OperationCode.READ_ONE,
 #             )
 #             services_ids = self.get_services_ids(reformed_req)
@@ -235,7 +234,7 @@ class ServiceTambovBuilder(Builder):
 #         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
 #             api_method = self.reformer.get_api_method(
 #                 self.remote_sys_code,
-#                 TambovEntityCode.SERVICE,
+#                 TambovEntityCode.REND_SERVICE,
 #                 OperationCode.READ_ONE,
 #             )
 #             self.set_services([req_meta['dst_id']], package, api_method, req_meta)
@@ -261,7 +260,7 @@ class ServiceTambovBuilder(Builder):
 #             }
 #             service_data = self.transfer__send_request(req)
 #             main_item = package.add_main_pack_entity(
-#                 entity_code=TambovEntityCode.SERVICE,
+#                 entity_code=TambovEntityCode.REND_SERVICE,
 #                 method=req['meta']['dst_method'],
 #                 main_param_name='measure_id',
 #                 main_id=service_id,
@@ -305,7 +304,7 @@ class ServiceTambovBuilder(Builder):
         # сопоставление параметров родительских сущностей
         params_map = {
             RisarEntityCode.CARD: {
-                'entity': TambovEntityCode.PATIENT, 'param': 'patientUid',
+                'entity': TambovEntityCode.SMART_PATIENT, 'param': 'patientUid',
             },
             RisarEntityCode.ORGANIZATION: {
                 'entity': TambovEntityCode.CLINIC, 'param': 'orgId',
@@ -315,7 +314,7 @@ class ServiceTambovBuilder(Builder):
 
         entities = RequestEntities()
         main_item = entities.set_main_entity(
-            dst_entity_code=TambovEntityCode.SERVICE,
+            dst_entity_code=TambovEntityCode.REND_SERVICE,
             dst_parents_params=header_meta['remote_parents_params'],
             dst_main_id_name='id',
             src_operation_code=src_operation_code,
