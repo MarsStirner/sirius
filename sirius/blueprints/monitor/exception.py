@@ -10,7 +10,7 @@ import sys
 import traceback
 import functools
 from time import time, sleep
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 import flask
@@ -260,7 +260,8 @@ def connect_entry(function=None, login=None):
     """
     Ловит ошибку на входе в модуль активных запросов
     """
-    sleep_timeout = 6
+    sleep_timeout = 6  # sec
+    session_timeout = 1  # min
 
     def decorator(func):
         @functools.wraps(func)
@@ -274,10 +275,14 @@ def connect_entry(function=None, login=None):
                 retry_count += 1
                 try:
                     if callable(login):
-                        session = getattr(func, '_session', None)
-                        if not session:
+                        session, dtime = getattr(func, '_session', (None, None))
+                        if not session or (
+                            (datetime.today() - dtime) > timedelta(minutes=session_timeout)
+                        ):
                             session = login()
-                            func._session = session
+                        dtime = datetime.today()
+                        # считаем, что сессия стареет с последнего доступа
+                        func._session = session, dtime
                         kwargs['session'] = session
                     res = func(*args, **kwargs)
                 except (ConnectError, ConnectionError) as exc:

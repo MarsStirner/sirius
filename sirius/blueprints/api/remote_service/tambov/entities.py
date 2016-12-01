@@ -21,6 +21,7 @@ class TambovEntityCode(Enum):
     ADDRESS_ALL_INFO = 'address_all_info'
     LOCATION = 'location'
     EMPLOYEE_POSITION = 'employee_position'
+    POSITION = 'position'
     EMPLOYEE = 'employee'
     INDIVIDUAL = 'individual'
     EMPLOYEE_SPECIALITIES = 'employee_specialities'

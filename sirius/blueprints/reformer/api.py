@@ -43,6 +43,7 @@ class Reformer(IStreamMeta):
             self.remote_sys_code: self.remote_version,
             SystemCode.LOCAL: self.local_version,
         }
+        self.api_methods = {}  # cache per reformer
 
     def set_transfer(self, transfer):
         self.transfer = transfer
@@ -598,12 +599,15 @@ class Reformer(IStreamMeta):
     #     return res
 
     def get_api_method(self, system_code, entity_code, operation_code):
-        res = ApiMethod.get(
-            system_code, entity_code, operation_code, self.version[system_code]
-        )
-        if not res['method']:
-            res['method'] = self.get_method_by_operation_code(operation_code)
-        return res
+        key = system_code, entity_code, operation_code
+        if key not in self.api_methods:
+            res = ApiMethod.get(
+                system_code, entity_code, operation_code, self.version[system_code]
+            )
+            if not res['method']:
+                res['method'] = self.get_method_by_operation_code(operation_code)
+            self.api_methods[key] = res
+        return self.api_methods[key]
 
     def get_method_by_operation_code(self, operation_code):
         if operation_code == OperationCode.ADD:
@@ -786,7 +790,6 @@ class EntitiesPackage(object):
         self.pack_entities = {}
         self.system_code = system_code
         self.builder = builder
-        self.api_methods = {}  # cache per package
 
     def get_pack_entities(self):
         return self.pack_entities
@@ -841,7 +844,7 @@ class EntitiesPackage(object):
 
     def add_main(self, entity_code, main_id_name, main_id, parents_params):
         # реализовано только на сбор пакета в remote
-        api_method = self.get_api_method(
+        api_method = self.builder.reformer.get_api_method(
             self.system_code,
             entity_code,
             OperationCode.READ_ONE,
@@ -875,7 +878,7 @@ class EntitiesPackage(object):
 
     def add_child(self, parent_item, entity_code, main_id_name, main_id):
         # реализовано только на сбор пакета в remote
-        api_method = self.get_api_method(
+        api_method = self.builder.reformer.get_api_method(
             self.system_code,
             entity_code,
             OperationCode.READ_ONE,
@@ -911,7 +914,7 @@ class EntitiesPackage(object):
         # реализовано только на сбор пакета в remote
         if not main_id:
             return None
-        api_method = self.get_api_method(
+        api_method = self.builder.reformer.get_api_method(
             self.system_code,
             entity_code,
             OperationCode.READ_ONE,
@@ -941,15 +944,6 @@ class EntitiesPackage(object):
             data=data,
         )
         return data
-
-    def get_api_method(self, system_code, entity_code, operation_code):
-        key = system_code, entity_code, operation_code
-        if key not in self.api_methods:
-            api_method = self.builder.reformer.get_api_method(
-                system_code, entity_code, operation_code
-            )
-            self.api_methods[key] = api_method
-        return self.api_methods[key]
 
 
 class RequestEntities(object):

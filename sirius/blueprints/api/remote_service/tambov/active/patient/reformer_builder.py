@@ -111,7 +111,7 @@ class PatientTambovBuilder(Builder):
             # отброс мусора с тестовой БД
             if not patient_uid:
                 continue
-            main_item = package.add_main(
+            main_item, _ = package.add_main(
                 entity_code=TambovEntityCode.SMART_PATIENT,
                 main_id_name='patientUid',
                 main_id=patient_uid,
