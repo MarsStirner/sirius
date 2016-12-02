@@ -323,3 +323,39 @@ class Scheduler(object):
                 'TFOMSCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': '41'},  # todo: card_data['card_LPU']
             }
             LocalProducer().send(msg)
+
+    def get_hospital_rec(self, system_code, entity_code):
+        from sirius.blueprints.api.local_service.producer import LocalProducer
+        from sirius.blueprints.api.remote_service.producer import RemoteProducer
+        from sirius.blueprints.api.local_service.risar.entities import \
+            RisarEntityCode
+
+        implement = Implementation()
+        reformer = implement.get_reformer(system_code)
+
+        # /api/integration/<int:api_version>/card/list/
+        card_list_method = reformer.get_api_method(
+            SystemCode.LOCAL, RisarEntityCode.CARD, OperationCode.READ_MANY
+        )
+        data = {
+            'filters': {
+                'id': 139  # todo: при тестировании работаем пока с одной картой
+            }
+        }
+        msg = Message(data)
+        msg.to_local_service()
+        msg.set_request_type()
+        msg.set_immediate_answer()
+        msg.set_method(card_list_method['method'],
+                       card_list_method['template_url'])
+        producer = RemoteProducer()
+        card_msg = producer.send(msg, async=False)
+        for card_data in card_msg.get_data():
+            msg = self.create_message(system_code, entity_code,
+                                      OperationCode.READ_ONE)  # searchHspRecord
+            meta = msg.get_header().meta
+            meta['local_parents_params'] = {
+                'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
+            }
+            producer = LocalProducer()
+            producer.send(msg)
