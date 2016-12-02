@@ -14,6 +14,7 @@ class TambovEntityCode(Enum):
     SMART_PATIENT = 'smart_patient'
     REFERRAL = 'referral'
     REND_SERVICE = 'rend_service'
+    DATA_REND_SERVICE = 'data_rend_service'
     SERVICE = 'service'
     CASE = 'case'
     VISIT = 'visit'

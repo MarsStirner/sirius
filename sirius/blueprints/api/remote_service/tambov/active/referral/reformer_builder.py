@@ -172,116 +172,129 @@ class ReferralTambovBuilder(Builder):
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
 
         entities = RequestEntities()
-        measure_items = {}
         childs = pack_entity['childs']
-        service_list = childs[TambovEntityCode.REND_SERVICE]
-        for item in service_list:
-            service_data = item['data']
+        rend_serv_item = childs[TambovEntityCode.REND_SERVICE][0]
+        rend_serv_data = rend_serv_item['data']
+        measure_id = SrvPrototypeMatch.get_measure_id(rend_serv_data['prototypeId'])
 
-            measure_type = SrvPrototypeMatch.get_measure_type(service_data.prototypeId)
+        if referral_data:
+            measure_item = entities.set_main_entity(
+                dst_entity_code=RisarEntityCode.MEASURE,
+                dst_parents_params=header_meta['local_parents_params'],
+                dst_main_id_name='measure_id',
+                src_operation_code=src_operation_code,
+                src_entity_code=src_entity_code,
+                src_main_id_name=header_meta['remote_main_param_name'],
+                src_id=header_meta['remote_main_id'],
+                level_count=2,
+            )
+            if src_operation_code != OperationCode.DELETE:
+                measure_item['body'] = {
+                    # 'measure_id': None,  # заполняется в set_current_id_func
+                    'measure_type_code': measure_id,
+                    'begin_datetime': encode(referral_data['referralDate']),
+                    'end_datetime': encode(referral_data['referralDate']),
+                    'status': 'created',  # referral_data['refStatusId'],
+                }
+        else:
+            measure_item = None
 
-            if measure_type in measure_items:
-                measure_item = measure_items[header_meta['remote_main_id']]
-            else:
-                # todo: возможно передавать MEASURE не нужно
-                measure_item = entities.set_main_entity(
-                    dst_entity_code=RisarEntityCode.MEASURE,
-                    dst_parents_params=header_meta['local_parents_params'],
-                    dst_main_id_name='measure_id',
-                    src_operation_code=src_operation_code,
-                    src_entity_code=src_entity_code,
-                    src_main_id_name=header_meta['remote_main_param_name'],
-                    src_id=header_meta['remote_main_id'],
-                    level_count=2,
-                )
-                measure_items[header_meta['remote_main_id']] = measure_item
-                measure_id = SrvPrototypeMatch.get_measure_id(service_data.prototypeId)
-                if src_operation_code != OperationCode.DELETE:
-                    measure_item['body'] = {
-                        # 'measure_id': None,  # заполняется в set_current_id_func
-                        # пока считаем, что на одно направление
-                        # не может быть разных measure_id из услуг
-                        'measure_type_code': measure_id,
-                        'begin_datetime': encode(referral_data['referralDate']),
-                        'end_datetime': encode(referral_data['referralDate']),
-                        'status': 'created',  # referral_data['refStatusId'],
-                    }
-
-            research_meas_types = ('lab_test', 'func_test')
-            checkup_meas_types = ('checkup',)
-            if measure_type in research_meas_types:
-                self.build_local_measure_research(
-                    header_meta, entities, service_data,
-                    measure_item, measure_id
-                )
-            elif measure_type in checkup_meas_types:
-                self.build_local_measure_specialists_checkup(
-                    header_meta, entities, service_data,
-                    measure_item, measure_id
-                )
-            else:
-                # todo:
-                raise NotImplementedError()
+        measure_type = SrvPrototypeMatch.get_measure_type(rend_serv_data['prototypeId'])
+        research_meas_types = ('lab_test', 'func_test')
+        checkup_meas_types = ('checkup',)
+        if measure_type in checkup_meas_types:
+            self.build_local_measure_specialists_checkup(
+                header_meta, entities, rend_serv_data,
+                measure_item, measure_id
+            )
+        else:
+            assert measure_type in research_meas_types
+            self.build_local_measure_research(
+                header_meta, entities, rend_serv_item, rend_serv_data,
+                measure_item, measure_id
+            )
         return entities
 
     def build_local_measure_research(
-        self, header_meta, entities, service_data, measure_item, measure_id
+        self, header_meta, entities, rend_serv_item, rend_serv_data, measure_item, measure_id
     ):
         src_operation_code = header_meta['remote_operation_code']
+        data_rend_serv_item = rend_serv_item['addition'][TambovEntityCode.DATA_REND_SERVICE][0]
+        data_rend_serv_data = data_rend_serv_item['data']
 
-        research_item = entities.set_child_entity(
-            parent_item=measure_item,
-            dst_entity_code=RisarEntityCode.MEASURE_RESEARCH,
-            dst_parents_params=header_meta['local_parents_params'],
-            dst_main_id_name='result_action_id',
-            dst_parent_id_name='measure_id',
-            src_operation_code=src_operation_code,
-            src_entity_code=TambovEntityCode.REND_SERVICE,
-            src_main_id_name='id',
-            src_id=service_data['id'],
-        )
+        if measure_item:
+            research_item = entities.set_child_entity(
+                parent_item=measure_item,
+                dst_entity_code=RisarEntityCode.MEASURE_RESEARCH,
+                dst_parents_params=header_meta['local_parents_params'],
+                dst_main_id_name='result_action_id',
+                dst_parent_id_name='measure_id',
+                src_operation_code=src_operation_code,
+                src_entity_code=TambovEntityCode.REND_SERVICE,
+                src_main_id_name='id',
+                src_id=rend_serv_data['id'],
+            )
+        else:
+            research_item = entities.set_main_entity(
+                dst_entity_code=RisarEntityCode.MEASURE_RESEARCH,
+                dst_parents_params=header_meta['local_parents_params'],
+                dst_main_id_name='result_action_id',
+                src_operation_code=src_operation_code,
+                src_entity_code=TambovEntityCode.REND_SERVICE,
+                src_main_id_name='id',
+                src_id=rend_serv_data['id'],
+                level_count=1,
+            )
         if src_operation_code != OperationCode.DELETE:
             research_item['body'] = {
                 # 'result_action_id': None,  # заполняется в set_current_id_func
                 # 'measure_id':  # заполняется в set_parent_id_common_func
-                'external_id': service_data['id'],
+                'external_id': rend_serv_data['id'],
                 'measure_type_code': measure_id,
-                'realization_date': encode(service_data['dateFrom']),
-                'lpu_code': safe_traverse(service_data, 'orgId', default=''),
-                # 'analysis_number': service_data[''] or Undefined,
-                'results': 'p1:1;p2:2',
-                # 'comment': service_data[''] or Undefined,
-                # 'doctor_code': service_data[''] or Undefined,
-                # 'status': service_data[''] or Undefined,
+                'realization_date': encode(rend_serv_data['dateFrom']),
+                'lpu_code': safe_traverse(rend_serv_data, 'orgId', default=''),
+                'results': data_rend_serv_data,
             }
 
         return entities
 
     def build_local_measure_specialists_checkup(
-        self, header_meta, entities, service_data, measure_item, measure_id
+        self, header_meta, entities, rend_serv_data, measure_item, measure_id
     ):
         src_operation_code = header_meta['remote_operation_code']
 
-        research_item = entities.set_child_entity(
-            parent_item=measure_item,
-            dst_entity_code=RisarEntityCode.MEASURE_SPECIALISTS_CHECKUP,
-            dst_parents_params=header_meta['local_parents_params'],
-            dst_main_id_name='result_action_id',
-            dst_parent_id_name='measure_id',
-            src_operation_code=src_operation_code,
-            src_entity_code=TambovEntityCode.REND_SERVICE,
-            src_main_id_name='id',
-            src_id=service_data['id'],
-        )
+        if measure_item:
+            sp_ckeckup_item = entities.set_child_entity(
+                parent_item=measure_item,
+                dst_entity_code=RisarEntityCode.MEASURE_SPECIALISTS_CHECKUP,
+                dst_parents_params=header_meta['local_parents_params'],
+                dst_main_id_name='result_action_id',
+                dst_parent_id_name='measure_id',
+                src_operation_code=src_operation_code,
+                src_entity_code=TambovEntityCode.REND_SERVICE,
+                src_main_id_name='id',
+                src_id=rend_serv_data['id'],
+            )
+        else:
+            sp_ckeckup_item = entities.set_main_entity(
+                dst_entity_code=RisarEntityCode.MEASURE_SPECIALISTS_CHECKUP,
+                dst_parents_params=header_meta['local_parents_params'],
+                dst_main_id_name='result_action_id',
+                src_operation_code=src_operation_code,
+                src_entity_code=TambovEntityCode.REND_SERVICE,
+                src_main_id_name='id',
+                src_id=rend_serv_data['id'],
+                level_count=1,
+            )
         if src_operation_code != OperationCode.DELETE:
-            research_item['body'] = {
+            sp_ckeckup_item['body'] = {
                 # 'result_action_id': None,  # заполняется в set_current_id_func
                 # 'measure_id': None,  # заполняется в set_parent_id_common_func
-                'external_id': service_data['id'],
+                'external_id': rend_serv_data['id'],
                 'measure_type_code': measure_id,
-                'checkup_date': encode(service_data['dateTo']),
-                'lpu_code': safe_traverse(service_data, 'orgId', default=''),
-                'doctor_code': safe_traverse(service_data, 'resourceGroupId', default=''),
+                'checkup_date': encode(rend_serv_data['dateTo']),
+                'lpu_code': safe_traverse(rend_serv_data, 'orgId', default=''),
+                'doctor_code': safe_traverse(rend_serv_data, 'resourceGroupId', default=''),
             }
 
         return entities

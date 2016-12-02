@@ -81,7 +81,7 @@ class ServiceTambovBuilder(Builder):
             OperationCode.READ_ONE,
         )
 
-        referral_items = {}
+        referralIds = set()
         for rend_service_id in rend_services_ids:
             req = DataRequest()
             req.set_req_params(
@@ -90,10 +90,23 @@ class ServiceTambovBuilder(Builder):
                 data={'id': rend_service_id},
             )
             rend_service_data = self.transfer__send_request(req)
+            # без прототипа не поймем каким методом отправлять
+            if not rend_service_data['prototypeId']:
+                continue
+
+            # на одно направление должна быть только одна услуга.
+            # оставльные откидываем
             referralId = rend_service_data['referralId']
-            # так как в мис направление не указано, а в мр его нужно создать
-            # обозначим направление мис фейковым ID. если в мис проставят
-            # направление, то в мр должны создать новое и перепривязать услугу
+            if referralId in referralIds:
+                continue
+            referralIds.add(referralId)
+            # если есть направление - отправляем его и услугу.
+            # если нет направления - отправляем только услугу.
+            # обратная передача, автоматом созданного направления в МР, уйдет
+            # в МИС и будет висеть там, даже, если уже там назначили
+            # направление на услугу.
+            # если в мис проставят другое направление, то в МР по-хорошему
+            # должны создать новое и перепривязать услугу.
             if referralId:
                 req = DataRequest()
                 req.set_req_params(
@@ -103,26 +116,23 @@ class ServiceTambovBuilder(Builder):
                 )
                 referral_data = self.transfer__send_request(req)
             else:
-                continue
-                if not rend_service_data['prototypeId']:
-                    continue
+                # так как в мис направление не указано, а изменения по
+                # направлению нужно засечь и код не хотим дублировать в услугах
+                # и навлениях, то обозначим направление мис фейковым ID, но с
+                # пустыми данными, что бы в итоге направление не писать в МР
                 referralId = '_'.join(('rend_serviceId', rend_service_id))
                 referral_data = {}
 
-            if referralId in referral_items:
-                main_item = referral_items[referralId]
-            else:
-                main_item = package.add_main_pack_entity(
-                    entity_code=TambovEntityCode.REFERRAL,
-                    method=req.method,
-                    main_param_name='id',
-                    main_id=referralId,
-                    parents_params=req_meta['dst_parents_params'],
-                    data=referral_data,
-                )
-                referral_items[referralId] = main_item
+            main_item = package.add_main_pack_entity(
+                entity_code=TambovEntityCode.REFERRAL,
+                method=req.method,
+                main_param_name='id',
+                main_id=referralId,
+                parents_params=req_meta['dst_parents_params'],
+                data=referral_data,
+            )
 
-            send_srv_item = package.add_child_pack_entity(
+            rend_srv_item = package.add_child_pack_entity(
                 root_item=main_item,
                 parent_item=main_item,
                 entity_code=TambovEntityCode.REND_SERVICE,
@@ -131,7 +141,27 @@ class ServiceTambovBuilder(Builder):
                 data=rend_service_data,
             )
 
-    # todo: удалить, когда объединение запланированных и внеплановых утвердится
+            data_req = DataRequest()
+            data_req.set_meta(
+                dst_system_code=self.remote_sys_code,
+                dst_entity_code=TambovEntityCode.DATA_REND_SERVICE,
+                dst_operation_code=OperationCode.READ_ONE,
+                dst_id=rend_service_id,
+                dst_parents_params=req_meta['dst_parents_params'],
+            )
+            # self.reformer.set_local_id(data_req)
+            self.reformer.set_request_service(data_req)
+            data_rend_srv_data = self.transfer__send_request(data_req)
+            data_rend_srv_item = package.add_addition_pack_entity(
+                root_item=main_item,
+                parent_item=rend_srv_item,
+                entity_code=TambovEntityCode.DATA_REND_SERVICE,
+                main_id=rend_service_id,
+                data=data_rend_srv_data,
+            )
+
+
+                # todo: удалить, когда объединение запланированных и внеплановых утвердится
 # class ServiceTambovBuilder__(Builder):
 #     remote_sys_code = SystemCode.TAMBOV
 #
