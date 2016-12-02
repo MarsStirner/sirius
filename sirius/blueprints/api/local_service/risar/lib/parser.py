@@ -8,7 +8,7 @@
 """
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.monitor.exception import InternalError, ExternalError
-from sirius.models.system import RegionCode, SystemCode
+from sirius.models.system import RegionCode, SystemCode, Host
 
 
 class RequestLocalData(object):
@@ -44,7 +44,7 @@ class RequestLocalData(object):
         pass
 
     def get_params(self, data):
-        self.request_url = data.get('request_url')
+        self.request_url = Host.get_url(SystemCode.LOCAL).rstrip('/') + data.get('request_url')
         self.request_method = data.get('request_method')
 
         self.service_method = data.get('service_method')

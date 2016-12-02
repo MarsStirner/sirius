@@ -59,3 +59,11 @@ class Host(Model):
     __table_args__ = (
         UniqueConstraint('code', 'system_id', name='_host_uc'),
     )
+
+    @classmethod
+    def get_url(cls, system_code):
+        return cls.query.join(
+            System, System.id == cls.system_id,
+        ).filter(
+            System.code == system_code,
+        ).order_by(cls.code).value(cls.url)
