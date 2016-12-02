@@ -29,7 +29,7 @@ remote_queues = {
     ],
 }
 
-region_code = app.config.get('REGION_CODE')
+region_code = app.config.get('REGION_CODE', RegionCode.TAMBOV)
 remote_queue_name_list = remote_queues[region_code]
 
 
