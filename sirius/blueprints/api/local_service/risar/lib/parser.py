@@ -8,6 +8,7 @@
 """
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.monitor.exception import InternalError, ExternalError
+from sirius.models.system import RegionCode, SystemCode
 
 
 class RequestLocalData(object):
@@ -25,6 +26,16 @@ class RequestLocalData(object):
         self.validate(data)
         self.get_params(data)
         self.data = data
+
+        system_code = {
+            RegionCode.TAMBOV: SystemCode.TAMBOV,
+        }
+        # todo: ух
+        remote_entity_map = {
+            'patient': 'smart_patient',
+        }
+        self.data['remote_system_code'] = system_code[self.data.get('remote_system_code')]
+        self.data['remote_entity_code'] = remote_entity_map[self.data.get('remote_entity_code')]
 
     def validate(self, data):
         # todo:
