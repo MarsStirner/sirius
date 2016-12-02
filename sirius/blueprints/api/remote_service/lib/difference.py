@@ -22,6 +22,8 @@ class Difference(object):
 
     # @module_entry
     def mark_diffs(self, entity_package):
+        # todo: сломался. пример - пациент 1342306
+        return entity_package
         # пометить изменения в Хранилище и в пакете
         # в пакете проставляются operation_code, is_changed, удаляемые записи
         flat_entities = {}
