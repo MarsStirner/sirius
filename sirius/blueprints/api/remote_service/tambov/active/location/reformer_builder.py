@@ -188,8 +188,9 @@ class LocationTambovBuilder(Builder):
         return True
 
     def valid_position(self, position_data):
-        if not (position_data['role'] == 1034):
-            return False
+        # могут быть не только Акушеры-Геникологи
+        # if not (position_data['role'] == 1034):
+        #     return False
         if not (position_data['speciality'] == 1):
             return False
         return True
