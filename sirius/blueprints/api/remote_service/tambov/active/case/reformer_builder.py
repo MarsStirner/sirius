@@ -73,6 +73,7 @@ class CaseTambovBuilder(Builder):
                 dst_id=msg_meta['src_main_id'],
                 dst_parents_params=msg_meta['src_parents_params'],
             )
+            data_req.req_data['meta']['dst_id_url_param_name'] = 'exam_obs_id'
 
             # self.reformer.set_local_id(data_req)
             self.reformer.set_request_service(data_req)

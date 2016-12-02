@@ -38,12 +38,10 @@ class ReferralTambovBuilder(Builder):
         package = EntitiesPackage(self, SystemCode.LOCAL)
         msg_meta = msg.get_relative_meta()
         msg_meta['src_operation_code'] = self.get_operation_code_by_method(msg_meta['src_method'])
-        if msg_meta['src_operation_code'] == OperationCode.READ_MANY:
+        if isinstance(msg.get_data(), list):
             data = msg.get_data()
-        elif msg_meta['src_operation_code'] == OperationCode.READ_ONE:
-            data = [msg.get_data()]
         else:
-            raise InternalError('Unexpected operation code')
+            data = [msg.get_data()]
         self.set_measures(data, package, msg_meta)
         return package
 
@@ -65,25 +63,27 @@ class ReferralTambovBuilder(Builder):
                 data=measure_data,
             )
 
-            data_req = DataRequest()
-            data_req.set_meta(
-                dst_system_code=SystemCode.LOCAL,
-                dst_entity_code=RisarEntityCode.APPOINTMENT,
-                dst_operation_code=OperationCode.READ_ONE,
-                dst_id=measure_data['appointment_id'],
-                dst_parents_params=msg_meta['src_parents_params'],
-            )
+            if measure_data['appointment_id']:
+                data_req = DataRequest()
+                data_req.set_meta(
+                    dst_system_code=SystemCode.LOCAL,
+                    dst_entity_code=RisarEntityCode.APPOINTMENT,
+                    dst_operation_code=OperationCode.READ_ONE,
+                    dst_id=measure_data['appointment_id'],
+                    dst_parents_params=msg_meta['src_parents_params'],
+                )
+                data_req.req_data['meta']['dst_id_url_param_name'] = 'appointment_id'
 
-            # self.reformer.set_local_id(data_req)
-            self.reformer.set_request_service(data_req)
-            appointment_data = self.reformer.local_request_by_req(data_req)
-            appointment_item = package.add_addition_pack_entity(
-                root_item=measure_root,
-                parent_item=measure_item,
-                entity_code=RisarEntityCode.APPOINTMENT,
-                main_id=measure_data['appointment_id'],
-                data=appointment_data,
-            )
+                # self.reformer.set_local_id(data_req)
+                self.reformer.set_request_service(data_req)
+                appointment_data = self.reformer.local_request_by_req(data_req)
+                appointment_item = package.add_addition_pack_entity(
+                    root_item=measure_root,
+                    parent_item=measure_item,
+                    entity_code=RisarEntityCode.APPOINTMENT,
+                    main_id=measure_data['appointment_id'],
+                    data=appointment_data,
+                )
 
     ##################################################################
     ##  reform entities to remote

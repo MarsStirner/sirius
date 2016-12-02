@@ -44,7 +44,7 @@ class RequestLocalData(object):
         pass
 
     def get_params(self, data):
-        self.request_url = Host.get_url(SystemCode.LOCAL).rstrip('/') + data.get('request_url')
+        self.request_url = data.get('request_url') and (Host.get_url(SystemCode.LOCAL).rstrip('/') + data.get('request_url'))
         self.request_method = data.get('request_method')
 
         self.service_method = data.get('service_method')
