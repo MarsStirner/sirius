@@ -11,14 +11,16 @@ from sirius.blueprints.api.local_service.risar.events import RisarEvents
 request_tambov_patient_1 = {
     "remote_system_code": 'tambov',
     "remote_entity_code": 'patient',
-    "remote_main_id": '6EHBT7UCLVXB5LSV',
+    # "remote_main_id": '6EHBT7UCLVXB5LSV',
+    "remote_main_id": '1342306',
 }
 
 request_tambov_register_patient_card = {
     "local_main_id": None,
     "remote_system_code": 'tambov',
     "remote_entity_code": 'patient',
-    "remote_main_id": '6EHBT7UCLVXB5LSV',
+    # "remote_main_id": '6EHBT7UCLVXB5LSV',
+    "remote_main_id": '1342306',
 }
 
 create_risar_card_1 = {

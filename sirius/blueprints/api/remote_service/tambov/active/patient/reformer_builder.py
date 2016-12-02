@@ -227,9 +227,11 @@ class PatientTambovBuilder(Builder):
             main_item['body']['residential_address'] = local_addr
             local_addr['locality_type'] = 1
             for entry in address_data['entries']:
-                if entry['level'] == '5':
+                if entry['level'] == '4':
+                    if not local_addr['KLADR_locality']:
+                        local_addr['KLADR_locality'] = entry['kladrCode'][:11] + '00'
+                elif entry['level'] == '5':
                     local_addr['KLADR_locality'] = entry['kladrCode'][:11] + '00'
-                    # local_addr['locality_type'] = '1' if entry['type'] == '18' else '2'
                 elif entry['level'] == '6':
                     local_addr['KLADR_street'] = entry['kladrCode']
                 elif entry['level'] == '7':
