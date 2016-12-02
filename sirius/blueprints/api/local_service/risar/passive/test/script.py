@@ -20,7 +20,7 @@ from sirius.blueprints.api.test.connect import make_login, release_token
 session = None
 
 
-class _TestLocalApi:
+class TestLocalApi:
 
     def test_auth(self):
         global session
@@ -41,7 +41,7 @@ class _TestLocalApi:
         code = result['meta']['code']
         assert code == 200
 
-    def _test_first_exam_patient(self, testapp):  # бизнес процесс первичного приема пациента
+    def test_first_exam_patient(self, testapp):  # бизнес процесс первичного приема пациента
         # Добавляем/обновляем пациента по UID мис
         result = request_remote(testapp, session, request_tambov_patient_1)
         code = result['meta']['code']

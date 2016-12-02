@@ -289,9 +289,10 @@ class Reformer(IStreamMeta):
                         }
                     })
             meta['dst_params_entities'] = method['params_entities']
-            # dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
-            # dst_param_ids = [dst_url_entities[param_entity] for param_entity in method['params_entities']]
-            # meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
+            # todo: убрать, когда наладим set_rest_url_params
+            dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
+            dst_param_ids = [dst_url_entities[param_entity] for param_entity in method['params_entities']]
+            meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
 
     def get_addition_data(self, missing_msgs):
         # пока считаем, что конвертировать локальные ID не придется
@@ -977,6 +978,7 @@ class RequestEntities(object):
                 entity_body = record['body']
                 if entity_meta['dst_id'] and isinstance(entity_body, dict) and not entity_body.get(dst_main_id_name):
                     entity_body[dst_main_id_name] = str(entity_meta['dst_id'])
+            # self.set_rest_url_params(entity_meta)
             if callable(set_current_id_func):
                 set_current_id_func(entity_meta, entity_body)
 
@@ -1019,6 +1021,7 @@ class RequestEntities(object):
                 entity_body = record['body']
                 if entity_meta['dst_id'] and isinstance(entity_body, dict) and not entity_body.get(dst_main_id_name):
                     entity_body[dst_main_id_name] = str(entity_meta['dst_id'])
+            # self.set_rest_url_params(entity_meta)
             if callable(set_current_id_func):
                 set_current_id_func(entity_meta, entity_body)
 
@@ -1036,7 +1039,7 @@ class RequestEntities(object):
                 'entity': parent_meta['dst_entity_code'],
                 'id': parent_meta['dst_id'],
             }
-            self.set_rest_url_params(entity_meta)
+            # self.set_rest_url_params(entity_meta)
             if callable(set_parent_id_func):
                 set_parent_id_func(parent_meta, entity_meta, entity_body)
 
@@ -1069,11 +1072,16 @@ class RequestEntities(object):
         self.operation_order.setdefault(order, []).append(entity)
 
     def set_rest_url_params(self, meta):
-        if meta['dst_protocol'] == ProtocolCode.REST:
+        # todo: dst_protocol должен быть всегда
+        if meta.get('dst_protocol', ProtocolCode.REST) == ProtocolCode.REST:
             dst_url_params = (meta.get('dst_parents_params') or {}).copy()
             dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
             dst_param_ids = [dst_url_entities[param_entity] for param_entity in meta['dst_params_entities']]
-            meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
+            try:
+                meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
+            except Exception:
+                # todo: придумать другое решение. реформ не только для дочерних, но и для себя
+                pass
 
 
 class ReqEntity(dict):

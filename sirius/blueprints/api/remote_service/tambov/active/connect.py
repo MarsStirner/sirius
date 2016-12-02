@@ -45,7 +45,7 @@ class TambovSOAPClient(object):
         self.check_error(result)
         return result
 
-    def getPatient(self, **kw):
+    def getPatient_Smart(self, **kw):
         result = self.client.service.getPatient(**kw)
         """
         error

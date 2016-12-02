@@ -173,10 +173,11 @@ class PatientTambovBuilder(Builder):
             'birthday_date': encode(patient['birthDate']),
             'gender': gender,
             # 'SNILS': None,  # заполняется в документах
-            'blood_type_info': {
-                'blood_type': patient_data.bloodGroup or Undefined,
-            },
         }
+        if patient_data['bloodGroup']:
+            main_item['body']['blood_type_info'] = [{
+                'blood_type': patient_data['bloodGroup'],
+            }]
         for document_data in sm_patient_data.identifiers:
             if not document_data.type:
                 continue

@@ -12,6 +12,7 @@ from sirius.blueprints.api.remote_service.tambov.active.connect import TambovSOA
 from sirius.blueprints.api.remote_service.lib.transfer import Transfer
 from sirius.blueprints.monitor.exception import connect_entry, module_entry, \
     InternalError
+from sirius.blueprints.reformer.api import DataRequest
 from sirius.models.protocol import ProtocolCode
 
 
@@ -21,13 +22,17 @@ class TambovTransfer(Transfer):
 
     @module_entry
     def execute(self, req):
-        if req['meta']['dst_protocol'] == ProtocolCode.SOAP:
+        if isinstance(req, DataRequest):
+            req_meta = req.meta
+        else:
+            req_meta = req['meta']
+        if req_meta.get('dst_protocol', ProtocolCode.SOAP) == ProtocolCode.SOAP:
             req_result = self.soap_protocol(req)
-        elif req['meta']['dst_protocol'] == ProtocolCode.REST:
+        elif req_meta['dst_protocol'] == ProtocolCode.REST:
             req_result = self.rest_protocol(req)
         else:
-            raise InternalError('Unexpected protocol (%s)' % req['dst_protocol'])
-        res = self.answer.process(req_result, req['meta'])
+            raise InternalError('Unexpected protocol (%s)' % req_meta['dst_protocol'])
+        res = self.answer.process(req_result, req_meta)
         return res
 
     def soap_protocol(self, req):

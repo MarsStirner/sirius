@@ -18,7 +18,7 @@ from sirius.lib.message import Message
 from flask import request
 from sirius.blueprints.monitor.logformat import hook
 from sirius.models.operation import OperationCode
-from sirius.models.system import RegionCode
+from sirius.models.system import RegionCode, SystemCode
 
 
 @module.route('/api/request/local/', methods=["POST"])
@@ -47,9 +47,20 @@ def api_request_remote():
     msg.to_remote_service()
     msg.set_request_type()
     meta = msg.get_header().meta
+
+    system_code = {
+        RegionCode.TAMBOV: SystemCode.TAMBOV,
+    }
+    # todo: ух
+    remote_entity_map = {
+        'patient': 'smart_patient',
+    }
+    remote_system_code = system_code[rld.data.get('remote_system_code')]
+    remote_entity_code = remote_entity_map[rld.data.get('remote_entity_code')]
+
     meta['local_operation_code'] = OperationCode.READ_ONE
-    meta['remote_system_code'] = rld.data.get('remote_system_code')
-    meta['remote_entity_code'] = rld.data.get('remote_entity_code')
+    meta['remote_system_code'] = remote_system_code
+    meta['remote_entity_code'] = remote_entity_code
     meta['remote_main_id'] = rld.data.get('remote_main_id')
     prod = LocalProducer()
     res = prod.send(msg)

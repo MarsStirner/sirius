@@ -13,7 +13,7 @@ from sirius.blueprints.scheduler.api import Scheduler
 from sirius.blueprints.scheduler.models import ScheduleGroup
 
 
-class TestSchedule:
+class _TestSchedule:
 
     @beat_entry
     def test_execute(self):
