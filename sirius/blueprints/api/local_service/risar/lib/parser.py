@@ -34,8 +34,10 @@ class RequestLocalData(object):
         remote_entity_map = {
             'patient': 'smart_patient',
         }
-        self.data['remote_system_code'] = system_code[self.data.get('remote_system_code')]
-        self.data['remote_entity_code'] = remote_entity_map[self.data.get('remote_entity_code')]
+        if self.data.get('remote_system_code'):
+            self.data['remote_system_code'] = system_code[self.data.get('remote_system_code')]
+        if self.data.get('remote_entity_code'):
+            self.data['remote_entity_code'] = remote_entity_map[self.data.get('remote_entity_code')]
 
     def validate(self, data):
         # todo:
