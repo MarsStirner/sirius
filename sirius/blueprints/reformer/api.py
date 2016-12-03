@@ -112,16 +112,22 @@ class Reformer(IStreamMeta):
 
         rec_meta = record['meta']
         if rec_meta['dst_operation_code'] == OperationCode.ADD:
-            if rec_meta['dst_id_url_param_name'] in (rec_meta['dst_parents_params'] or ()):
-                rec_meta['dst_id'] = rec_meta['dst_parents_params'][rec_meta['dst_id_url_param_name']]['id']
-            else:
-                answer_res = parser.get_params(
-                    rec_meta['dst_entity_code'],
-                    answer,
-                    rec_meta['dst_id_url_param_name'],
-                )
-                rec_meta['dst_id'] = answer_res['main_id']
-            # rec_meta['dst_id_url_param_name'] = answer_res['param_name']
+            # почему жертвуем своим ИДшником?
+            # if rec_meta['dst_id_url_param_name'] in (rec_meta['dst_parents_params'] or ()):
+            #     rec_meta['dst_id'] = rec_meta['dst_parents_params'][rec_meta['dst_id_url_param_name']]['id']
+            # else:
+            #     answer_res = parser.get_params(
+            #         rec_meta['dst_entity_code'],
+            #         answer,
+            #         rec_meta['dst_id_url_param_name'],
+            #     )
+            #     rec_meta['dst_id'] = answer_res['main_id']
+            answer_res = parser.get_params(
+                rec_meta['dst_entity_code'],
+                answer,
+                rec_meta['dst_id_url_param_name'],
+            )
+            rec_meta['dst_id'] = answer_res['main_id']
             MatchingId.add(
                 local_entity_id=rec_meta['dst_entity_id'],
                 local_id_prefix=rec_meta['dst_id_prefix'],
@@ -150,11 +156,12 @@ class Reformer(IStreamMeta):
 
         rec_meta = record['meta']
         if rec_meta['dst_operation_code'] == OperationCode.ADD:
-            if rec_meta['dst_id_url_param_name'] in (rec_meta['dst_parents_params'] or ()):
-                rec_meta['dst_id'] = rec_meta['dst_parents_params'][rec_meta['dst_id_url_param_name']]['id']
-            else:
-                rec_meta['dst_id'] = trans_res
-            # rec_meta['dst_id_url_param_name'] = answer_res['param_name']
+            # в соап имена совпадают. почему жертвуем своим ИДшником?
+            # if rec_meta['dst_id_url_param_name'] in (rec_meta['dst_parents_params'] or ()):
+            #     rec_meta['dst_id'] = rec_meta['dst_parents_params'][rec_meta['dst_id_url_param_name']]['id']
+            # else:
+            #     rec_meta['dst_id'] = trans_res
+            rec_meta['dst_id'] = trans_res
             MatchingId.add(
                 local_entity_id=rec_meta['src_entity_id'],
                 local_id=rec_meta['src_id'],
