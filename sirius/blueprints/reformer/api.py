@@ -604,14 +604,14 @@ class Reformer(IStreamMeta):
         )
         return res
 
-    # def get_remote_id_by_local(self, remote_entity_code, local_entity_code, local_id):
-    #     res = MatchingId.get_remote_id(
-    #         local_entity_code,
-    #         local_id,
-    #         remote_entity_code,
-    #         self.remote_sys_code,
-    #     )
-    #     return res
+    def get_remote_id_by_local(self, remote_entity_code, local_entity_code, local_id):
+        res = MatchingId.get_remote_id(
+            local_entity_code,
+            local_id,
+            remote_entity_code,
+            self.remote_sys_code,
+        )
+        return res
 
     def get_api_method(self, system_code, entity_code, operation_code):
         key = system_code, entity_code, operation_code

@@ -6,6 +6,7 @@
 @date: 23.09.2016
 
 """
+import logging
 from datetime import date, datetime
 
 from hitsl_utils.safe import safe_traverse, safe_int, safe_traverse_attrs
@@ -27,6 +28,7 @@ from sirius.models.system import SystemCode
 
 encode = WebMisJsonEncoder().default
 to_date = lambda x: x and datetime.strptime(x, '%Y-%m-%d')
+logger = logging.getLogger('simple')
 
 
 class ReferralTambovBuilder(Builder):
@@ -55,6 +57,10 @@ class ReferralTambovBuilder(Builder):
 
         for measure_data in measures:
             if not measure_data.get('appointment_id'):
+                # logger.error(
+                #     'Missing required appointment_id in measure_id = "%s", measure_type_code = "%s"' %
+                #     (measure_data['measure_id'], measure_data.get('measure_type_code'))
+                # )
                 continue
 
             measure_root = measure_item = package.add_main_pack_entity(
@@ -129,7 +135,9 @@ class ReferralTambovBuilder(Builder):
             src_id=header_meta['local_main_id'],
             level_count=1,
         )
-        prototype_id = SrvPrototypeMatch.get_prototype_id(measure_data.get('measure_type_code'))
+        prototype_id = SrvPrototypeMatch.get_prototype_id_by_mes_code(measure_data.get('measure_type_code'))
+        org_code = appoint_data.get('appointed_lpu') or appoint_data.get('referral_lpu')
+        date = appoint_data.get('date') or appoint_data.get('referral_date') or measure_data.get('begin_datetime')
         srv_api_method = self.reformer.get_api_method(
             self.remote_sys_code,
             TambovEntityCode.SERVICE,
@@ -141,19 +149,19 @@ class ReferralTambovBuilder(Builder):
             method=srv_api_method['method'],
             protocol=ProtocolCode.SOAP,
             data={
-                'clinic': appoint_data.get('appointed_lpu'),
+                'clinic': org_code,
                 'prototype': prototype_id,
             },
         )
         srvs_data = self.transfer__send_request(req)
-        srv_data = srvs_data and srvs_data[0]  # считаем, что будет одна
+        srv_data = srvs_data and srvs_data[0] or None  # считаем, что будет одна
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = {
                 # 'id': None,  # проставляется в set_current_id_func
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                'referralDate': to_date(appoint_data.get('date')),
-                'referralOrganizationId': appoint_data.get('appointed_lpu'),
-                'refServiceId': srv_data.serviceId,
+                'referralDate': to_date(date),
+                'referralOrganizationId': org_code,
+                'refServiceId': srv_data and [srv_data['id']],  # баг какой-то. ждет список
             }
 
         return entities

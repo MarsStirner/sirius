@@ -56,12 +56,15 @@ class LocalProducer(object):
         # diff_entity_packages = diff.mark_diffs(entity_packages)
         # diff.save_all_changes()
         msgs = reformer.create_to_remote_messages(entity_packages)
-        skip_err = msg.get_header().meta['local_operation_code'] == OperationCode.READ_MANY
+        op_code = msg.get_header().meta['local_operation_code']
+        skip_err = op_code == OperationCode.READ_MANY or not op_code and len(msgs) > 1
         # self.producer_send_msgs(msgs, skip_err=skip_err, callback=diff.save_change)
         self.send_msgs(msgs, rmt_sys_code, queue_name, skip_err=skip_err)
         # diff.commit_all_changes()
 
     def send_msgs(self, msgs, rmt_sys_code, queue_name=None, async=False, skip_err=False, callback=None):
+        # чтобы skip_err работал
+        callback = callback or True
         if callback:
             res = []
             for msg in msgs:

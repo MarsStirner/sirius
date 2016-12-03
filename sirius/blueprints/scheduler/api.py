@@ -132,12 +132,12 @@ class Scheduler(object):
         card_list_method = reformer.get_api_method(
             SystemCode.LOCAL, RisarEntityCode.CARD, OperationCode.READ_MANY
         )
-        # data = {
-        #     'filters': {
-        #         'id': 3  # todo: при тестировании работаем пока с одной картой
-        #     }
-        # }
-        msg = Message(None)
+        data = {
+            'filters': {
+                'id': 3  # todo: при тестировании работаем пока с одной картой
+            }
+        }
+        msg = Message(data)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -223,12 +223,12 @@ class Scheduler(object):
         card_list_method = reformer.get_api_method(
             SystemCode.LOCAL, RisarEntityCode.CARD, OperationCode.READ_MANY
         )
-        # data = {
-        #     'filters': {
-        #         'id': 3  # todo: при тестировании работаем пока с одной картой
-        #     }
-        # }
-        msg = Message(None)
+        data = {
+            'filters': {
+                'id': 3  # todo: при тестировании работаем пока с одной картой
+            }
+        }
+        msg = Message(data)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -337,12 +337,12 @@ class Scheduler(object):
         card_list_method = reformer.get_api_method(
             SystemCode.LOCAL, RisarEntityCode.CARD, OperationCode.READ_MANY
         )
-        # data = {
-        #     'filters': {
-        #         'id': 3  # todo: при тестировании работаем пока с одной картой
-        #     }
-        # }
-        msg = Message(None)
+        data = {
+            'filters': {
+                'id': 3  # todo: при тестировании работаем пока с одной картой
+            }
+        }
+        msg = Message(data)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()

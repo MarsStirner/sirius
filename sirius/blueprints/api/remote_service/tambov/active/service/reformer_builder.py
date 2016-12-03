@@ -6,6 +6,7 @@
 @date: 23.09.2016
 
 """
+import logging
 from datetime import date, datetime
 
 from hitsl_utils.safe import safe_traverse, safe_int
@@ -24,6 +25,7 @@ from sirius.models.operation import OperationCode
 
 encode = WebMisJsonEncoder().default
 to_date = lambda x: datetime.strptime(x, '%Y-%m-%d')
+logger = logging.getLogger('simple')
 
 
 class ServiceTambovBuilder(Builder):
@@ -94,12 +96,20 @@ class ServiceTambovBuilder(Builder):
             rend_service_data = self.transfer__send_request(req)
             # без прототипа не поймем каким методом отправлять
             if not rend_service_data['prototypeId']:
+                logger.error(
+                    'Missing required prototypeId in referralId = "%s"' %
+                    (rend_service_data['referralId'])
+                )
                 continue
 
             # на одно направление должна быть только одна услуга.
-            # оставльные откидываем
+            # остальные откидываем
             referralId = rend_service_data['referralId']
             if referralId in referralIds:
+                logger.error(
+                    'referralId "%s" already have other rend_service_id. Skipped current rend_service_id = "%s"' %
+                    (referralId, rend_service_id)
+                )
                 continue
             referralIds.add(referralId)
             # если есть направление - отправляем его и услугу.
