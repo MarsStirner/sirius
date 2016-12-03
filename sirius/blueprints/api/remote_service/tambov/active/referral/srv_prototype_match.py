@@ -21,7 +21,7 @@ class SrvPrototypeMatch(object):
         if not cls.inited:
             fname = 'measure_prototype_01.csv'
             this_path = os.path.realpath(__file__)
-            with open(os.path.join(this_path, fname)) as f:
+            with open(os.path.join(os.path.dirname(this_path), fname)) as f:
                 rows = csv.reader(f, delimiter='#')
                 header = False
                 for row in rows:
