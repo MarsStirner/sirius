@@ -10,6 +10,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 from sirius.blueprints.monitor.exception import ExternalError
 from sirius.lib.apiutils import ApiException
+from sirius.models.protocol import ProtocolCode
 from zeep import Client, Transport
 from zeep.exceptions import Fault as WebFault
 # from suds.client import Client
@@ -68,11 +69,10 @@ class TambovRESTClient(object):
 
         return session
 
-    def make_api_request(self, method, url, session, any_data=None, url_args=None):
+    def make_api_request(self, method, url, protocol, session, any_data=None, url_args=None):
         authent_token, authoriz_token = session
         data_type = 'json'
-        # todo: ввести атрибут типа данных
-        if any_data[0] != '{':
+        if protocol == ProtocolCode.SOAP:
             data_type = 'data'
         response = getattr(requests, method)(
             url,

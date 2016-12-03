@@ -26,13 +26,13 @@ class TambovTransfer(Transfer):
             req_meta = req.meta
         else:
             req_meta = req['meta']
-        if req_meta.get('dst_protocol', ProtocolCode.SOAP) == ProtocolCode.SOAP:
+        if req_meta.get('dst_protocol_code', ProtocolCode.SOAP) == ProtocolCode.SOAP:
             req_result = self.soap_protocol(req)
-        elif req_meta['dst_protocol'] == ProtocolCode.REST:
+        elif req_meta['dst_protocol_code'] == ProtocolCode.REST:
             req_result = self.rest_protocol(req)
         else:
-            raise InternalError('Unexpected protocol (%s)' % req_meta['dst_protocol'])
-        res = self.answer.process(req_result, req_meta)
+            raise InternalError('Unexpected protocol (%s)' % req_meta['dst_protocol_code'])
+        res = self.answer.process(req_result, req)
         return res
 
     def soap_protocol(self, req):
@@ -57,7 +57,8 @@ class TambovTransfer(Transfer):
         #     login=client.make_login
         # )(req.method, req.url, req.data)
         session = None, None
-        req_result = client.make_api_request(req.method, req.url, session, req.data)
+        req_result = client.make_api_request(req.method, req.url,
+                                             req.protocol, session, req.data)
         return req_result
 
     def get_rest_client(self):

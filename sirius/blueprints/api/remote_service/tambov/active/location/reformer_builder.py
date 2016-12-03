@@ -18,6 +18,7 @@ from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.method import ApiMethod
 from sirius.lib.xform import Undefined
+from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 from sirius.models.operation import OperationCode
 
@@ -86,6 +87,7 @@ class LocationTambovBuilder(Builder):
             loc_req.set_req_params(
                 url=api_method['template_url'],
                 method=api_method['method'],
+                protocol=ProtocolCode.SOAP,
                 data={'location': location_id},
             )
             try:
@@ -108,6 +110,7 @@ class LocationTambovBuilder(Builder):
                 emp_pos_req.set_req_params(
                     url=api_method['template_url'],
                     method=api_method['method'],
+                    protocol=ProtocolCode.SOAP,
                     data={'id': employeePosition_item['employeePosition']},
                 )
                 employeePosition_data = self.transfer__send_request(emp_pos_req)
@@ -121,6 +124,7 @@ class LocationTambovBuilder(Builder):
                 emp_spec_req.set_req_params(
                     url=api_method['template_url'],
                     method=api_method['method'],
+                    protocol=ProtocolCode.SOAP,
                     data={'id': employeePosition_data['position']},
                 )
                 position_data = self.transfer__send_request(emp_spec_req)
@@ -141,6 +145,7 @@ class LocationTambovBuilder(Builder):
                 employee_req.set_req_params(
                     url=api_method['template_url'],
                     method=api_method['method'],
+                    protocol=ProtocolCode.SOAP,
                     data={'id': employeePosition_data['employee']},
                 )
                 employee_data = self.transfer__send_request(employee_req)
@@ -148,18 +153,35 @@ class LocationTambovBuilder(Builder):
                 #####################################
                 # add
 
-                empl_pos_item = package.add_main_pack_entity(
-                    entity_code=TambovEntityCode.EMPLOYEE_POSITION,
+                location_item = package.add_main_pack_entity(
+                    entity_code=TambovEntityCode.LOCATION,
                     method=loc_req.method,
-                    main_param_name='employeePosition',
-                    main_id=employeePosition_item['employeePosition'],
+                    main_param_name='location',
+                    main_id=location_id,
                     parents_params=req_meta['dst_parents_params'],
-                    data=employeePosition_data,
+                    data=location_data,
                 )
-                package.root_item = empl_pos_item
+                package.root_item = location_item
+
+                # empl_pos_item = package.add_main_pack_entity(
+                #     entity_code=TambovEntityCode.EMPLOYEE_POSITION,
+                #     method=loc_req.method,
+                #     main_param_name='employeePosition',
+                #     main_id=employeePosition_item['employeePosition'],
+                #     parents_params=req_meta['dst_parents_params'],
+                #     data=employeePosition_data,
+                # )
+                # package.root_item = empl_pos_item
+                # empl_pos_item = package.add_addition_pack_entity(
+                #     root_item=package.root_item,
+                #     parent_item=empl_pos_item,
+                #     entity_code=TambovEntityCode.EMPLOYEE_POSITION,
+                #     main_id=employeePosition_item['employeePosition'],
+                #     data=employeePosition_data,
+                # )
 
                 individual_data = package.add_addition(
-                    parent_item=empl_pos_item,
+                    parent_item=location_item,
                     entity_code=TambovEntityCode.INDIVIDUAL,
                     main_id_name=None,
                     main_id=employee_data['individual'],
@@ -167,7 +189,7 @@ class LocationTambovBuilder(Builder):
 
                 package.add_addition_pack_entity(
                     root_item=package.root_item,
-                    parent_item=empl_pos_item,
+                    parent_item=location_item,
                     entity_code=TambovEntityCode.POSITION,
                     main_id=employeePosition_data['position'],
                     data=position_data,
@@ -199,7 +221,7 @@ class LocationTambovBuilder(Builder):
     ##  reform entities
 
     def build_local_entities(self, header_meta, pack_entity):
-        employeePosition_data = pack_entity['data']
+        location_data = pack_entity['data']
         src_entity_code = header_meta['remote_entity_code']
         src_operation_code = header_meta['remote_operation_code']
 
@@ -220,23 +242,23 @@ class LocationTambovBuilder(Builder):
             src_operation_code=src_operation_code,
             src_entity_code=src_entity_code,
             src_main_id_name=header_meta['remote_main_param_name'],
-            src_id=employeePosition_data['main_id'],
+            src_id=location_data['main_id'],
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
-            self.build_local_doctor_body(doctor_item, employeePosition_data,
+            self.build_local_doctor_body(doctor_item, location_data,
                                          empl_pos_addition, header_meta)
 
         return entities
 
-    def build_local_doctor_body(self, doctor_item, employeePosition_data,
+    def build_local_doctor_body(self, doctor_item, location_data,
                                 empl_pos_addition, header_meta):
         individual = empl_pos_addition[TambovEntityCode.INDIVIDUAL][0]
         position = empl_pos_addition[TambovEntityCode.POSITION][0]
         position_data = position['data']
         individual_data = individual['data']
         doctor_item['body'] = {
-            'regional_code': employeePosition_data['main_id'],  # id/code двух систем будут совпадать
+            'regional_code': location_data['main_id'],  # id/code двух систем будут совпадать
             'organization': header_meta['remote_main_id'],  # id/code двух систем будут совпадать
             'last_name': individual_data['surname'],
             'first_name': individual_data['name'],

@@ -17,6 +17,7 @@ from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.blueprints.reformer.models.method import ApiMethod
+from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 from sirius.lib.xform import Undefined
 from sirius.models.operation import OperationCode
@@ -87,6 +88,7 @@ class ServiceTambovBuilder(Builder):
             req.set_req_params(
                 url=rend_serv_api_method['template_url'],
                 method=rend_serv_api_method['method'],
+                protocol=ProtocolCode.SOAP,
                 data={'id': rend_service_id},
             )
             rend_service_data = self.transfer__send_request(req)
@@ -112,6 +114,7 @@ class ServiceTambovBuilder(Builder):
                 req.set_req_params(
                     url=referral_api_method['template_url'],
                     method=referral_api_method['method'],
+                    protocol=ProtocolCode.SOAP,
                     data={'id': referralId},
                 )
                 referral_data = self.transfer__send_request(req)
@@ -148,6 +151,7 @@ class ServiceTambovBuilder(Builder):
                 dst_operation_code=OperationCode.READ_ONE,
                 dst_id=rend_service_id,
                 dst_parents_params=req_meta['dst_parents_params'],
+                dst_id_url_param_name='main_id',
             )
             # self.reformer.set_local_id(data_req)
             self.reformer.set_request_service(data_req)

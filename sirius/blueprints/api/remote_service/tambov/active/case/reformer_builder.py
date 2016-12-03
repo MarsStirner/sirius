@@ -22,6 +22,7 @@ from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
 from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.lib.apiutils import ApiException
 from sirius.models.operation import OperationCode
+from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 
 encode = WebMisJsonEncoder().default
@@ -163,6 +164,7 @@ class CaseTambovBuilder(Builder):
             req.set_req_params(
                 url=srv_api_method['template_url'],
                 method=srv_api_method['method'],
+                protocol=ProtocolCode.SOAP,
                 data={
                     'clinic': safe_traverse(ticket_data, 'hospital', default=''),
                     'prototype': prototype_id,

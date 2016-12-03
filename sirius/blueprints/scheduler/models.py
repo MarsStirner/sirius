@@ -16,7 +16,7 @@ from sirius.extensions import cache
 from sirius.models.entity import Entity
 from sirius.models.system import System
 from sqlalchemy import UniqueConstraint, CheckConstraint
-from sqlalchemy.sql.elements import and_
+from sqlalchemy.sql.elements import and_, or_
 from sqlalchemy import case, cast
 
 
@@ -62,22 +62,22 @@ class Schedule(Model):
         cur_time = cur_datetime.time()
         res = cls.query.join(
             ScheduleTime, ScheduleTime.id == cls.schedule_time_id
-        ).join(
-            ScheduleExecute, ScheduleExecute.schedule_id == cls.id
+        # ).join(
+        #     ScheduleExecute, ScheduleExecute.schedule_id == cls.id
         ).filter(
-            case([
-                (
-                    ScheduleTime.type == ScheduleTimeType.DELTA,
-                    cur_datetime - ScheduleExecute.begin_datetime > ScheduleTime.time
-                ),
-                (
-                    ScheduleTime.type == ScheduleTimeType.TIME,
-                    and_(
-                        cur_time.isoformat() > ScheduleTime.time,
-                        cur_date > cast(ScheduleExecute.begin_datetime, db.Date)
-                    )
-                ),
-            ]),
+            # case([
+            #     (
+            #         ScheduleTime.type == ScheduleTimeType.DELTA,
+            #         cur_datetime - ScheduleExecute.begin_datetime > ScheduleTime.time
+            #     ),
+            #     (
+            #         ScheduleTime.type == ScheduleTimeType.TIME,
+            #         and_(
+            #             cur_time.isoformat() > ScheduleTime.time,
+            #             cur_date > cast(ScheduleExecute.begin_datetime, db.Date)
+            #         )
+            #     ),
+            # ]),
         ).all()
         return res
 
@@ -103,7 +103,7 @@ class Schedule(Model):
             yield res
         finally:
             if res:
-                sch_exec.end(self)
+                sch_exec.end()
                 release_lock()
 
 

@@ -8,7 +8,7 @@
 """
 from datetime import date, datetime
 
-from hitsl_utils.safe import safe_traverse, safe_int
+from hitsl_utils.safe import safe_traverse, safe_int, safe_traverse_attrs
 from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tambov.active.referral.srv_prototype_match import \
@@ -22,6 +22,7 @@ from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.lib.apiutils import ApiException
 from sirius.lib.xform import Undefined
 from sirius.models.operation import OperationCode
+from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 
 encode = WebMisJsonEncoder().default
@@ -138,6 +139,7 @@ class ReferralTambovBuilder(Builder):
         req.set_req_params(
             url=srv_api_method['template_url'],
             method=srv_api_method['method'],
+            protocol=ProtocolCode.SOAP,
             data={
                 'clinic': appoint_data.get('appointed_lpu'),
                 'prototype': prototype_id,
@@ -177,7 +179,7 @@ class ReferralTambovBuilder(Builder):
         childs = pack_entity['childs']
         rend_serv_item = childs[TambovEntityCode.REND_SERVICE][0]
         rend_serv_data = rend_serv_item['data']
-        measure_id = SrvPrototypeMatch.get_measure_id(rend_serv_data['prototypeId'])
+        measure_code = SrvPrototypeMatch.get_measure_code(rend_serv_data['prototypeId'])
 
         if referral_data:
             measure_item = entities.set_main_entity(
@@ -193,7 +195,7 @@ class ReferralTambovBuilder(Builder):
             if src_operation_code != OperationCode.DELETE:
                 measure_item['body'] = {
                     # 'measure_id': None,  # заполняется в set_current_id_func
-                    'measure_type_code': measure_id,
+                    'measure_type_code': measure_code,
                     'begin_datetime': encode(referral_data['referralDate']),
                     'end_datetime': encode(referral_data['referralDate']),
                     'status': 'created',  # referral_data['refStatusId'],
@@ -207,18 +209,18 @@ class ReferralTambovBuilder(Builder):
         if measure_type in checkup_meas_types:
             self.build_local_measure_specialists_checkup(
                 header_meta, entities, rend_serv_data,
-                measure_item, measure_id
+                measure_item, measure_code
             )
         else:
             assert measure_type in research_meas_types
             self.build_local_measure_research(
                 header_meta, entities, rend_serv_item, rend_serv_data,
-                measure_item, measure_id
+                measure_item, measure_code
             )
         return entities
 
     def build_local_measure_research(
-        self, header_meta, entities, rend_serv_item, rend_serv_data, measure_item, measure_id
+        self, header_meta, entities, rend_serv_item, rend_serv_data, measure_item, measure_code
     ):
         src_operation_code = header_meta['remote_operation_code']
         data_rend_serv_item = rend_serv_item['addition'][TambovEntityCode.DATA_REND_SERVICE][0]
@@ -252,16 +254,16 @@ class ReferralTambovBuilder(Builder):
                 # 'result_action_id': None,  # заполняется в set_current_id_func
                 # 'measure_id':  # заполняется в set_parent_id_common_func
                 'external_id': rend_serv_data['id'],
-                'measure_type_code': measure_id,
+                'measure_type_code': measure_code,
                 'realization_date': encode(rend_serv_data['dateFrom']),
-                'lpu_code': safe_traverse(rend_serv_data, 'orgId', default=''),
+                'lpu_code': safe_traverse_attrs(rend_serv_data, 'orgId', default=''),
                 'results': data_rend_serv_data,
             }
 
         return entities
 
     def build_local_measure_specialists_checkup(
-        self, header_meta, entities, rend_serv_data, measure_item, measure_id
+        self, header_meta, entities, rend_serv_data, measure_item, measure_code
     ):
         src_operation_code = header_meta['remote_operation_code']
 
@@ -293,10 +295,30 @@ class ReferralTambovBuilder(Builder):
                 # 'result_action_id': None,  # заполняется в set_current_id_func
                 # 'measure_id': None,  # заполняется в set_parent_id_common_func
                 'external_id': rend_serv_data['id'],
-                'measure_type_code': measure_id,
+                'measure_type_code': measure_code,
                 'checkup_date': encode(rend_serv_data['dateTo']),
-                'lpu_code': safe_traverse(rend_serv_data, 'orgId', default=''),
-                'doctor_code': safe_traverse(rend_serv_data, 'resourceGroupId', default=''),
+                'lpu_code': self.get_org_code(safe_traverse_attrs(rend_serv_data, 'orgId', default='')),
+                'doctor_code': self.get_doctor_code(safe_traverse_attrs(rend_serv_data, 'resourceGroupId', default='')),
             }
 
         return entities
+
+    def get_org_code(self, clinic_id):
+        res = None
+        if clinic_id:
+            res = self.reformer.get_local_id_by_remote(
+                RisarEntityCode.ORGANIZATION,
+                TambovEntityCode.CLINIC,
+                clinic_id,
+            )
+        return res
+
+    def get_doctor_code(self, location_id):
+        res = None
+        if location_id:
+            res = self.reformer.get_local_id_by_remote(
+                RisarEntityCode.DOCTOR,
+                TambovEntityCode.LOCATION,
+                location_id,
+            )
+        return res

@@ -279,7 +279,7 @@ class Reformer(IStreamMeta):
         )
         meta['dst_method'] = method['method']
         meta['dst_url'] = method['template_url']
-        meta['dst_protocol'] = method['protocol']
+        meta['dst_protocol_code'] = method['protocol']
         if method['protocol'] == ProtocolCode.REST:
             dst_url_params = (meta.get('dst_parents_params') or {}).copy()
             if meta['dst_operation_code'] != OperationCode.ADD:
@@ -517,7 +517,7 @@ class Reformer(IStreamMeta):
         #             str(src_id)
         #         )
 
-        req_meta['dst_protocol'] = method['protocol']
+        req_meta['dst_protocol_code'] = method['protocol']
         if method['protocol'] == ProtocolCode.REST:
             dst_url_params = (req_meta.get('dst_parents_params') or {}).copy()
             if req_meta['dst_operation_code'] != OperationCode.READ_MANY:
@@ -869,12 +869,14 @@ class EntitiesPackage(object):
             req.set_req_params(
                 url=api_method['template_url'],
                 method=api_method['method'],
+                protocol=ProtocolCode.SOAP,
                 data={main_id_name: main_id},
             )
         else:
             req.set_req_params(
                 url=api_method['template_url'],
                 method=api_method['method'],
+                protocol=ProtocolCode.SOAP,
                 options=(main_id,),
             )
         try:
@@ -903,12 +905,14 @@ class EntitiesPackage(object):
             req.set_req_params(
                 url=api_method['template_url'],
                 method=api_method['method'],
+                protocol=ProtocolCode.SOAP,
                 data={main_id_name: main_id},
             )
         else:
             req.set_req_params(
                 url=api_method['template_url'],
                 method=api_method['method'],
+                protocol=ProtocolCode.SOAP,
                 options=(main_id,),
             )
         try:
@@ -939,12 +943,14 @@ class EntitiesPackage(object):
             req.set_req_params(
                 url=api_method['template_url'],
                 method=api_method['method'],
+                protocol=ProtocolCode.SOAP,
                 data={main_id_name: main_id},
             )
         else:
             req.set_req_params(
                 url=api_method['template_url'],
                 method=api_method['method'],
+                protocol=ProtocolCode.SOAP,
                 options=(main_id,),
             )
         try:
@@ -1086,8 +1092,8 @@ class RequestEntities(object):
         self.operation_order.setdefault(order, []).append(entity)
 
     def set_rest_url_params(self, meta):
-        # todo: dst_protocol должен быть всегда
-        if meta.get('dst_protocol', ProtocolCode.REST) == ProtocolCode.REST:
+        # todo: dst_protocol_code должен быть всегда
+        if meta.get('dst_protocol_code', ProtocolCode.REST) == ProtocolCode.REST:
             dst_url_params = (meta.get('dst_parents_params') or {}).copy()
             dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
             dst_param_ids = [dst_url_entities[param_entity] for param_entity in meta['dst_params_entities']]
@@ -1139,7 +1145,7 @@ class DataRequest(object):
     def set_meta(
         self, dst_system_code, dst_entity_code, dst_operation_code, dst_id,
         dst_parents_params, src_entity_code=None, src_id=None,
-        src_parents_params=None
+        src_parents_params=None, dst_id_url_param_name=None,
     ):
         self.req_data['meta'] = {
             'src_entity_code': src_entity_code,
@@ -1150,9 +1156,10 @@ class DataRequest(object):
             'dst_operation_code': dst_operation_code,
             'dst_id': dst_id,
             'dst_parents_params': dst_parents_params,
+            'dst_id_url_param_name': dst_id_url_param_name,
         }
 
-    def set_req_params(self, url, method, data=None, options=None):
+    def set_req_params(self, url, method, protocol, data=None, options=None):
         assert data or options
         data = data or {}
         options = options or tuple()
@@ -1160,6 +1167,7 @@ class DataRequest(object):
         self.req_data['meta'].update({
             'dst_url': url,
             'dst_method': method,
+            'dst_protocol_code': protocol,
         })
         self.req_data['options'] = options
 
@@ -1193,3 +1201,7 @@ class DataRequest(object):
     @property
     def options(self):
         return self.req_data['options']
+
+    @property
+    def protocol(self):
+        return self.req_data['meta']['dst_protocol_code']
