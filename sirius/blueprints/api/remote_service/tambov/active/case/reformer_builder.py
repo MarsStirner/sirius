@@ -136,7 +136,8 @@ class CaseTambovBuilder(Builder):
                 'initGoalId': safe_traverse(ticket_data, 'visit_type', default=''),
                 'fundingSourceTypeId': '1',
                 'careRegimenId': '1',
-                'establishmentDate': to_date(safe_traverse(ticket_data, 'date_open')),
+                # 'diagnosId': to_date(safe_traverse(ticket_data, 'diagnosis``')),
+                # 'establishmentDate': to_date(safe_traverse(ticket_data, 'date_open')),
             }
 
         srv_api_method = self.reformer.get_api_method(
