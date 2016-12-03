@@ -316,11 +316,7 @@ class Reformer(IStreamMeta):
             if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
                 return
             self.pre_conformity_remote(record)
-            try:
-                trans_res = self.transfer.execute(record)
-            except LoggedException:
-                # todo: для отладки без удаленки
-                trans_res = 222
+            trans_res = self.transfer.execute(record)
             self.conformity_remote(record, trans_res)
 
         soo = sorted(entities.operation_order.items(), key=lambda x: x[0])
