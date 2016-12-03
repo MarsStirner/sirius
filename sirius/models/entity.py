@@ -106,6 +106,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
 
     @classmethod
     def fill_temp_table(cls, data):
+        root_ext_ids = set()
         insert_query = '''
         INSERT INTO %(table_name)s (%(columns)s) VALUES (%(values)s)
         '''
@@ -120,7 +121,8 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
                         for x in vals
                     )),
                 }))
-            cls.set_deleted_data(r['root_external_id'])
+            root_ext_ids.add(r['root_external_id'])
+        return root_ext_ids
 
     @classmethod
     def drop_temp_table(cls):

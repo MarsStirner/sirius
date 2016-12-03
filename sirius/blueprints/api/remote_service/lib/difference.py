@@ -22,8 +22,6 @@ class Difference(object):
 
     # @module_entry
     def mark_diffs(self, entity_package):
-        # todo: сломался. пример - пациент 1342306
-        return entity_package
         # пометить изменения в Хранилище и в пакете
         # в пакете проставляются operation_code, is_changed, удаляемые записи
         flat_entities = {}
@@ -51,6 +49,7 @@ class Difference(object):
     def set_diffs(self, system_code, flat_entities):
         # DiffEntityImage.create_temp_table()
         DiffEntityImage.clear_temp_table()
+        root_ext_ids = set()
         for (level, entity_code), fl_entity_dict in flat_entities.iteritems():
             entity_id = Entity.get_id(system_code, entity_code)
             objects = [
@@ -64,7 +63,10 @@ class Difference(object):
                 }
                 for main_id, package_record in fl_entity_dict.iteritems()
             ]
-            DiffEntityImage.fill_temp_table(objects)
+            ids = DiffEntityImage.fill_temp_table(objects)
+            root_ext_ids.update(ids)
+        for root_ext_id in root_ext_ids:
+            DiffEntityImage.set_deleted_data(root_ext_id)
         DiffEntityImage.set_changed_data()
         DiffEntityImage.set_new_data()
 
