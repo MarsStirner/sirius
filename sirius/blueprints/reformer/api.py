@@ -314,6 +314,8 @@ class Reformer(IStreamMeta):
             if set_parent_id_func:
                 set_parent_id_func(record)
             if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
+                # if rec_meta['skip_resend']:
+                #     self.set_remote_id_for_childs(rec_meta)
                 return
             self.pre_conformity_remote(record)
             trans_res = self.transfer.execute(record)
@@ -326,6 +328,14 @@ class Reformer(IStreamMeta):
                 for record in records:
                     send_to_remote_data_record(self, record)
         return True
+
+    # def set_remote_id_for_childs(self, rec_meta):
+    #     dst_id = self.get_remote_id_by_local(
+    #         rec_meta['dst_entity_code'],
+    #         rec_meta['src_entity_code'],
+    #         rec_meta['src_id'],
+    #     )
+    #     rec_meta['dst_id'] = dst_id
 
     @module_entry
     def send_to_local_data(self, entities, request_by_url):
@@ -587,10 +597,11 @@ class Reformer(IStreamMeta):
         )
         return res
 
-    # def get_remote_id_by_local(self, local_entity_code, local_id):
+    # def get_remote_id_by_local(self, remote_entity_code, local_entity_code, local_id):
     #     res = MatchingId.get_remote_id(
     #         local_entity_code,
     #         local_id,
+    #         remote_entity_code,
     #         self.remote_sys_code,
     #     )
     #     return res

@@ -169,12 +169,12 @@ class CaseTambovBuilder(Builder):
                 },
             )
             srvs_data = self.transfer__send_request(req)
-            srv_data = srvs_data and srvs_data[0] or None  # считаем, что будет одна
+            srv_data = srvs_data[0]  # считаем, что будет одна
             if src_operation_code != OperationCode.DELETE:
                 item['body'] = {
                     # 'id': None,  # проставляется в set_current_id_func
                     'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                    'serviceId': srv_data and srv_data['serviceId'],
+                    'serviceId': srv_data['id'],
                     'dateFrom': to_date(safe_traverse(ticket_data, 'date_open')),
                     'isRendered': True,
                     'orgId': safe_traverse(ticket_data, 'hospital', default=''),
