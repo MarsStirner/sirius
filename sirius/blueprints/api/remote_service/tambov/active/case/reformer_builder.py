@@ -133,7 +133,7 @@ class CaseTambovBuilder(Builder):
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
                 'medicalOrganizationId': safe_traverse(ticket_data, 'hospital', default=''),
                 'caseTypeId': '1',
-                'initGoalId': safe_traverse(ticket_data, 'visit_type', default=''),
+                'initGoalId': safe_traverse(ticket_data, 'visit_type', default='7'),
                 'fundingSourceTypeId': '1',
                 'careRegimenId': '1',
                 # 'diagnoses' 'diagnosId': safe_traverse(ticket_data, 'diagnosis'),  # код, а нужен ИД
