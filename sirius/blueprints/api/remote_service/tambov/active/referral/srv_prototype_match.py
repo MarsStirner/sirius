@@ -14,6 +14,7 @@ class SrvPrototypeMatch(object):
     inited = False
     srv_prototype__measure__map = {}
     measure__srv_prototype__map = {}
+    prototype_code__srv_prototype__map = {}
 
     @classmethod
     def init(cls):
@@ -30,10 +31,13 @@ class SrvPrototypeMatch(object):
                     measure_id = row[0]
                     measure_type = row[1]
                     prototype_id = row[2]
+                    prototype_code = row[3]
                     if prototype_id:
                         cls.srv_prototype__measure__map[prototype_id] = (
                             measure_id, measure_type
                         )
+                        if prototype_code:
+                            cls.prototype_code__srv_prototype__map[prototype_code] = prototype_id
                     if measure_id:
                         cls.measure__srv_prototype__map[measure_id] = prototype_id
             cls.inited = True
@@ -42,6 +46,11 @@ class SrvPrototypeMatch(object):
     def get_prototype_id(cls, measure_id):
         cls.init()
         return cls.measure__srv_prototype__map.get(measure_id)
+
+    @classmethod
+    def get_prototype_id_by_prototype_code(cls, prototype_code):
+        cls.init()
+        return cls.prototype_code__srv_prototype__map.get(prototype_code)
 
     @classmethod
     def get_measure_type(cls, prototype_id):

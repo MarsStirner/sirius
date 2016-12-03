@@ -12,6 +12,8 @@ from hitsl_utils.safe import safe_traverse, safe_int
 from hitsl_utils.wm_api import WebMisJsonEncoder
 
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
+from sirius.blueprints.api.remote_service.tambov.active.referral.srv_prototype_match import \
+    SrvPrototypeMatch
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
 from sirius.blueprints.monitor.exception import InternalError
@@ -154,13 +156,15 @@ class CaseTambovBuilder(Builder):
                 src_main_id_name=header_meta['local_main_param_name'],
                 src_id=header_meta['local_main_id'],
             )
+            prototype_code = safe_traverse(serv_code, 'medical_service', default='')
+            prototype_id = SrvPrototypeMatch.get_prototype_id_by_prototype_code(prototype_code)
             req = DataRequest()
             req.set_req_params(
                 url=srv_api_method['template_url'],
                 method=srv_api_method['method'],
                 data={
                     'clinic': safe_traverse(ticket_data, 'hospital', default=''),
-                    'prototype': safe_traverse(serv_code, 'medical_service', default=''),
+                    'prototype': prototype_id,
                 },
             )
             srvs_data = self.transfer__send_request(req)
@@ -169,7 +173,7 @@ class CaseTambovBuilder(Builder):
                 item['body'] = {
                     # 'id': None,  # проставляется в set_current_id_func
                     'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                    'serviceId': srv_data.serviceId,
+                    'serviceId': srv_data and srv_data['serviceId'],
                     'dateFrom': to_date(safe_traverse(ticket_data, 'date_open')),
                     'isRendered': True,
                     'orgId': safe_traverse(ticket_data, 'hospital', default=''),
