@@ -136,8 +136,8 @@ class CaseTambovBuilder(Builder):
                 'initGoalId': safe_traverse(ticket_data, 'visit_type', default=''),
                 'fundingSourceTypeId': '1',
                 'careRegimenId': '1',
-                # 'diagnosId': to_date(safe_traverse(ticket_data, 'diagnosis``')),
-                # 'establishmentDate': to_date(safe_traverse(ticket_data, 'date_open')),
+                # 'diagnoses' 'diagnosId': safe_traverse(ticket_data, 'diagnosis'),  # код, а нужен ИД
+                # 'diagnoses' 'establishmentDate': to_date(safe_traverse(ticket_data, 'date_open')),
             }
 
         srv_api_method = self.reformer.get_api_method(
@@ -169,7 +169,7 @@ class CaseTambovBuilder(Builder):
                 },
             )
             srvs_data = self.transfer__send_request(req)
-            srv_data = srvs_data and srvs_data[0]  # считаем, что будет одна
+            srv_data = srvs_data and srvs_data[0] or None  # считаем, что будет одна
             if src_operation_code != OperationCode.DELETE:
                 item['body'] = {
                     # 'id': None,  # проставляется в set_current_id_func
@@ -199,7 +199,7 @@ class CaseTambovBuilder(Builder):
                 'admissionDate': to_date(checkup_data['general_info']['date']),
                 'goalId': '7',
                 'placeId': '1',
-                'diagnosId': safe_traverse(ticket_data, 'medical_report', 'diagnosis_osn', default=''),
+                # 'diagnoses' 'diagnosId': safe_traverse(ticket_data, 'medical_report', 'diagnosis_osn', default=''),
             }
 
         return entities
