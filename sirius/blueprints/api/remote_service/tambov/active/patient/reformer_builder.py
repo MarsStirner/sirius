@@ -192,7 +192,7 @@ class PatientTambovBuilder(Builder):
                 main_item['body']['SNILS'] = document_data.number
             # elif document_data.codeType == '1' and not main_item['body']['SNILS'] is None:  # SNILS
             #     main_item['body']['SNILS'] = document_data.code
-            elif document_data.type == '26':  # ENP
+            elif document_data.type == '_26':  # ENP  # insurance_document_issuing_authority приходит код, а нужно ИД
                 main_item['body'].setdefault('insurance_documents', []).append({
                     'insurance_document_type': document_data.type or '',
                     'insurance_document_number': document_data.number or '',

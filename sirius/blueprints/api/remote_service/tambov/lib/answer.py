@@ -12,9 +12,9 @@ from sirius.models.protocol import ProtocolCode
 
 class TambovAnswer(RemoteAnswer):
 
-    def process(self, result, req=None):
+    def process(self, result, req_meta=None):
         # meta['dst_entity_code']
-        if req.protocol == ProtocolCode.REST:
+        if req_meta['dst_protocol_code'] == ProtocolCode.REST:
             res = result.json()
         else:
             res = self.xml_to_dict(result)

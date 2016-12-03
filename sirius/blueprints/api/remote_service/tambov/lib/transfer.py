@@ -32,7 +32,7 @@ class TambovTransfer(Transfer):
             req_result = self.rest_protocol(req)
         else:
             raise InternalError('Unexpected protocol (%s)' % req_meta['dst_protocol_code'])
-        res = self.answer.process(req_result, req)
+        res = self.answer.process(req_result, req_meta)
         return res
 
     def soap_protocol(self, req):
