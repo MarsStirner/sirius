@@ -43,6 +43,8 @@ class TambovReformer(Reformer):
             res = ClinicTambovBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TambovEntityCode.LOCATION:
             res = LocationTambovBuilder(self).build_local_entities(header_meta, data)
+        elif remote_entity_code == TambovEntityCode.HOSPITAL_REC:
+            res = HospitalTambovBuilder(self).build_local_entities(header_meta, data)
         else:
             raise InternalError('Unexpected remote_entity_code')
         return res
@@ -71,7 +73,6 @@ class TambovReformer(Reformer):
             data_req = PatientTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.SMART_PATIENT)
         elif local_entity_code in (
                 RisarEntityCode.MEASURE_RESEARCH,
-                RisarEntityCode.MEASURE_HOSPITALIZATION,
                 RisarEntityCode.MEASURE_SPECIALISTS_CHECKUP,
         ) or remote_entity_code == TambovEntityCode.REND_SERVICE:
             data_req = ServiceTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.REND_SERVICE)

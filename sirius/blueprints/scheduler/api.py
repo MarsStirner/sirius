@@ -23,13 +23,15 @@ class Scheduler(object):
     def run(self):
         schedules = Schedule.get_schedules_to_execute()
         for schedule in schedules:
-            logger.debug('Scheduler %s' % (schedule.code))
+            logger.debug('Scheduler %s' % schedule.code)
             with schedule.acquire_group_lock() as is_success:
                 logger.debug('Scheduler locked %s %s' % (schedule.code, is_success))
                 if is_success:
                     for req_data in schedule.schedule_group.get_requests():
                         self.execute(req_data)
-                    # return
+                    return  # на след. цикле ошибка DetachedInstanceError:
+                    # Parent instance <Schedule> is not bound to a Session;
+                    # lazy load operation of attribute 'schedule_group' cannot proceed
 
     def execute(self, req_data):
         from sirius.blueprints.api.local_service.producer import LocalProducer
@@ -152,13 +154,16 @@ class Scheduler(object):
         producer = RemoteProducer()
         card_msg = producer.send(msg, async=False)
         for card_data in card_msg.get_data():
-            msg = self.create_message(system_code, entity_code)  # searchServiceRend
-            meta = msg.get_header().meta
-            meta['local_parents_params'] = {
-                'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
-            }
-            producer = LocalProducer()
-            producer.send(msg)
+            try:
+                msg = self.create_message(system_code, entity_code)  # searchServiceRend
+                meta = msg.get_header().meta
+                meta['local_parents_params'] = {
+                    'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
+                }
+                producer = LocalProducer()
+                producer.send(msg)
+            except InternalError:
+                pass
 
     def get_doctors(self, system_code, entity_code):
         from sirius.blueprints.api.local_service.producer import LocalProducer
@@ -180,17 +185,20 @@ class Scheduler(object):
         producer = RemoteProducer()
         org_msg = producer.send(msg, async=False)
         for org_data in org_msg.get_data():
-            if not org_data['TFOMSCode']:
-                continue
-            if not org_data['TFOMSCode'] == '1434663':  # права выданы только на это лпу
-                continue
-            msg = self.create_message(system_code, entity_code)  # getLocations
-            meta = msg.get_header().meta
-            meta['local_parents_params'] = {
-                'TFOMSCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': org_data['TFOMSCode']},
-            }
-            producer = LocalProducer()
-            producer.send(msg)
+            try:
+                if not org_data['TFOMSCode']:
+                    continue
+                if not org_data['TFOMSCode'] == '1434663':  # права выданы только на это лпу
+                    continue
+                msg = self.create_message(system_code, entity_code)  # getLocations
+                meta = msg.get_header().meta
+                meta['local_parents_params'] = {
+                    'TFOMSCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': org_data['TFOMSCode']},
+                }
+                producer = LocalProducer()
+                producer.send(msg)
+            except InternalError:
+                pass
 
     def get_times(self, system_code, entity_code):
         from sirius.blueprints.api.local_service.producer import LocalProducer
@@ -212,14 +220,17 @@ class Scheduler(object):
         producer = RemoteProducer()
         doc_msg = producer.send(msg, async=False)
         for doc_data in doc_msg.get_data():
-            msg = self.create_message(system_code, entity_code)  # getTimes
-            meta = msg.get_header().meta
-            meta['local_parents_params'] = {
-                'regional_code': {'entity': RisarEntityCode.DOCTOR, 'id': doc_data['regional_code']},
-                'organization': {'entity': RisarEntityCode.ORGANIZATION, 'id': doc_data['organization']},
-            }
-            producer = LocalProducer()
-            producer.send(msg)
+            try:
+                msg = self.create_message(system_code, entity_code)  # getTimes
+                meta = msg.get_header().meta
+                meta['local_parents_params'] = {
+                    'regional_code': {'entity': RisarEntityCode.DOCTOR, 'id': doc_data['regional_code']},
+                    'organization': {'entity': RisarEntityCode.ORGANIZATION, 'id': doc_data['organization']},
+                }
+                producer = LocalProducer()
+                producer.send(msg)
+            except InternalError:
+                pass
 
     def get_birth_results(self, system_code, entity_code):
         from sirius.blueprints.api.local_service.producer import LocalProducer
@@ -247,13 +258,16 @@ class Scheduler(object):
         producer = RemoteProducer()
         card_msg = producer.send(msg, async=False)
         for card_data in card_msg.get_data():
-            msg = self.create_message(system_code, entity_code, OperationCode.READ_ONE)  # getBirthResult
-            meta = msg.get_header().meta
-            meta['local_parents_params'] = {
-                'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
-            }
-            producer = LocalProducer()
-            producer.send(msg)
+            try:
+                msg = self.create_message(system_code, entity_code, OperationCode.READ_ONE)  # getBirthResult
+                meta = msg.get_header().meta
+                meta['local_parents_params'] = {
+                    'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
+                }
+                producer = LocalProducer()
+                producer.send(msg)
+            except InternalError:
+                pass
 
     def send_exchange_card(self, system_code, entity_code):
         from sirius.blueprints.api.local_service.producer import LocalProducer
@@ -302,38 +316,41 @@ class Scheduler(object):
             }
         }
         for card_data in card_msg.get_data():
-            exch_card_req['doc']['context']['event_id'] = card_data['card_id']
-            # /print_subsystem/fill_template
-            exch_card_method = reformer.get_api_method(
-                SystemCode.LOCAL, RisarEntityCode.EXCHANGE_CARD,
-                OperationCode.READ_ONE
-            )
-            msg = Message(exch_card_req)
-            msg.to_local_service()
-            msg.set_request_type()
-            msg.set_immediate_answer()
-            msg.set_method(exch_card_method['method'], exch_card_method['template_url'])
-            exch_card_msg = producer.send(msg, async=False)
+            try:
+                exch_card_req['doc']['context']['event_id'] = card_data['card_id']
+                # /print_subsystem/fill_template
+                exch_card_method = reformer.get_api_method(
+                    SystemCode.LOCAL, RisarEntityCode.EXCHANGE_CARD,
+                    OperationCode.READ_ONE
+                )
+                msg = Message(exch_card_req)
+                msg.to_local_service()
+                msg.set_request_type()
+                msg.set_immediate_answer()
+                msg.set_method(exch_card_method['method'], exch_card_method['template_url'])
+                exch_card_msg = producer.send(msg, async=False)
 
-            exch_card_data = {
-                'card_LPU': card_data['card_LPU'],
-                'exch_card': exch_card_msg.get_data(),
-            }
-            msg = Message(exch_card_data)
-            msg.to_remote_service()
-            msg.set_send_data_type()
-            meta = msg.get_header().meta
-            meta['local_entity_code'] = entity_code
-            meta['local_operation_code'] = OperationCode.ADD
-            meta['local_main_param_name'] = 'card_id'
-            meta['local_main_id'] = card_data['card_id']
-            meta['remote_system_code'] = system_code
+                exch_card_data = {
+                    'card_LPU': card_data['card_LPU'],
+                    'exch_card': exch_card_msg.get_data(),
+                }
+                msg = Message(exch_card_data)
+                msg.to_remote_service()
+                msg.set_send_data_type()
+                meta = msg.get_header().meta
+                meta['local_entity_code'] = entity_code
+                meta['local_operation_code'] = OperationCode.ADD
+                meta['local_main_param_name'] = 'card_id'
+                meta['local_main_id'] = card_data['card_id']
+                meta['remote_system_code'] = system_code
 
-            meta['local_parents_params'] = {
-                'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
-                'TFOMSCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': '41'},  # todo: card_data['card_LPU']
-            }
-            LocalProducer().send(msg)
+                meta['local_parents_params'] = {
+                    'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
+                    'TFOMSCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': '41'},  # todo: card_data['card_LPU']
+                }
+                LocalProducer().send(msg)
+            except InternalError:
+                pass
 
     def get_hospital_rec(self, system_code, entity_code):
         from sirius.blueprints.api.local_service.producer import LocalProducer
@@ -362,11 +379,13 @@ class Scheduler(object):
         producer = RemoteProducer()
         card_msg = producer.send(msg, async=False)
         for card_data in card_msg.get_data():
-            msg = self.create_message(system_code, entity_code,
-                                      OperationCode.READ_ONE)  # searchHspRecord
-            meta = msg.get_header().meta
-            meta['local_parents_params'] = {
-                'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
-            }
-            producer = LocalProducer()
-            producer.send(msg)
+            try:
+                msg = self.create_message(system_code, entity_code)  # searchHspRecord
+                meta = msg.get_header().meta
+                meta['local_parents_params'] = {
+                    'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
+                }
+                producer = LocalProducer()
+                producer.send(msg)
+            except InternalError:
+                pass

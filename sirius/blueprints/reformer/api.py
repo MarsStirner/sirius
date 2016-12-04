@@ -700,7 +700,7 @@ class Builder(object):
                                           'id': matching_id_data['dst_id']}}
                     )
                 else:
-                    raise ApiException(500, 'Entity (%s, %s) has not yet passed' %
+                    raise InternalError('Entity (%s, %s) has not yet passed' %
                                        (src_param_entity_code, src_param_id))
             else:
                 raise InternalError('Unexpected src_param_entity_code (%s)' % src_param_entity_code)
