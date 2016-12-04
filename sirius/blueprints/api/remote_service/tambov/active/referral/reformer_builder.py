@@ -136,7 +136,7 @@ class ReferralTambovBuilder(Builder):
             src_id=header_meta['local_main_id'],
             level_count=1,
         )
-        prototype_id = SrvPrototypeMatch.get_prototype_id_by_mes_code(measure_data.get('measure_type_code'))
+
         org_code = appoint_data.get('appointed_lpu') or appoint_data.get('referral_lpu')
         date = appoint_data.get('date') or appoint_data.get('referral_date') or measure_data.get('begin_datetime')
         srv_api_method = self.reformer.get_api_method(
@@ -144,18 +144,24 @@ class ReferralTambovBuilder(Builder):
             TambovEntityCode.SERVICE,
             OperationCode.READ_MANY,
         )
-        req = DataRequest()
-        req.set_req_params(
-            url=srv_api_method['template_url'],
-            method=srv_api_method['method'],
-            protocol=ProtocolCode.SOAP,
-            data={
-                'clinic': org_code,
-                'prototype': prototype_id,
-            },
-        )
-        srvs_data = self.transfer__send_request(req)
-        srv_data = srvs_data and srvs_data[0] or None  # считаем, что будет одна
+
+        typeId = srv_data = None
+        if measure_data.get('measure_type_code') == '0065':
+            typeId = 2
+        else:
+            prototype_id = SrvPrototypeMatch.get_prototype_id_by_mes_code(measure_data.get('measure_type_code'))
+            req = DataRequest()
+            req.set_req_params(
+                url=srv_api_method['template_url'],
+                method=srv_api_method['method'],
+                protocol=ProtocolCode.SOAP,
+                data={
+                    'clinic': org_code,
+                    'prototype': prototype_id,
+                },
+            )
+            srvs_data = self.transfer__send_request(req)
+            srv_data = srvs_data and srvs_data[0] or None  # считаем, что будет одна
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = {
                 # 'id': None,  # проставляется в set_current_id_func
@@ -163,6 +169,7 @@ class ReferralTambovBuilder(Builder):
                 'referralDate': to_date(date),
                 'referralOrganizationId': org_code,
                 'refServiceId': srv_data and [srv_data['id']],  # баг какой-то. ждет список
+                'typeId': typeId,
             }
 
         return entities

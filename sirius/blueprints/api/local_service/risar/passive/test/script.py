@@ -98,9 +98,9 @@ class TestLocalApi:
         code = result['meta']['code']
         assert code == 200
 
-    def test_save_referral(self, testapp):
+    def _test_save_referral(self, testapp):
         # сохранение направления
-        result = request_local(testapp, session, save_request_risar_get_measure_research(3, 99))
+        result = request_local(testapp, session, save_request_risar_get_measure_research(3, 154))
         code = result['meta']['code']
         assert code == 200
 

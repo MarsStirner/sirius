@@ -7,6 +7,8 @@
 
 """
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
+from sirius.blueprints.api.remote_service.tambov.active.birth.reformer_builder import \
+    BirthTambovBuilder
 from sirius.blueprints.api.remote_service.tambov.active.clinic.reformer_builder import \
     ClinicTambovBuilder
 from sirius.blueprints.api.remote_service.tambov.active.hospital.reformer_builder import \
@@ -45,8 +47,10 @@ class TambovReformer(Reformer):
             res = LocationTambovBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TambovEntityCode.HOSPITAL_REC:
             res = HospitalTambovBuilder(self).build_local_entities(header_meta, data)
+        elif remote_entity_code == TambovEntityCode.BIRTH:
+            res = BirthTambovBuilder(self).build_local_entities(header_meta, data)
         else:
-            raise InternalError('Unexpected remote_entity_code')
+            raise InternalError('Unexpected remote_entity_code (%s)' % remote_entity_code)
         return res
 
     def get_remote_entities(self, header_meta, data):
@@ -60,7 +64,7 @@ class TambovReformer(Reformer):
         elif local_entity_code == RisarEntityCode.EXCHANGE_CARD:
             res = ServiceTambovBuilder(self).build_remote_entities_exch_card(header_meta, data)
         else:
-            raise InternalError('Unexpected local_entity_code')
+            raise InternalError('Unexpected local_entity_code (%s)' % local_entity_code)
         return res
 
     ##################################################################
@@ -82,8 +86,10 @@ class TambovReformer(Reformer):
             data_req = HospitalTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.HOSPITAL_REC)
         elif local_entity_code == RisarEntityCode.DOCTOR or remote_entity_code == TambovEntityCode.LOCATION:
             data_req = LocationTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.LOCATION)
+        elif local_entity_code == RisarEntityCode.CHILDBIRTH or remote_entity_code == TambovEntityCode.BIRTH:
+            data_req = BirthTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.BIRTH)
         else:
-            raise InternalError('Unexpected local_entity_code')
+            raise InternalError('Unexpected local_entity_code (%s)' % local_entity_code)
         self.set_remote_request_params(data_req)
         self.set_request_service(data_req)
         return data_req
@@ -112,7 +118,7 @@ class TambovReformer(Reformer):
         elif src_entity == RisarEntityCode.EXCHANGE_CARD:
             res = ServiceTambovBuilder(self).build_local_entity_packages_exch_card(msg)
         else:
-            raise InternalError('Unexpected entity code')
+            raise InternalError('Unexpected src_entity (%s)' % src_entity)
         return res
 
     @module_entry
@@ -138,6 +144,8 @@ class TambovReformer(Reformer):
             res = HospitalTambovBuilder(self).build_remote_entity_packages(req)
         elif dst_entity == TambovEntityCode.LOCATION:
             res = LocationTambovBuilder(self).build_remote_entity_packages(req)
+        elif dst_entity == TambovEntityCode.BIRTH:
+            res = BirthTambovBuilder(self).build_remote_entity_packages(req)
         else:
-            raise InternalError('Unexpected entity code')
+            raise InternalError('Unexpected dst_entity (%s)' % dst_entity)
         return res

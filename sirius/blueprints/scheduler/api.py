@@ -286,7 +286,7 @@ class Scheduler(object):
         data = {
             'filters': {
                 'pregnancyWeek': 32,  # в рисар нет таких пока
-                # 'id': 139,
+                # 'id': 3,
             }
         }
         msg = Message(data)

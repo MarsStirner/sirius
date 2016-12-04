@@ -8,7 +8,8 @@
 """
 from datetime import date, datetime
 
-from hitsl_utils.safe import safe_traverse, safe_int
+from hitsl_utils.safe import safe_traverse, safe_int, safe_traverse_attrs, \
+    safe_bool_none, safe_double, safe_bool
 from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
@@ -91,18 +92,108 @@ class BirthTambovBuilder(Builder):
         )
         if src_operation_code != OperationCode.DELETE:
             part1 = birth_data['Part1']
+            part2 = birth_data['Part2']
+            part3 = birth_data['Part3']
+            part4 = birth_data['Part4']
+            part5 = birth_data['Part5']
+            part6 = birth_data['Part6']
+            days = safe_int(safe_traverse_attrs(part1, 'PregnantTimeSpan', 'Days'))
             main_item['body'] = {
+                # "required": ["admission_date", "pregnancy_duration",
+                #              "delivery_date", "delivery_time",
+                #              "maternity_hospital", "diagnosis_osn",
+                #              "pregnancy_final"]
                 'general_info': {
                     'admission_date': encode(part1['InDate']),
-                    'pregnancy_duration': part1['PregnantTimeSpan']['Days'],
-                    'delivery_date': encode(part1['ChildBirth']['Date']),
-                    'delivery_time': encode(part1['ChildBirth']['Time']),
-                    'maternity_hospital': part1['BornClinic'],
-                    'maternity_hospital_doctor': part1['Employee'],
-                    'diagnosis_osn': part1['Diagnoses']['Main'],
-                    'pregnancy_final': part1['ChildBirthOutcome'],  # rbRisarPregnancy_Final
+                    'maternity_hospital': safe_traverse_attrs(part1, 'BornClinic', 'OMS'),
+                    'delivery_date': encode(safe_traverse_attrs(part1, 'ChildBirth', 'Date')),
+                    'delivery_time': encode(safe_traverse_attrs(part1, 'ChildBirth', 'Time')),
+                    'pregnancy_final': safe_traverse_attrs(part1, 'ChildBirth', 'ChildBirthOutcome'),  # rbRisarPregnancy_Final
+                    'pregnancy_duration': days and int(days / 7) or 0,
+                    'diagnosis_osn': 'A01.1',  # part1['Diagnoses']['Main'],
+                    # --
+                    # 'diagnosis_sop': part1['Extra'] or Undefined,
+                    # 'diagnosis_osl': part1['Complication'] or Undefined,
+                    'maternity_hospital_doctor': safe_traverse_attrs(part1, 'ChildBirth', 'Employee', 'FirstName') or Undefined,
+                    'curation_hospital': part1['OrgName'] or Undefined,
+                    'pregnancy_speciality': part1['BirthSpeciality'] or Undefined,
+                    'postnatal_speciality': part1['AfterBirthSpeciality'] or Undefined,
+                    'help': part1['HelpProvided'] or Undefined,
+                    'abortion': part1['Abort'] or Undefined,
+                    # 'death': ???,
+                },
+                # "required": [
+                #     "reason_of_death",
+                #     "death_date",
+                #     "death_time"
+                # ]
+                'mother_death': {
+                    'death_date': safe_traverse_attrs(part2, 'MotherDeathData', 'DeathDate'),
+                    'death_time': safe_traverse_attrs(part2, 'MotherDeathData', 'DeathTime'),
+                    'reason_of_death': safe_traverse_attrs(part2, 'MotherDeathData', 'MotherDeathReason'),
+                    # --
+                    # 'pat_diagnosis_osn': safe_traverse_attrs(part2, 'MotherDeathData', 'PatologicalDiagnos'),
+                    # 'pat_diagnosis_sop': safe_traverse_attrs(part2, 'MotherDeathData', 'AcompanyDiagnos'),
+                    # 'pat_diagnosis_osl': safe_traverse_attrs(part2, 'MotherDeathData', 'ComplicationDiagnos'),
+                    'control_expert_conclusion': part2['LkkResult'] or Undefined,
+                },
+                'complications': {
+                    'delivery_waters': part3['BirthWaterBreak'] or Undefined,
+                    'pre_birth_delivery_waters': safe_bool_none(part3['PrenatalWaterBreak']) or Undefined,
+                    'weakness': part3['BirthPowerWeakness'] or Undefined,
+                    'meconium_color': safe_bool_none(part3['AmiaticWater']) or Undefined,
+                    'pathological_preliminary_period': safe_bool_none(part3['PatologicPreliminaryPeriod']) or Undefined,
+                    'abnormalities_of_labor': safe_bool_none(part3['BirthActivityAnomaly']) or Undefined,
+                    'chorioamnionitis': safe_bool_none(part3['Horiamnionit']) or Undefined,
+                    'perineal_tear': part3['PerinealRupture'] or Undefined,
+                    'eclampsia': part3['Nefropaty'] or Undefined,
+                    'anemia': safe_bool_none(part3['Anemia']) or Undefined,
+                    'infections_during_delivery': part3['InfectionDuringBirth'] or Undefined,
+                    'infections_after_delivery': part3['InfectionAfterBirth'] or Undefined,
+                    'funiculus': safe_traverse_attrs(part3, 'CordPatology', 'Term') or Undefined,
+                    'afterbirth': safe_traverse_attrs(part3, 'PlacentaPatology', 'Term') or Undefined,
+                },
+                'manipulations': {
+                    'caul': safe_bool_none(part4['Amniotomy']) or Undefined,
+                    'calfbed': safe_bool_none(part4['ManualWombSurvey']) or Undefined,
+                    'perineotomy': part4['Perineotomy'] or Undefined,
+                    'secundines': safe_bool_none(part4['ManualRemovalAfterBirth']) or Undefined,
+                    'other_manipulations': part4['AnotherManipulations'] or Undefined,
+                },
+                'operations': {
+                    'caesarean_section': part5['CesarianDelivery'] or Undefined,
+                    'obstetrical_forceps': part5['Forceps'] or Undefined,
+                    'vacuum_extraction': safe_bool_none(part5['Vacuum']),
+                    'indication': part5['Indicator'] or Undefined,
+                    'specialities': part5['Speciality'] or Undefined,
+                    'anesthetization': part5['Anestesia'] or Undefined,
+                    'hysterectomy': part5['Hysterectomy'] or Undefined,
+                    # 'complications': part5['Complication'] or Undefined,
+                    'embryotomy': part5['Embryotomy'] or Undefined,
                 },
                 'kids': []
             }
+            kids = []
+            childs = part6['Child']
+            for child in childs:
+                # "required": ["alive", "sex", "weight", "length", "date"]
+                kids.append({
+                    'alive': not safe_bool(safe_traverse_attrs(child, 'Child', 'IsDeath')),
+                    'sex': safe_int(safe_traverse_attrs(child, 'Child', 'Gender')),
+                    'weight': safe_double(safe_traverse_attrs(child, 'Child', 'Weight')),
+                    'length': safe_double(safe_traverse_attrs(child, 'Child', 'Height')),
+                    'date': encode(safe_traverse_attrs(child, 'Child', 'BirthDate')),
+                    # --
+                    # 'time': ???,
+                    'maturity_rate': safe_traverse_attrs(child, 'Child', 'FullTerm') or Undefined,
+                    'apgar_score_1': safe_int(safe_traverse_attrs(child, 'Child', 'Apgar_1min')) or Undefined,
+                    'apgar_score_5': safe_int(safe_traverse_attrs(child, 'Child', 'Apgar_5min')) or Undefined,
+                    'apgar_score_10': safe_int(safe_traverse_attrs(child, 'Child', 'Apgar_10min')) or Undefined,
+                    'death_date': encode(safe_traverse_attrs(child, 'Child', 'DeathDate')) or Undefined,
+                    'death_time': encode(safe_traverse_attrs(child, 'Child', 'DeathTime')) or Undefined,
+                    'death_reason': safe_traverse_attrs(child, 'Child', 'DeathReason') or Undefined,
+                    # 'diseases': child['NewbornSeakness'] or Undefined,
+                })
+            main_item['body']['kids'] = kids
 
         return entities

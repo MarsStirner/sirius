@@ -270,6 +270,7 @@ class Reformer(IStreamMeta):
         Выход
         dst_method
         dst_url
+        dst_protocol_code
         """
         meta = record['meta']
         method = self.get_api_method(
@@ -297,9 +298,9 @@ class Reformer(IStreamMeta):
                     })
             meta['dst_params_entities'] = method['params_entities']
             # todo: убрать, когда наладим set_rest_url_params
-            dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
-            dst_param_ids = [dst_url_entities[param_entity] for param_entity in method['params_entities']]
-            meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
+            # dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
+            # dst_param_ids = [dst_url_entities[param_entity] for param_entity in method['params_entities']]
+            # meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
 
     def get_addition_data(self, missing_msgs):
         # пока считаем, что конвертировать локальные ID не придется
@@ -321,9 +322,8 @@ class Reformer(IStreamMeta):
             if set_parent_id_func:
                 set_parent_id_func(record)
             if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
-                # if rec_meta['skip_resend']:
-                #     self.set_remote_id_for_childs(rec_meta)
                 return
+            self.set_rest_url_params(rec_meta)
             self.pre_conformity_remote(record)
             trans_res = self.transfer.execute(record)
             self.conformity_remote(record, trans_res)
@@ -354,6 +354,7 @@ class Reformer(IStreamMeta):
                 set_parent_id_func(record)
             if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
                 return
+            self.set_rest_url_params(rec_meta)
             url = rec_meta['dst_url']
             method = rec_meta['dst_method']
             body = simplify(record.get('body'))
@@ -367,6 +368,14 @@ class Reformer(IStreamMeta):
                 records = entities.get_data()[entity_code]
                 for record in records:
                     send_to_local_data_record(self, record)
+
+    def set_rest_url_params(self, meta):
+        # todo: dst_protocol_code должен быть всегда
+        if meta.get('dst_protocol_code', ProtocolCode.REST) == ProtocolCode.REST:
+            dst_url_params = (meta.get('dst_parents_params') or {}).copy()
+            dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
+            dst_param_ids = [dst_url_entities[param_entity] for param_entity in meta['dst_params_entities']]
+            meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
 
     def create_local_msgs(self, data, method):
         if method.upper() == 'POST':
@@ -1091,17 +1100,13 @@ class RequestEntities(object):
     def set_operation_order(self, entity, order):
         self.operation_order.setdefault(order, []).append(entity)
 
-    def set_rest_url_params(self, meta):
-        # todo: dst_protocol_code должен быть всегда
-        if meta.get('dst_protocol_code', ProtocolCode.REST) == ProtocolCode.REST:
-            dst_url_params = (meta.get('dst_parents_params') or {}).copy()
-            dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
-            dst_param_ids = [dst_url_entities[param_entity] for param_entity in meta['dst_params_entities']]
-            try:
-                meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
-            except Exception:
-                # todo: придумать другое решение. реформ не только для дочерних, но и для себя
-                pass
+    # def set_rest_url_params(self, meta):
+    #     # todo: dst_protocol_code должен быть всегда
+    #     if meta.get('dst_protocol_code', ProtocolCode.REST) == ProtocolCode.REST:
+    #         dst_url_params = (meta.get('dst_parents_params') or {}).copy()
+    #         dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
+    #         dst_param_ids = [dst_url_entities[param_entity] for param_entity in meta['dst_params_entities']]
+    #         meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
 
 
 class ReqEntity(dict):
