@@ -11,6 +11,8 @@ from sirius.blueprints.api.remote_service.tambov.active.clinic.reformer_builder 
     ClinicTambovBuilder
 from sirius.blueprints.api.remote_service.tambov.active.hospital.reformer_builder import \
     HospitalTambovBuilder
+from sirius.blueprints.api.remote_service.tambov.active.location.reformer_builder import \
+    LocationTambovBuilder
 from sirius.blueprints.reformer.models.method import ServiceMethod
 from ..active.case.reformer_builder import CaseTambovBuilder
 from ..active.patient.reformer_builder import PatientTambovBuilder
@@ -39,6 +41,8 @@ class TambovReformer(Reformer):
             res = ReferralTambovBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TambovEntityCode.CLINIC:
             res = ClinicTambovBuilder(self).build_local_entities(header_meta, data)
+        elif remote_entity_code == TambovEntityCode.LOCATION:
+            res = LocationTambovBuilder(self).build_local_entities(header_meta, data)
         else:
             raise InternalError('Unexpected remote_entity_code')
         return res
@@ -75,6 +79,8 @@ class TambovReformer(Reformer):
             data_req = ClinicTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.CLINIC)
         elif local_entity_code == RisarEntityCode.MEASURE_HOSPITALIZATION or remote_entity_code == TambovEntityCode.HOSPITAL_REC:
             data_req = HospitalTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.HOSPITAL_REC)
+        elif local_entity_code == RisarEntityCode.DOCTOR or remote_entity_code == TambovEntityCode.LOCATION:
+            data_req = LocationTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.LOCATION)
         else:
             raise InternalError('Unexpected local_entity_code')
         self.set_remote_request_params(data_req)
@@ -129,6 +135,8 @@ class TambovReformer(Reformer):
             res = ClinicTambovBuilder(self).build_remote_entity_packages(req)
         elif dst_entity == TambovEntityCode.HOSPITAL_REC:
             res = HospitalTambovBuilder(self).build_remote_entity_packages(req)
+        elif dst_entity == TambovEntityCode.LOCATION:
+            res = LocationTambovBuilder(self).build_remote_entity_packages(req)
         else:
             raise InternalError('Unexpected entity code')
         return res

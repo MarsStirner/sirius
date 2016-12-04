@@ -21,7 +21,7 @@ from sirius.lib.xform import Undefined
 from sirius.models.system import SystemCode
 from sirius.models.operation import OperationCode
 
-encode = WebMisJsonEncoder().default
+encode = lambda x: x and WebMisJsonEncoder().default(x)
 
 
 class ClinicTambovBuilder(Builder):
@@ -51,8 +51,7 @@ class ClinicTambovBuilder(Builder):
         return package
 
     def set_clinics(self, clinics, package, req_meta):
-        # todo: ограничение для тестов
-        for clinic_id in clinics[:7]:
+        for clinic_id in clinics:
             clinic_item, clinic_data = package.add_main(
                 entity_code=TambovEntityCode.CLINIC,
                 main_id_name='clinic',
@@ -72,7 +71,7 @@ class ClinicTambovBuilder(Builder):
 
     def build_local_entities(self, header_meta, pack_entity):
         clinic_data = pack_entity['data']
-        clinic_addition = safe_traverse(pack_entity, 'addition', default={})
+        clinic_addition = safe_traverse(pack_entity, 'addition') or {}
         AddressAllInfos = clinic_addition.get(TambovEntityCode.ADDRESS_ALL_INFO)
         entities = RequestEntities()
 
@@ -110,7 +109,7 @@ class ClinicTambovBuilder(Builder):
             'TFOMSCode': str(header_meta['remote_main_id']),  # id/code двух систем будут совпадать
             'full_name': clinic_data['name'],
             'short_name': clinic_data['name'],
-            'address': safe_traverse(clinic_data, 'actualAddress', default=''),
+            'address': safe_traverse_attrs(clinic_data, 'actualAddress', 'addressText') or '',
             'area': town_kladr,
             'is_LPU': 1,
         }

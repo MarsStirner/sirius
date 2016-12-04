@@ -22,4 +22,27 @@ class TambovAnswer(RemoteAnswer):
 
     def xml_to_dict(self, data):
         # todo:
+        # return SafeGet(data)
         return data
+
+
+# class SafeGet(object):
+#     # опасно, т.к. в имени атрибута м/б опечатка
+#
+#     def __init__(self, obj):
+#         self.obj = obj
+#
+#     def __getattr__(self, item):
+#         return self.get_res(item)
+#
+#     def __getitem__(self, item):
+#         return self.get_res(item)
+#
+#     def __iter__(self):
+#         return self.obj.__iter__()
+#
+#     def get_res(self, item):
+#         res = item in self.obj and self.obj[item] or None
+#         if type(res) == 'instance':
+#             res = self.__class__(res)
+#         return res

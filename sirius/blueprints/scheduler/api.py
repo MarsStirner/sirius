@@ -132,12 +132,12 @@ class Scheduler(object):
         card_list_method = reformer.get_api_method(
             SystemCode.LOCAL, RisarEntityCode.CARD, OperationCode.READ_MANY
         )
-        data = {
-            'filters': {
-                'id': 3  # todo: при тестировании работаем пока с одной картой
-            }
-        }
-        msg = Message(data)
+        # data = {
+        #     'filters': {
+        #         'id': 3  # todo: при тестировании работаем пока с одной картой
+        #     }
+        # }
+        msg = Message(None)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -173,6 +173,10 @@ class Scheduler(object):
         producer = RemoteProducer()
         org_msg = producer.send(msg, async=False)
         for org_data in org_msg.get_data():
+            if not org_data['TFOMSCode']:
+                continue
+            if not org_data['TFOMSCode'] == '1434663':  # права выданы только на это лпу
+                continue
             msg = self.create_message(system_code, entity_code)  # getLocations
             meta = msg.get_header().meta
             meta['local_parents_params'] = {
@@ -223,12 +227,12 @@ class Scheduler(object):
         card_list_method = reformer.get_api_method(
             SystemCode.LOCAL, RisarEntityCode.CARD, OperationCode.READ_MANY
         )
-        data = {
-            'filters': {
-                'id': 3  # todo: при тестировании работаем пока с одной картой
-            }
-        }
-        msg = Message(data)
+        # data = {
+        #     'filters': {
+        #         'id': 3  # todo: при тестировании работаем пока с одной картой
+        #     }
+        # }
+        msg = Message(None)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -337,12 +341,12 @@ class Scheduler(object):
         card_list_method = reformer.get_api_method(
             SystemCode.LOCAL, RisarEntityCode.CARD, OperationCode.READ_MANY
         )
-        data = {
-            'filters': {
-                'id': 3  # todo: при тестировании работаем пока с одной картой
-            }
-        }
-        msg = Message(data)
+        # data = {
+        #     'filters': {
+        #         'id': 3  # todo: при тестировании работаем пока с одной картой
+        #     }
+        # }
+        msg = Message(None)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()

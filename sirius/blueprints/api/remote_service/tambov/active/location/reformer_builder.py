@@ -22,7 +22,7 @@ from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 from sirius.models.operation import OperationCode
 
-encode = WebMisJsonEncoder().default
+encode = lambda x: x and WebMisJsonEncoder().default(x)
 
 
 class LocationTambovBuilder(Builder):
@@ -101,6 +101,9 @@ class LocationTambovBuilder(Builder):
             for employeePosition_item in safe_traverse_attrs(
                 location_data, 'employeePositionList', 'EmployeePosition'
             ) or []:
+                if not self.valid_employee_position(employeePosition_item):
+                    continue
+
                 api_method = self.reformer.get_api_method(
                     self.remote_sys_code,
                     TambovEntityCode.EMPLOYEE_POSITION,
@@ -153,38 +156,60 @@ class LocationTambovBuilder(Builder):
                 #####################################
                 # add
 
+                # location_item = package.add_main_pack_entity(
+                #     entity_code=TambovEntityCode.LOCATION,
+                #     method=loc_req.method,
+                #     main_param_name='location',
+                #     main_id=location_id,
+                #     parents_params=req_meta['dst_parents_params'],
+                #     data=location_data,
+                # )
+                # package.root_item = location_item
+                #
+                # # empl_pos_item = package.add_main_pack_entity(
+                # #     entity_code=TambovEntityCode.EMPLOYEE_POSITION,
+                # #     method=loc_req.method,
+                # #     main_param_name='employeePosition',
+                # #     main_id=employeePosition_item['employeePosition'],
+                # #     parents_params=req_meta['dst_parents_params'],
+                # #     data=employeePosition_data,
+                # # )
+                # # package.root_item = empl_pos_item
+                # empl_pos_item = package.add_addition_pack_entity(
+                #     root_item=package.root_item,
+                #     parent_item=location_item,
+                #     entity_code=TambovEntityCode.EMPLOYEE_POSITION,
+                #     main_id=employeePosition_item['employeePosition'],
+                #     data=employeePosition_data,
+                # )
+                #
+                # individual_data = package.add_addition(
+                #     parent_item=location_item,
+                #     entity_code=TambovEntityCode.INDIVIDUAL,
+                #     main_id_name=None,
+                #     main_id=employee_data['individual'],
+                # )
+
+                api_method = self.reformer.get_api_method(
+                    self.remote_sys_code,
+                    TambovEntityCode.INDIVIDUAL,
+                    OperationCode.READ_ONE,
+                )
+                individual_req = DataRequest()
+                individual_req.set_req_params(
+                    url=api_method['template_url'],
+                    method=api_method['method'],
+                    protocol=ProtocolCode.SOAP,
+                    options=(employee_data['individual'],),
+                )
+                individual_data = self.transfer__send_request(individual_req)
                 location_item = package.add_main_pack_entity(
                     entity_code=TambovEntityCode.LOCATION,
                     method=loc_req.method,
-                    main_param_name='location',
-                    main_id=location_id,
+                    main_param_name='location_employeePosition',
+                    main_id='_'.join((employeePosition_item['employeePosition'], location_id)),
                     parents_params=req_meta['dst_parents_params'],
-                    data=location_data,
-                )
-                package.root_item = location_item
-
-                # empl_pos_item = package.add_main_pack_entity(
-                #     entity_code=TambovEntityCode.EMPLOYEE_POSITION,
-                #     method=loc_req.method,
-                #     main_param_name='employeePosition',
-                #     main_id=employeePosition_item['employeePosition'],
-                #     parents_params=req_meta['dst_parents_params'],
-                #     data=employeePosition_data,
-                # )
-                # package.root_item = empl_pos_item
-                # empl_pos_item = package.add_addition_pack_entity(
-                #     root_item=package.root_item,
-                #     parent_item=empl_pos_item,
-                #     entity_code=TambovEntityCode.EMPLOYEE_POSITION,
-                #     main_id=employeePosition_item['employeePosition'],
-                #     data=employeePosition_data,
-                # )
-
-                individual_data = package.add_addition(
-                    parent_item=location_item,
-                    entity_code=TambovEntityCode.INDIVIDUAL,
-                    main_id_name=None,
-                    main_id=employee_data['individual'],
+                    data=individual_data,  # в локейшн кладем индивид, т.к. первый не нужен в диффах
                 )
 
                 package.add_addition_pack_entity(
@@ -199,41 +224,46 @@ class LocationTambovBuilder(Builder):
         today = datetime.today().date()
         if not location_data['source']:
             return False
-        if not (location_data['profile'] == 42):
-            return False
+        # if not ('42' in [x['profile'] for x in safe_traverse_attrs(location_data, 'specializationList', 'Specialization') or ()]):
+        #     return False
         if not (not location_data['endDate'] or location_data['endDate'] > today):
             return False
-        if not (
-            not safe_traverse_attrs(location_data, 'EmployeePosition', 'endDate') or
-                safe_traverse_attrs(location_data, 'EmployeePosition', 'endDate') > today):
+        return True
+
+    def valid_employee_position(self, employeePosition_item):
+        today = datetime.today().date()
+        if not (not employeePosition_item['endDate'] or
+                employeePosition_item['endDate'] > today):
             return False
         return True
 
     def valid_position(self, position_data):
         # могут быть не только Акушеры-Геникологи
-        # if not (position_data['role'] == 1034):
+        # if not (position_data['role'] == '1034'):
         #     return False
-        if not (position_data['speciality'] == 1):
-            return False
+        # if not (position_data['speciality'] == '1'):
+        #     return False
         return True
 
     ##################################################################
     ##  reform entities
 
     def build_local_entities(self, header_meta, pack_entity):
-        location_data = pack_entity['data']
         src_entity_code = header_meta['remote_entity_code']
         src_operation_code = header_meta['remote_operation_code']
 
         # сопоставление параметров родительских сущностей
-        # params_map = {
-        #     TambovEntityCode.SMART_PATIENT: {
-        #         'entity': RisarEntityCode.CARD, 'param': 'card_id'
-        #     }
-        # }
-        # self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
+        params_map = {
+            TambovEntityCode.CLINIC: {
+                'entity': RisarEntityCode.ORGANIZATION, 'param': 'TFOMSCode'
+            }
+        }
+        self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
 
-        empl_pos_addition = pack_entity['addition']
+        location_addition = pack_entity['addition']  # в локейшн клали индивид, т.к. первый не нужен в диффах
+        # empl_position = location_addition[TambovEntityCode.EMPLOYEE_POSITION][0]
+        src_id_prefix, src_id = pack_entity['main_id'].split('_')
+
         entities = RequestEntities()
         doctor_item = entities.set_main_entity(
             dst_entity_code=RisarEntityCode.DOCTOR,
@@ -242,29 +272,30 @@ class LocationTambovBuilder(Builder):
             src_operation_code=src_operation_code,
             src_entity_code=src_entity_code,
             src_main_id_name=header_meta['remote_main_param_name'],
-            src_id=location_data['main_id'],
+            src_id_prefix=src_id_prefix,
+            src_id=src_id,
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
-            self.build_local_doctor_body(doctor_item, location_data,
-                                         empl_pos_addition, header_meta)
+            self.build_local_doctor_body(doctor_item, pack_entity,
+                                         location_addition, header_meta, src_id)
 
         return entities
 
-    def build_local_doctor_body(self, doctor_item, location_data,
-                                empl_pos_addition, header_meta):
-        individual = empl_pos_addition[TambovEntityCode.INDIVIDUAL][0]
-        position = empl_pos_addition[TambovEntityCode.POSITION][0]
+    def build_local_doctor_body(self, doctor_item, pack_entity,
+                                location_addition, header_meta, src_id):
+        # individual = location_addition[TambovEntityCode.INDIVIDUAL][0]
+        position = location_addition[TambovEntityCode.POSITION][0]
         position_data = position['data']
-        individual_data = individual['data']
+        individual_data = pack_entity['data']
         doctor_item['body'] = {
-            'regional_code': location_data['main_id'],  # id/code двух систем будут совпадать
-            'organization': header_meta['remote_main_id'],  # id/code двух систем будут совпадать
+            'regional_code': src_id,  # id/code двух систем будут совпадать
+            'organization': header_meta['local_parents_params']['TFOMSCode']['id'],  # id/code двух систем будут совпадать
             'last_name': individual_data['surname'],
             'first_name': individual_data['name'],
-            'patr_name': individual_data['patrName'],
-            'sex': individual_data['gender'],
-            'birth_date': encode(individual_data['birthDate']),
+            'patr_name': individual_data['patrName'] or '',
+            'sex': safe_int(individual_data['gender']),
+            'birth_date': encode(individual_data['birthDate']) or '',
             'speciality': position_data['speciality'],
             'post': position_data['role'],
         }

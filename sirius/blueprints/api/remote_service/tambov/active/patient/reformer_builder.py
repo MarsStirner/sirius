@@ -20,7 +20,7 @@ from sirius.lib.xform import Undefined
 from sirius.models.system import SystemCode
 from sirius.models.operation import OperationCode
 
-encode = WebMisJsonEncoder().default
+encode = lambda x: x and WebMisJsonEncoder().default(x)
 
 
 class PatientTambovBuilder(Builder):
@@ -184,7 +184,7 @@ class PatientTambovBuilder(Builder):
 
             # Получаем код организации
             document_issuing_authority = Undefined
-            for code in safe_traverse_attrs(document_data, 'issueOrganization', 'codes', default=()):
+            for code in (safe_traverse_attrs(document_data, 'issueOrganization', 'codes') or {}):
                 if code['type'] == 'CODE_OMS':
                     document_issuing_authority = code['code']
                     break

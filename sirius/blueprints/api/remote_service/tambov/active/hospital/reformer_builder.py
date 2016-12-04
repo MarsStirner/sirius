@@ -21,7 +21,7 @@ from sirius.models.system import SystemCode
 from sirius.lib.xform import Undefined
 from sirius.models.operation import OperationCode
 
-encode = WebMisJsonEncoder().default
+encode = lambda x: x and WebMisJsonEncoder().default(x)
 to_date = lambda x: x and datetime.strptime(x, '%Y-%m-%d')
 
 

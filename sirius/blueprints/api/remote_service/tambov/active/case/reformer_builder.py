@@ -25,7 +25,7 @@ from sirius.models.operation import OperationCode
 from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 
-encode = WebMisJsonEncoder().default
+encode = lambda x: x and WebMisJsonEncoder().default(x)
 to_date = lambda x: datetime.strptime(x, '%Y-%m-%d')
 
 
@@ -132,9 +132,9 @@ class CaseTambovBuilder(Builder):
                 # 'id': None,  # проставляется в set_current_id_func
                 'uid': str(header_meta['local_main_id']),
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                'medicalOrganizationId': safe_traverse(ticket_data, 'hospital', default=''),
+                'medicalOrganizationId': safe_traverse(ticket_data, 'hospital') or '',
                 'caseTypeId': '1',
-                'initGoalId': safe_traverse(ticket_data, 'visit_type', default='7'),
+                'initGoalId': safe_traverse(ticket_data, 'visit_type') or '7',
                 'fundingSourceTypeId': '1',
                 'careRegimenId': '1',
                 # 'diagnoses' 'diagnosId': safe_traverse(ticket_data, 'diagnosis'),  # код, а нужен ИД
@@ -146,7 +146,7 @@ class CaseTambovBuilder(Builder):
             TambovEntityCode.SERVICE,
             OperationCode.READ_MANY,
         )
-        for serv_code in safe_traverse(ticket_data, 'medical_services', default=()):
+        for serv_code in (safe_traverse(ticket_data, 'medical_services') or ()):
             item = entities.set_child_entity(
                 parent_item=main_item,
                 dst_entity_code=TambovEntityCode.REND_SERVICE,
@@ -158,7 +158,7 @@ class CaseTambovBuilder(Builder):
                 src_main_id_name=header_meta['local_main_param_name'],
                 src_id=header_meta['local_main_id'],
             )
-            prototype_code = safe_traverse(serv_code, 'medical_service', default='')
+            prototype_code = safe_traverse(serv_code, 'medical_service') or ''
             prototype_id = SrvPrototypeMatch.get_prototype_id_by_prototype_code(prototype_code)
             req = DataRequest()
             req.set_req_params(
@@ -166,7 +166,7 @@ class CaseTambovBuilder(Builder):
                 method=srv_api_method['method'],
                 protocol=ProtocolCode.SOAP,
                 data={
-                    'clinic': safe_traverse(ticket_data, 'hospital', default=''),
+                    'clinic': safe_traverse(ticket_data, 'hospital') or '',
                     'prototype': prototype_id,
                 },
             )
@@ -179,7 +179,7 @@ class CaseTambovBuilder(Builder):
                     'serviceId': srv_data['id'],
                     'dateFrom': to_date(safe_traverse(ticket_data, 'date_open')),
                     'isRendered': True,
-                    'orgId': safe_traverse(ticket_data, 'hospital', default=''),
+                    'orgId': safe_traverse(ticket_data, 'hospital') or '',
                 }
 
         checkup_node = pack_entity['addition'][RisarEntityCode.CHECKUP_OBS_FIRST][0]
@@ -201,7 +201,7 @@ class CaseTambovBuilder(Builder):
                 'admissionDate': to_date(checkup_data['general_info']['date']),
                 'goalId': '7',
                 'placeId': '1',
-                # 'diagnoses' 'diagnosId': safe_traverse(ticket_data, 'medical_report', 'diagnosis_osn', default=''),
+                # 'diagnoses' 'diagnosId': safe_traverse(ticket_data, 'medical_report', 'diagnosis_osn') or '',
             }
 
         return entities

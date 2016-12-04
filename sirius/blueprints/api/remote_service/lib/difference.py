@@ -15,6 +15,7 @@ from sirius.blueprints.monitor.exception import module_entry
 from sirius.models.entity import Entity, DiffEntityImage
 from sirius.models.operation import OperationCode
 from sirius.database import db
+# from suds.sudsobject import asdict
 from zeep.xsd.valueobjects import CompoundValue
 
 
@@ -58,6 +59,7 @@ class Difference(object):
                     'root_external_id': (package_record.get('root_parent') or {}).get('main_id', main_id),
                     'external_id': main_id,
                     'content': dumps(self.serialize_object(package_record['data']), cls=WebMisJsonEncoder),
+                    # 'content': dumps(self.recursive_asdict(package_record['data']), encoding=WebMisJsonEncoder),
                     'operation_code': OperationCode.READ_MANY,
                     'level': level,
                 }
@@ -158,3 +160,21 @@ class Difference(object):
                 value = cls.serialize_object(value)
             result[key] = value
         return result
+
+    # @classmethod
+    # def recursive_asdict(cls, d):
+    #     """Convert Suds object into serializable format."""
+    #     out = {}
+    #     for k, v in asdict(d).iteritems():
+    #         if hasattr(v, '__keylist__'):
+    #             out[k] = cls.recursive_asdict(v)
+    #         elif isinstance(v, list):
+    #             out[k] = []
+    #             for item in v:
+    #                 if hasattr(item, '__keylist__'):
+    #                     out[k].append(cls.recursive_asdict(item))
+    #                 else:
+    #                     out[k].append(item)
+    #         else:
+    #             out[k] = v
+    #     return out

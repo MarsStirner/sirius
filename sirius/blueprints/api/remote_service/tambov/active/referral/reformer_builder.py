@@ -6,6 +6,7 @@
 @date: 23.09.2016
 
 """
+import json
 import logging
 from datetime import date, datetime
 
@@ -26,7 +27,7 @@ from sirius.models.operation import OperationCode
 from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 
-encode = WebMisJsonEncoder().default
+encode = lambda x: x and WebMisJsonEncoder().default(x)
 to_date = lambda x: x and datetime.strptime(x, '%Y-%m-%d')
 logger = logging.getLogger('simple')
 
@@ -264,8 +265,8 @@ class ReferralTambovBuilder(Builder):
                 'external_id': rend_serv_data['id'],
                 'measure_type_code': measure_code,
                 'realization_date': encode(rend_serv_data['dateFrom']),
-                'lpu_code': safe_traverse_attrs(rend_serv_data, 'orgId', default=''),
-                'results': data_rend_serv_data,
+                'lpu_code': safe_traverse_attrs(rend_serv_data, 'orgId') or '',
+                'results': json.dumps(data_rend_serv_data),
             }
 
         return entities
@@ -305,8 +306,8 @@ class ReferralTambovBuilder(Builder):
                 'external_id': rend_serv_data['id'],
                 'measure_type_code': measure_code,
                 'checkup_date': encode(rend_serv_data['dateTo']),
-                'lpu_code': self.get_org_code(safe_traverse_attrs(rend_serv_data, 'orgId', default='')),
-                'doctor_code': self.get_doctor_code(safe_traverse_attrs(rend_serv_data, 'resourceGroupId', default='')),
+                'lpu_code': self.get_org_code(safe_traverse_attrs(rend_serv_data, 'orgId') or ''),
+                'doctor_code': self.get_doctor_code(safe_traverse_attrs(rend_serv_data, 'resourceGroupId') or ''),
             }
 
         return entities

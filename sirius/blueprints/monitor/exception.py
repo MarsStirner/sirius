@@ -21,7 +21,10 @@ from six import reraise
 from sirius.lib.apiutils import ApiException, jsonify_api_exception, \
     jsonify_exception, RawApiResult, jsonify_ok, json_dumps
 from sqlalchemy.exc import OperationalError as SAOperationalError
-from zeep.exceptions import TransportError, Error as ZeepError
+from zeep.exceptions import TransportError as ZeepTransportError, Error as ZeepError
+# from suds import WebFault as SudsError
+# from suds.transport import TransportError as SudsTransportError
+from zeep.exceptions import TransportError as SudsTransportError, Error as SudsError  # заглушка (вдруг понадобится suds)
 
 logger = logging.getLogger('simple')
 
@@ -59,7 +62,7 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
                 meta = obj.get_stream_meta()
                 res = func(*args, **kwargs)
                 exit_time = time()
-            except (StandardError, ZeepError) as exc:
+            except (StandardError, ZeepError, SudsError) as exc:
                 error_datetime = datetime.today()
                 traceback.print_exc()
                 if isinstance(exc, ZeepError):
@@ -108,7 +111,7 @@ def check_point(function=None, stream_pos=2, self_pos=1):
                 meta = obj.get_stream_meta()
                 res = func(*args, **kwargs)
                 exit_time = time()
-            except (StandardError, ZeepError) as exc:
+            except (StandardError, ZeepError, SudsError) as exc:
                 error_datetime = datetime.today()
                 traceback.print_exc()
                 if isinstance(exc, ZeepError):
@@ -294,7 +297,7 @@ def connect_entry(function=None, login=None):
                         pass
                     retry = True
                     sleep(sleep_timeout)
-                except (TransportError,) as exc:
+                except (ZeepTransportError, SudsTransportError) as exc:
                     if retry_count == 1 and callable(login):  #and res.status_code == 403:
                         func._session = None
                         retry = True
