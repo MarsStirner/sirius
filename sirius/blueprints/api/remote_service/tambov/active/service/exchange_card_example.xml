@@ -1,20 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<version xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ORIGINAL_VERSION">
+<version xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:type="ORIGINAL_VERSION">
     <contribution>
         <id xsi:type="HIER_OBJECT_ID">
             <value xml:space="preserve">a3203421-09bd-4684-88fe-cf2fb4e40e45</value>
         </id>
-        <namespace xml:space="preserve" />
-        <type xml:space="preserve">CONTRIBUTION</type>
+        <namespace xml:space="preserve"/><type xml:space="preserve">CONTRIBUTION</type>
     </contribution>
     <commit_audit>
         <system_id xml:space="preserve">68.r-mis.ru:443</system_id>
         <committer xsi:type="PARTY_IDENTIFIED">
-            <name xml:space="preserve" />
+            <name xml:space="preserve"/>
             <identifiers>
-                <issuer xml:space="preserve" />
-                <assigner xml:space="preserve" />
-                <type xml:space="preserve" />
+                <issuer xml:space="preserve"/><assigner xml:space="preserve"/><type xml:space="preserve"/>
             </identifiers>
         </committer>
         <time_committed>
@@ -56,9 +53,7 @@
                         <value xml:space="preserve">_</value>
                     </name>
                     <value xsi:type="DV_TEXT">
-                        <value xml:space="preserve">
-                            {{ card.anamnesis.finished_diseases|join(', ') if card.anamnesis }}
-                        </value>
+                        <value xml:space="preserve">краснуха, корь, в/оспа,аппендэктомия в 18 лет, хр. тонзиллит, миопия сл. степени(-1,5)</value>
                     </value>
                 </items>
             </data>
@@ -82,9 +77,7 @@
                         <value xml:space="preserve">_</value>
                     </name>
                     <value xsi:type="DV_TEXT">
-                        <value xml:space="preserve">
-                            {{ card.prev_pregnancies_features|join('; ') }}
-                        </value>
+                        <value xml:space="preserve">1-2004-срочные роды, Д.3250/52, без осложнений; 2-2006-м/а, без осложнений, 3-настоящая</value>
                     </value>
                 </items>
             </data>
@@ -108,7 +101,7 @@
                         <value xml:space="preserve">Которая беременность</value>
                     </name>
                     <value xsi:type="DV_QUANTITY">
-                        <magnitude>{{ card.prev_pregs|length + 1 }}</magnitude>
+                        <magnitude>3.0</magnitude>
                     </value>
                 </items>
                 <items archetype_node_id="at0003" xsi:type="ELEMENT">
@@ -116,7 +109,7 @@
                         <value xml:space="preserve">Которые роды</value>
                     </name>
                     <value xsi:type="DV_QUANTITY">
-                        <magnitude>{{ card.birth_pregnancies|length }}</magnitude>
+                        <magnitude>2.0</magnitude>
                     </value>
                 </items>
             </data>
@@ -135,21 +128,14 @@
                 <name>
                     <value xml:space="preserve">Tree</value>
                 </name>
-                {% for abortion in card.abortion_pregnancies %}
-                <items archetype_node_id="at0003" xsi:type="CLUSTER">
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
                     <name>
-                        <value xml:space="preserve">_Аборт</value>
+                        <value xml:space="preserve">_</value>
                     </name>
-                    <items archetype_node_id="at0002" xsi:type="ELEMENT">
-                        <name>
-                            <value xml:space="preserve">_</value>
-                        </name>
-                        <value xsi:type="DV_TEXT">
-                            <value xml:space="preserve">{{ abortion.result.name if abortion.result }} {{ abortion.year }} {{ abortion.pregnancy_week }}</value>
-                        </value>
-                    </items>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">1(2006г.) 5-6 нед, б/о</value>
+                    </value>
                 </items>
-                {% endfor %}
             </data>
         </content>
         <content archetype_node_id="at0000" xsi:type="OBSERVATION">
@@ -186,43 +172,45 @@
                             <name>
                                 <value xml:space="preserve">Срочные роды</value>
                             </name>
-                            <value xsi:type="DV_TEXT" />
+                            <value xsi:type="DV_TEXT">
+                                <value xml:space="preserve">2004</value>
+                            </value>
                         </items>
                         <items archetype_node_id="at0006" xsi:type="ELEMENT">
                             <name>
                                 <value xml:space="preserve">по шевелению</value>
                             </name>
-                            <value xsi:type="DV_TEXT" />
+                            <value xsi:type="DV_TEXT"/>
                         </items>
                         <items archetype_node_id="at0007" xsi:type="ELEMENT">
                             <name>
                                 <value xml:space="preserve">по 1 явке</value>
                             </name>
-                            <value xsi:type="DV_TEXT" />
+                            <value xsi:type="DV_TEXT"/>
                         </items>
                         <items archetype_node_id="at0008" xsi:type="ELEMENT">
                             <name>
                                 <value xml:space="preserve">по 1 УЗИ</value>
                             </name>
-                            <value xsi:type="DV_TEXT" />
+                            <value xsi:type="DV_TEXT"/>
                         </items>
                         <items archetype_node_id="at0009" xsi:type="ELEMENT">
                             <name>
                                 <value xml:space="preserve">по 2 УЗИ</value>
                             </name>
-                            <value xsi:type="DV_TEXT" />
+                            <value xsi:type="DV_TEXT"/>
                         </items>
                         <items archetype_node_id="at0010" xsi:type="ELEMENT">
                             <name>
                                 <value xml:space="preserve">по 3 УЗИ</value>
                             </name>
-                            <value xsi:type="DV_TEXT" />
+                            <value xsi:type="DV_TEXT"/>
                         </items>
                         <items archetype_node_id="at0011" xsi:type="ELEMENT">
                             <name>
                                 <value xml:space="preserve">_описание</value>
                             </name>
-                            <value xsi:type="DV_TEXT" />
+                            <value xsi:type="DV_TEXT"/>
                         </items>
                     </data>
                 </events>
@@ -247,7 +235,7 @@
                         <value xml:space="preserve">Дата</value>
                     </name>
                     <value xsi:type="DV_DATE">
-                        <value xml:space="preserve">{{ card.anamnesis.menstruation_last_date if card.anamnesis}}</value>
+                        <value xml:space="preserve">30.10.2016</value>
                     </value>
                 </items>
             </data>
@@ -272,7 +260,7 @@
                     </name>
                     <value xsi:type="DV_QUANTITY">
                         <magnitude>8.0</magnitude>
-                        <units xml:space="preserve">{{ card.primary_inspection.pregnancy_week if card.primary_inspection }}</units>
+                        <units xml:space="preserve">wk</units>
                     </value>
                 </items>
                 <items archetype_node_id="at0003" xsi:type="ELEMENT">
@@ -280,7 +268,7 @@
                         <value xml:space="preserve">при первом посещении</value>
                     </name>
                     <value xsi:type="DV_DATE">
-                        <value xml:space="preserve">{{ card.primary_inspection.action.begDate_raw|datetime_format('%d.%m.%Y') if card.primary_inspection }}</value>
+                        <value xml:space="preserve">10.10.2016</value>
                     </value>
                 </items>
             </data>
@@ -304,7 +292,7 @@
                         <value xml:space="preserve">_</value>
                     </name>
                     <value xsi:type="DV_TEXT">
-                        <value xml:space="preserve">{{ card.checkups|length }}</value>
+                        <value xml:space="preserve">12</value>
                     </value>
                 </items>
             </data>
@@ -327,13 +315,17 @@
                     <name>
                         <value xml:space="preserve">Дата</value>
                     </name>
-                    <value xsi:type="DV_DATE" />
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">11.11.2016</value>
+                    </value>
                 </items>
                 <items archetype_node_id="at0003" xsi:type="ELEMENT">
                     <name>
                         <value xml:space="preserve">_</value>
                     </name>
-                    <value xsi:type="DV_TEXT" />
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">в 16 нед.</value>
+                    </value>
                 </items>
             </data>
         </content>
@@ -363,7 +355,9 @@
                             <name>
                                 <value xml:space="preserve">_</value>
                             </name>
-                            <value xsi:type="DV_TEXT" />
+                            <value xsi:type="DV_TEXT">
+                                <value xml:space="preserve">6-7 нед-угроза прерывания, 12-13 нед. -ОРЗ(t38,0)</value>
+                            </value>
                         </items>
                     </data>
                 </events>
@@ -397,7 +391,7 @@
                             </name>
                             <value xsi:type="DV_CODED_TEXT">
                                 <defining_code>
-                                    <terminology_id />
+                                    <terminology_id/>
                                 </defining_code>
                             </value>
                         </items>
@@ -405,95 +399,104 @@
                             <name>
                                 <value xml:space="preserve">Размеры таза</value>
                             </name>
-                            <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                            <items archetype_node_id="at0004"
+                                   xsi:type="ELEMENT">
                                 <name>
                                     <value xml:space="preserve">D.Sp</value>
                                 </name>
                                 <value xsi:type="DV_QUANTITY">
-                                    <magnitude>{{ card.pelvic_measurements.DsSP }}</magnitude>
+                                    <magnitude>26.0</magnitude>
                                     <units xml:space="preserve">cm</units>
                                 </value>
                             </items>
-                            <items archetype_node_id="at0005" xsi:type="ELEMENT">
+                            <items archetype_node_id="at0005"
+                                   xsi:type="ELEMENT">
                                 <name>
                                     <value xml:space="preserve">D.Cr</value>
                                 </name>
                                 <value xsi:type="DV_QUANTITY">
-                                    <magnitude>{{ card.pelvic_measurements.DsCr }}</magnitude>
+                                    <magnitude>29.0</magnitude>
                                     <units xml:space="preserve">cm</units>
                                 </value>
                             </items>
-                            <items archetype_node_id="at0006" xsi:type="ELEMENT">
+                            <items archetype_node_id="at0006"
+                                   xsi:type="ELEMENT">
                                 <name>
                                     <value xml:space="preserve">D.Tr</value>
                                 </name>
                                 <value xsi:type="DV_QUANTITY">
-                                    <magnitude>{{ card.pelvic_measurements.DsTr }}</magnitude>
+                                    <magnitude>32.0</magnitude>
                                     <units xml:space="preserve">cm</units>
                                 </value>
                             </items>
-                            <items archetype_node_id="at0007" xsi:type="ELEMENT">
+                            <items archetype_node_id="at0007"
+                                   xsi:type="ELEMENT">
                                 <name>
                                     <value xml:space="preserve">C.Ext</value>
                                 </name>
                                 <value xsi:type="DV_QUANTITY">
-                                    <magnitude>{{ card.pelvic_measurements.CExt }}</magnitude>
+                                    <magnitude>21.0</magnitude>
                                     <units xml:space="preserve">cm</units>
                                 </value>
                             </items>
-                            <items archetype_node_id="at0009" xsi:type="ELEMENT">
+                            <items archetype_node_id="at0009"
+                                   xsi:type="ELEMENT">
                                 <name>
                                     <value xml:space="preserve">C.Diag</value>
                                 </name>
                                 <value xsi:type="DV_QUANTITY">
-                                    <magnitude>{{ card.pelvic_measurements.CDiag }}</magnitude>
+                                    <magnitude>14.0</magnitude>
                                     <units xml:space="preserve">cm</units>
                                 </value>
                             </items>
-                            <items archetype_node_id="at0010" xsi:type="ELEMENT">
+                            <items archetype_node_id="at0010"
+                                   xsi:type="ELEMENT">
                                 <name>
                                     <value xml:space="preserve">C.Vera</value>
                                 </name>
                                 <value xsi:type="DV_QUANTITY">
-                                    <magnitude> {{ card.pelvic_measurements.CVera }}</magnitude>
+                                    <magnitude>12.0</magnitude>
                                     <units xml:space="preserve">cm</units>
                                 </value>
                             </items>
-                            <items archetype_node_id="at0008" xsi:type="ELEMENT">
+                            <items archetype_node_id="at0008"
+                                   xsi:type="ELEMENT">
                                 <name>
                                     <value xml:space="preserve">Мыс недостижим</value>
                                 </name>
-                                <value xsi:type="DV_BOOLEAN" />
+                                <value xsi:type="DV_BOOLEAN"/>
                             </items>
                         </items>
                         <items archetype_node_id="at0012" xsi:type="CLUSTER">
                             <name>
                                 <value xml:space="preserve">Пояснично-крестцовый ромб</value>
                             </name>
-                            <items archetype_node_id="at0017" xsi:type="ELEMENT">
+                            <items archetype_node_id="at0017"
+                                   xsi:type="ELEMENT">
                                 <name>
                                     <value xml:space="preserve">поперечный</value>
                                 </name>
-                                <value xsi:type="DV_QUANTITY" />
+                                <value xsi:type="DV_QUANTITY"/>
                             </items>
-                            <items archetype_node_id="at0018" xsi:type="ELEMENT">
+                            <items archetype_node_id="at0018"
+                                   xsi:type="ELEMENT">
                                 <name>
                                     <value xml:space="preserve">продольный</value>
                                 </name>
-                                <value xsi:type="DV_QUANTITY" />
+                                <value xsi:type="DV_QUANTITY"/>
                             </items>
                         </items>
                         <items archetype_node_id="at0015" xsi:type="ELEMENT">
                             <name>
                                 <value xml:space="preserve">Индекс Соловьева</value>
                             </name>
-                            <value xsi:type="DV_TEXT" />
+                            <value xsi:type="DV_TEXT"/>
                         </items>
                         <items archetype_node_id="at0016" xsi:type="ELEMENT">
                             <name>
                                 <value xml:space="preserve">Форма таза (заключение)</value>
                             </name>
-                            <value xsi:type="DV_TEXT" />
+                            <value xsi:type="DV_TEXT"/>
                         </items>
                     </data>
                 </events>
@@ -526,7 +529,7 @@
                                 <value xml:space="preserve">_Рост</value>
                             </name>
                             <value xsi:type="DV_QUANTITY">
-                                <magnitude>{{ card.primary_inspection.height if card.primary_inspection }}</magnitude>
+                                <magnitude>168.0</magnitude>
                                 <units xml:space="preserve">cm</units>
                             </value>
                         </items>
@@ -561,7 +564,7 @@
                                 <value xml:space="preserve">_</value>
                             </name>
                             <value xsi:type="DV_QUANTITY">
-                                <magnitude>{{ card.primary_inspection.weight if card.primary_inspection }}</magnitude>
+                                <magnitude>58.0</magnitude>
                                 <units xml:space="preserve">kg</units>
                             </value>
                         </items>
@@ -583,37 +586,30 @@
                 <name>
                     <value xml:space="preserve">Tree</value>
                 </name>
-                {% for fetus in card.latest_inspection.fetuses %}
-                <items archetype_node_id="at0006" xsi:type="CLUSTER">
+                <items archetype_node_id="at0002" xsi:type="ELEMENT">
                     <name>
-                        <value xml:space="preserve">_Плод</value>
+                        <value xml:space="preserve">Положение плода</value>
                     </name>
-                    <items archetype_node_id="at0002" xsi:type="ELEMENT">
-                        <name>
-                            <value xml:space="preserve">Положение плода</value>
-                        </name>
-                        <value xsi:type="DV_TEXT">
-                            <value xml:space="preserve">{{ fetus.position.name if fetus.position}}</value>
-                        </value>
-                    </items>
-                    <items archetype_node_id="at0003" xsi:type="ELEMENT">
-                        <name>
-                            <value xml:space="preserve">Предлежащая часть</value>
-                        </name>
-                        <value xsi:type="DV_TEXT">
-                            <value xml:space="preserve">{{ fetus.presenting_part.name if fetus.presenting_part}}</value>
-                        </value>
-                    </items>
-                    <items archetype_node_id="at0004" xsi:type="ELEMENT">
-                        <name>
-                            <value xml:space="preserve">{{ fetus.heartbeat|join(', ', attribute='name') }}</value>
-                        </name>
-                        <value xsi:type="DV_TEXT">
-                            <value xml:space="preserve">{{ fetus.heart_rate }}</value>
-                        </value>
-                    </items>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">продольное</value>
+                    </value>
                 </items>
-                {% endfor %}
+                <items archetype_node_id="at0003" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">Предлежащая часть</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">головка</value>
+                    </value>
+                </items>
+                <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                    <name>
+                        <value xml:space="preserve">Сердцебиение плода</value>
+                    </name>
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">140 уд в минуту</value>
+                    </value>
+                </items>
             </data>
         </content>
         <content archetype_node_id="at0000" xsi:type="EVALUATION">
@@ -643,7 +639,7 @@
                                 <value xml:space="preserve">дата</value>
                             </name>
                             <value xsi:type="DV_DATE">
-                                <value xml:space="preserve">{{ card.rw1_em_result.action.begDate_raw|datetime_format('%d.%m.%Y') if card.rw1_em_result }}</value>
+                                <value xml:space="preserve">17.08.2016</value>
                             </value>
                         </items>
                         <items archetype_node_id="at0032" xsi:type="ELEMENT">
@@ -651,7 +647,7 @@
                                 <value xml:space="preserve">_</value>
                             </name>
                             <value xsi:type="DV_TEXT">
-                                <value xml:space="preserve">{{ card.rw1_em_result.results if card.rw1_em_result }}</value>
+                                <value xml:space="preserve">отр</value>
                             </value>
                         </items>
                     </items>
@@ -664,7 +660,7 @@
                                 <value xml:space="preserve">датa</value>
                             </name>
                             <value xsi:type="DV_DATE">
-                                <value xml:space="preserve">{{ card.rw2_em_result.action.begDate_raw|datetime_format('%d.%m.%Y') if card.rw2_em_result }}</value>
+                                <value xml:space="preserve">26.10.2016</value>
                             </value>
                         </items>
                         <items archetype_node_id="at0033" xsi:type="ELEMENT">
@@ -672,7 +668,7 @@
                                 <value xml:space="preserve">_описание</value>
                             </name>
                             <value xsi:type="DV_TEXT">
-                                <value xml:space="preserve">{{ card.rw2_em_result.results }}</value>
+                                <value xml:space="preserve">отр</value>
                             </value>
                         </items>
                     </items>
@@ -686,7 +682,7 @@
                             <value xml:space="preserve">Группа крови</value>
                         </name>
                         <value xsi:type="DV_TEXT">
-                            <value xml:space="preserve">{{ card.anamnesis.blood_type.group if card.anamnesis and card.anamnesis.blood_type }}</value>
+                            <value xml:space="preserve">0(I)</value>
                         </value>
                     </items>
                     <items archetype_node_id="at0013" xsi:type="ELEMENT">
@@ -694,7 +690,7 @@
                             <value xml:space="preserve">резус-принадлежность</value>
                         </name>
                         <value xsi:type="DV_TEXT">
-                            <value xml:space="preserve">{{ card.anamnesis.blood_type.rh if card.anamnesis and card.anamnesis.blood_type }}</value>
+                            <value xml:space="preserve">Rh(+)</value>
                         </value>
                     </items>
                     <items archetype_node_id="at0010" xsi:type="ELEMENT">
@@ -702,7 +698,7 @@
                             <value xml:space="preserve">тип крови</value>
                         </name>
                         <value xsi:type="DV_TEXT">
-                            <value xml:space="preserve">{{ card.anamnesis.blood_type.group if card.anamnesis and card.anamnesis.blood_type }}</value>
+                            <value xml:space="preserve">0(I)</value>
                         </value>
                     </items>
                     <items archetype_node_id="at0011" xsi:type="ELEMENT">
@@ -710,7 +706,7 @@
                             <value xml:space="preserve">тирт антител</value>
                         </name>
                         <value xsi:type="DV_TEXT">
-                            <value xml:space="preserve">{{ card.anamnesis.blood_type.group if card.anamnesis and card.anamnesis.blood_type }}</value>
+                            <value xml:space="preserve">0(I)</value>
                         </value>
                     </items>
                     <items archetype_node_id="at0012" xsi:type="ELEMENT">
@@ -718,7 +714,7 @@
                             <value xml:space="preserve">Резус-принадлежность крови мужа</value>
                         </name>
                         <value xsi:type="DV_TEXT">
-                            <value xml:space="preserve">{{ card.father_anamnesis.blood_type.rh if card.father_anamnesis and card.father_anamnesis.blood_type }}</value>
+                            <value xml:space="preserve">Rh(+)</value>
                         </value>
                     </items>
                 </items>
@@ -731,14 +727,16 @@
                             <value xml:space="preserve">РСК</value>
                         </name>
                         <value xsi:type="DV_TEXT">
-                            <value xml:space="preserve">{{ card.get_em_result('0014').results }}</value>
+                            <value xml:space="preserve">отр</value>
                         </value>
                     </items>
                     <items archetype_node_id="at0016" xsi:type="ELEMENT">
                         <name>
                             <value xml:space="preserve">кожная проба</value>
                         </name>
-                        <value xsi:type="DV_TEXT" />
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">отр</value>
+                        </value>
                     </items>
                 </items>
                 <items archetype_node_id="at0017" xsi:type="CLUSTER">
@@ -754,7 +752,7 @@
                                 <value xml:space="preserve">дaта</value>
                             </name>
                             <value xsi:type="DV_DATE">
-                                <value xml:space="preserve">{{ card.get_em_result('0010').action.begDate_raw|datetime_format('%d.%m.%Y') if card.get_em_result('0010') }}</value>
+                                <value xml:space="preserve">10.11.2016</value>
                             </value>
                         </items>
                         <items archetype_node_id="at0020" xsi:type="ELEMENT">
@@ -762,7 +760,7 @@
                                 <value xml:space="preserve">_результат</value>
                             </name>
                             <value xsi:type="DV_TEXT">
-                                <value xml:space="preserve">{{ card.get_em_result('0010').results }}</value>
+                                <value xml:space="preserve">эр-4,2, ht-36,c/я -68</value>
                             </value>
                         </items>
                     </items>
@@ -775,7 +773,7 @@
                                 <value xml:space="preserve">датa</value>
                             </name>
                             <value xsi:type="DV_DATE">
-                                <value xml:space="preserve">{{ card.get_em_result('0015').action.begDate_raw|datetime_format('%d.%m.%Y') if card.get_em_result('0015') }}</value>
+                                <value xml:space="preserve">11.11.2016</value>
                             </value>
                         </items>
                         <items archetype_node_id="at0025" xsi:type="ELEMENT">
@@ -783,7 +781,7 @@
                                 <value xml:space="preserve">_результаты</value>
                             </name>
                             <value xsi:type="DV_TEXT">
-                                <value xml:space="preserve">{{ card.get_em_result('0015').results }}</value>
+                                <value xml:space="preserve">белок-0,031, глюк.-0,8</value>
                             </value>
                         </items>
                     </items>
@@ -797,7 +795,7 @@
                             <value xml:space="preserve">дата</value>
                         </name>
                         <value xsi:type="DV_DATE_TIME">
-                            <value xml:space="preserve">{{ card.get_em_result('0031').action.begDate_raw|datetime_format('%d.%m.%Y') if card.get_em_result('0031') }}</value>
+                            <value xml:space="preserve">10.10.2016 09:00:00</value>
                         </value>
                     </items>
                     <items archetype_node_id="at0028" xsi:type="ELEMENT">
@@ -805,7 +803,7 @@
                             <value xml:space="preserve">_</value>
                         </name>
                         <value xsi:type="DV_TEXT">
-                            <value xml:space="preserve">{{ card.get_em_result('0031').results }}</value>
+                            <value xml:space="preserve">гон., трих,гриб -abs</value>
                         </value>
                     </items>
                 </items>
@@ -818,7 +816,7 @@
                             <value xml:space="preserve">дата</value>
                         </name>
                         <value xsi:type="DV_DATE_TIME">
-                            <value xml:space="preserve">{{ card.get_em_result('0676').action.begDate_raw|datetime_format('%d.%m.%Y') if card.get_em_result('0676') }}</value>
+                            <value xml:space="preserve">10.10.2016 00:00:00</value>
                         </value>
                     </items>
                     <items archetype_node_id="at0031" xsi:type="ELEMENT">
@@ -826,7 +824,7 @@
                             <value xml:space="preserve">_описание</value>
                         </name>
                         <value xsi:type="DV_TEXT">
-                            <value xml:space="preserve">{{ card.get_em_result('0676').results }}</value>
+                            <value xml:space="preserve">отр</value>
                         </value>
                     </items>
                 </items>
@@ -859,7 +857,7 @@
                                 <value xml:space="preserve">_</value>
                             </name>
                             <value xsi:type="DV_TEXT">
-                                <value xml:space="preserve">{{ 'пройдена' if card.gymnastics_lessons_number > 0 }}</value>
+                                <value xml:space="preserve">занятия проводились</value>
                             </value>
                         </items>
                         <items archetype_node_id="at0005" xsi:type="ELEMENT">
@@ -867,7 +865,7 @@
                                 <value xml:space="preserve">Число занятий</value>
                             </name>
                             <value xsi:type="DV_QUANTITY">
-                                <magnitude>{{ card.gymnastics_lessons_number }}</magnitude>
+                                <magnitude>5.0</magnitude>
                             </value>
                         </items>
                         <items archetype_node_id="at0006" xsi:type="ELEMENT">
@@ -876,7 +874,7 @@
                             </name>
                             <value xsi:type="DV_CODED_TEXT">
                                 <defining_code>
-                                    <terminology_id />
+                                    <terminology_id/>
                                 </defining_code>
                             </value>
                         </items>
@@ -884,7 +882,7 @@
                             <name>
                                 <value xml:space="preserve">_дополнительно</value>
                             </name>
-                            <value xsi:type="DV_TEXT" />
+                            <value xsi:type="DV_TEXT"/>
                         </items>
                     </data>
                 </events>
@@ -917,7 +915,7 @@
                                 <value xml:space="preserve">_</value>
                             </name>
                             <value xsi:type="DV_TEXT">
-                                <value xml:space="preserve">{{ 'пройдена' if card.psychological_preparation_lessons_number > 0 }}</value>
+                                <value xml:space="preserve">прошла</value>
                             </value>
                         </items>
                         <items archetype_node_id="at0005" xsi:type="ELEMENT">
@@ -925,7 +923,7 @@
                                 <value xml:space="preserve">Число занятий</value>
                             </name>
                             <value xsi:type="DV_QUANTITY">
-                                <magnitude>{{ card.psychological_preparation_lessons_number }}</magnitude>
+                                <magnitude>3.0</magnitude>
                             </value>
                         </items>
                         <items archetype_node_id="at0006" xsi:type="ELEMENT">
@@ -934,7 +932,7 @@
                             </name>
                             <value xsi:type="DV_CODED_TEXT">
                                 <defining_code>
-                                    <terminology_id />
+                                    <terminology_id/>
                                 </defining_code>
                             </value>
                         </items>
@@ -942,7 +940,7 @@
                             <name>
                                 <value xml:space="preserve">_дополнительно</value>
                             </name>
-                            <value xsi:type="DV_TEXT" />
+                            <value xsi:type="DV_TEXT"/>
                         </items>
                     </data>
                 </events>
@@ -967,7 +965,7 @@
                         <value xml:space="preserve">_</value>
                     </name>
                     <value xsi:type="DV_TEXT">
-                        <value xml:space="preserve">{{ 'пройдена' if card.maternity_lessons_number > 0 }}</value>
+                        <value xml:space="preserve">прошла</value>
                     </value>
                 </items>
             </data>
@@ -990,19 +988,25 @@
                     <name>
                         <value xml:space="preserve">I раз</value>
                     </name>
-                    <value xsi:type="DV_DATE" />
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">10.10.2016</value>
+                    </value>
                 </items>
                 <items archetype_node_id="at0003" xsi:type="ELEMENT">
                     <name>
                         <value xml:space="preserve">II раза</value>
                     </name>
-                    <value xsi:type="DV_DATE" />
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">13.10.2016</value>
+                    </value>
                 </items>
                 <items archetype_node_id="at0004" xsi:type="ELEMENT">
                     <name>
                         <value xml:space="preserve">III раза</value>
                     </name>
-                    <value xsi:type="DV_DATE" />
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">15.11.2016</value>
+                    </value>
                 </items>
             </data>
         </content>
@@ -1025,7 +1029,7 @@
                         <value xml:space="preserve">_</value>
                     </name>
                     <value xsi:type="DV_TEXT">
-                        <value xml:space="preserve">{{ card.ad|join('; ') }}</value>
+                        <value xml:space="preserve">110/70</value>
                     </value>
                 </items>
             </data>
@@ -1048,7 +1052,9 @@
                     <name>
                         <value xml:space="preserve">_Дата</value>
                     </name>
-                    <value xsi:type="DV_DATE" />
+                    <value xsi:type="DV_DATE">
+                        <value xml:space="preserve">16.11.2016</value>
+                    </value>
                 </items>
             </data>
         </content>
@@ -1071,7 +1077,7 @@
                         <value xml:space="preserve">_Дата</value>
                     </name>
                     <value xsi:type="DV_DATE">
-                        <value xml:space="preserve">{{ card.card_attrs.predicted_delivery_date if card.card_attrs }}</value>
+                        <value xml:space="preserve">01.02.2017</value>
                     </value>
                 </items>
             </data>
@@ -1094,7 +1100,9 @@
                     <name>
                         <value xml:space="preserve">_</value>
                     </name>
-                    <value xsi:type="DV_TEXT" />
+                    <value xsi:type="DV_TEXT">
+                        <value xml:space="preserve">Иванов</value>
+                    </value>
                 </items>
             </data>
         </content>
@@ -1120,19 +1128,128 @@
                         <name>
                             <value xml:space="preserve">Дата обследования</value>
                         </name>
-                        <value xsi:type="DV_DATE" />
+                        <value xsi:type="DV_DATE">
+                            <value xml:space="preserve">10.10.2016</value>
+                        </value>
                     </items>
                     <items archetype_node_id="at0002" xsi:type="ELEMENT">
                         <name>
                             <value xml:space="preserve">Данные обследования</value>
                         </name>
-                        <value xsi:type="DV_TEXT" />
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">110/70 , вес 61,2 моча N</value>
+                        </value>
                     </items>
                     <items archetype_node_id="at0005" xsi:type="ELEMENT">
                         <name>
                             <value xml:space="preserve">Подпись врача</value>
                         </name>
-                        <value xsi:type="DV_TEXT" />
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">Петров</value>
+                        </value>
+                    </items>
+                </items>
+                <items archetype_node_id="at0003" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">Обследование</value>
+                    </name>
+                    <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Дата обследования</value>
+                        </name>
+                        <value xsi:type="DV_DATE">
+                            <value xml:space="preserve">11.11.2016</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Данные обследования</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">110/60, вес 63,1, моча N</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0005" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Подпись врача</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">Иванов</value>
+                        </value>
+                    </items>
+                </items>
+                <items archetype_node_id="at0003" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">Обследование</value>
+                    </name>
+                    <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Дата обследования</value>
+                        </name>
+                        <value xsi:type="DV_DATE">
+                            <value xml:space="preserve">12.11.2016</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Данные обследования</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">вес 64, 110/70, моча N</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0005" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Подпись врача</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">Сидоров</value>
+                        </value>
+                    </items>
+                </items>
+            </data>
+        </content>
+        <content archetype_node_id="at0000" xsi:type="EVALUATION">
+            <name>
+                <value xml:space="preserve">Данные нескольких обследований с датами</value>
+            </name>
+            <archetype_details>
+                <archetype_id>
+                    <value xml:space="preserve">openEHR-EHR-EVALUATION.dannye_nesk_obsledovanyi_s_datami.v1</value>
+                </archetype_id>
+                <rm_version xml:space="preserve">1.0.1</rm_version>
+            </archetype_details>
+            <data archetype_node_id="at0001" xsi:type="ITEM_TREE">
+                <name>
+                    <value xml:space="preserve">Tree</value>
+                </name>
+                <items archetype_node_id="at0003" xsi:type="CLUSTER">
+                    <name>
+                        <value xml:space="preserve">Обследование</value>
+                    </name>
+                    <items archetype_node_id="at0004" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Дата обследования</value>
+                        </name>
+                        <value xsi:type="DV_DATE">
+                            <value xml:space="preserve">16.11.2016</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0002" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Данные обследования</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">вес 64,2, 110/80, моча в норме</value>
+                        </value>
+                    </items>
+                    <items archetype_node_id="at0005" xsi:type="ELEMENT">
+                        <name>
+                            <value xml:space="preserve">Подпись врача</value>
+                        </name>
+                        <value xsi:type="DV_TEXT">
+                            <value xml:space="preserve">Тишкин</value>
+                        </value>
                     </items>
                 </items>
             </data>
@@ -1164,7 +1281,7 @@
                                 <value xml:space="preserve">_</value>
                             </name>
                             <value xsi:type="DV_QUANTITY">
-                                <magnitude>{{ card.weight_gain }}</magnitude>
+                                <magnitude>7.5</magnitude>
                                 <units xml:space="preserve">kg</units>
                             </value>
                         </items>
@@ -1172,7 +1289,7 @@
                             <name>
                                 <value xml:space="preserve">_%</value>
                             </name>
-                            <value xsi:type="DV_QUANTITY" />
+                            <value xsi:type="DV_QUANTITY"/>
                         </items>
                     </data>
                 </events>
@@ -1196,7 +1313,10 @@
                     <name>
                         <value xml:space="preserve">Предполагаемый вес плода</value>
                     </name>
-                    <value xsi:type="DV_QUANTITY" />
+                    <value xsi:type="DV_QUANTITY">
+                        <magnitude>2800.0</magnitude>
+                        <units xml:space="preserve">gm</units>
+                    </value>
                 </items>
             </data>
         </content>

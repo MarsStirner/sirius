@@ -297,7 +297,7 @@ class Scheduler(object):
         producer = RemoteProducer()
         card_msg = producer.send(msg, async=False)
 
-        fname = 'exchange_card_template.xml'
+        fname = 'exchange_card_example.xml'
         rel_path = 'sirius/blueprints/api/remote_service/tambov/active/service/'
         with open(os.path.join(rel_path, fname)) as pr:
             template_text = pr.read()
