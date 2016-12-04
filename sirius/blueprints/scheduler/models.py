@@ -85,7 +85,8 @@ class Schedule(Model):
     def acquire_group_lock(self):
         lock_expire = 60*60*10  # 10h
         group_hexdigest = md5(self.schedule_group.code).hexdigest()
-        lock_id = '{0}-lock-{1}'.format(self.__class__.__name__, group_hexdigest)
+        lock_id = '{0}-{1}-lock-{2}'.format(self.__class__.__name__,
+                                            self.code, group_hexdigest)
 
         def acquire_lock():
             # cache.add fails if the key already exists

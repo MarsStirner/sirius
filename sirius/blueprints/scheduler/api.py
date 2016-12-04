@@ -6,6 +6,8 @@
 @date: 26.09.2016
 
 """
+import logging
+
 import os
 from sirius.blueprints.monitor.exception import InternalError
 from sirius.lib.implement import Implementation
@@ -14,16 +16,20 @@ from sirius.models.operation import OperationCode
 from sirius.models.system import SystemCode
 from .models import Schedule
 
+logger = logging.getLogger('simple')
+
 
 class Scheduler(object):
     def run(self):
         schedules = Schedule.get_schedules_to_execute()
         for schedule in schedules:
+            logger.debug('Scheduler %s' % (schedule.code))
             with schedule.acquire_group_lock() as is_success:
+                logger.debug('Scheduler locked %s %s' % (schedule.code, is_success))
                 if is_success:
                     for req_data in schedule.schedule_group.get_requests():
                         self.execute(req_data)
-                    return
+                    # return
 
     def execute(self, req_data):
         from sirius.blueprints.api.local_service.producer import LocalProducer
@@ -31,6 +37,7 @@ class Scheduler(object):
         entity_code = req_data.entity.code
         system_code = req_data.system.code
         sampling_method_name = req_data.sampling_method
+        logger.info('Scheduler execute %s %s %s' % (system_code, entity_code, sampling_method_name))
         if sampling_method_name:
             sampling_method_func = getattr(self, sampling_method_name, None)
             if callable(sampling_method_func):

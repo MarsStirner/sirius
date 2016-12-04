@@ -205,3 +205,117 @@ class CaseTambovBuilder(Builder):
             }
 
         return entities
+
+    def build_remote_entities_second(self, header_meta, pack_entity):
+        """
+        Требует в header_meta
+        local_operation_code
+        local_entity_code
+        local_main_param_name
+        local_main_id
+        local_parents_params
+
+        Устанавливает в entity
+        dst_entity_code
+        """
+        ticket_data = pack_entity['data']
+        src_operation_code = header_meta['local_operation_code']
+        src_entity_code = header_meta['local_entity_code']
+
+        # сопоставление параметров родительских сущностей
+        params_map = {
+            RisarEntityCode.CARD: {
+                'entity': TambovEntityCode.SMART_PATIENT, 'param': 'patientUid'
+            }
+        }
+        self.reform_local_parents_params(header_meta, src_entity_code, params_map)
+
+        entities = RequestEntities()
+        main_item = entities.set_main_entity(
+            dst_entity_code=TambovEntityCode.CASE,
+            dst_parents_params=header_meta['remote_parents_params'],
+            dst_main_id_name='id',
+            src_operation_code=src_operation_code,
+            src_entity_code=src_entity_code,
+            src_main_id_name=header_meta['local_main_param_name'],
+            src_id=header_meta['local_main_id'],
+            level_count=2,
+        )
+        if src_operation_code != OperationCode.DELETE:
+            main_item['body'] = {
+                # 'id': None,  # проставляется в set_current_id_func
+                'uid': str(header_meta['local_main_id']),
+                'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
+                'medicalOrganizationId': safe_traverse(ticket_data, 'hospital') or '',
+                'caseTypeId': '1',
+                'initGoalId': safe_traverse(ticket_data, 'visit_type') or '7',
+                'fundingSourceTypeId': '1',
+                'careRegimenId': '1',
+                # 'diagnoses' 'diagnosId': safe_traverse(ticket_data, 'diagnosis'),  # код, а нужен ИД
+                # 'diagnoses' 'establishmentDate': to_date(safe_traverse(ticket_data, 'date_open')),
+            }
+
+        srv_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.SERVICE,
+            OperationCode.READ_MANY,
+        )
+        for serv_code in (safe_traverse(ticket_data, 'medical_services') or ()):
+            item = entities.set_child_entity(
+                parent_item=main_item,
+                dst_entity_code=TambovEntityCode.REND_SERVICE,
+                dst_parents_params=header_meta['remote_parents_params'],
+                dst_main_id_name='id',
+                dst_parent_id_name='medicalCaseId',
+                src_operation_code=src_operation_code,
+                src_entity_code=src_entity_code,
+                src_main_id_name=header_meta['local_main_param_name'],
+                src_id=header_meta['local_main_id'],
+            )
+            prototype_code = safe_traverse(serv_code, 'medical_service') or ''
+            prototype_id = SrvPrototypeMatch.get_prototype_id_by_prototype_code(prototype_code)
+            req = DataRequest()
+            req.set_req_params(
+                url=srv_api_method['template_url'],
+                method=srv_api_method['method'],
+                protocol=ProtocolCode.SOAP,
+                data={
+                    'clinic': safe_traverse(ticket_data, 'hospital') or '',
+                    'prototype': prototype_id,
+                },
+            )
+            srvs_data = self.transfer__send_request(req)
+            srv_data = srvs_data[0]  # считаем, что будет одна
+            if src_operation_code != OperationCode.DELETE:
+                item['body'] = {
+                    # 'id': None,  # проставляется в set_current_id_func
+                    'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
+                    'serviceId': srv_data['id'],
+                    'dateFrom': to_date(safe_traverse(ticket_data, 'date_open')),
+                    'isRendered': True,
+                    'orgId': safe_traverse(ticket_data, 'hospital') or '',
+                }
+
+        checkup_node = pack_entity['addition'][RisarEntityCode.CHECKUP_OBS_SECOND][0]
+        checkup_data = checkup_node['data']
+        item = entities.set_child_entity(
+            parent_item=main_item,
+            dst_entity_code=TambovEntityCode.VISIT,
+            dst_parents_params=header_meta['remote_parents_params'],
+            dst_main_id_name='id',
+            dst_parent_id_name='caseId',
+            src_operation_code=src_operation_code,
+            src_entity_code=src_entity_code,
+            src_main_id_name=header_meta['local_main_param_name'],
+            src_id=header_meta['local_main_id'],
+        )
+        if src_operation_code != OperationCode.DELETE:
+            item['body'] = {
+                # 'id': None,  # проставляется в set_current_id_func
+                'admissionDate': to_date(checkup_data['dynamic_monitoring']['date']),
+                'goalId': '7',
+                'placeId': '1',
+                # 'diagnoses' 'diagnosId': safe_traverse(ticket_data, 'medical_report', 'diagnosis_osn') or '',
+            }
+
+        return entities

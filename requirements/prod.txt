@@ -49,4 +49,4 @@ Flask-Celery-Helper>=1.1.0
 jsonschema>=2.5.1
 
 # SOAP
-zeep
+zeep==0.23.0
