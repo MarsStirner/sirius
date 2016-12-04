@@ -20,11 +20,14 @@ class TestSchedule:
     def test_execute(self):
         with app.app_context():
             sch = Scheduler()
+
             # sch.run()
+
             # schedule_groups = ScheduleGroup.query.all()
             # for schedule_group in schedule_groups:
             #     for req_data in schedule_group.get_requests():
             #         sch.execute(req_data)
+
             req_data = ScheduleGroupRequest.query.filter(
                 ScheduleGroupRequest.schedule_group_id == 1,
                 ScheduleGroupRequest.order == 5,

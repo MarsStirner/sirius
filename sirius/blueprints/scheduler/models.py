@@ -104,7 +104,7 @@ class Schedule(Model):
         finally:
             if res:
                 sch_exec.end()
-                release_lock()
+            release_lock()
 
 
 class ScheduleGroup(Model):

@@ -9,7 +9,7 @@
 import logging
 
 import os
-from sirius.blueprints.monitor.exception import InternalError
+from sirius.blueprints.monitor.exception import InternalError, LoggedException
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message
 from sirius.models.operation import OperationCode
@@ -162,7 +162,7 @@ class Scheduler(object):
                 }
                 producer = LocalProducer()
                 producer.send(msg)
-            except InternalError:
+            except LoggedException:
                 pass
 
     def get_doctors(self, system_code, entity_code):
@@ -188,8 +188,8 @@ class Scheduler(object):
             try:
                 if not org_data['TFOMSCode']:
                     continue
-                if not org_data['TFOMSCode'] == '1434663':  # права выданы только на это лпу
-                    continue
+                # if not org_data['TFOMSCode'] == '1434663':  # права выданы только на это лпу
+                #     continue
                 msg = self.create_message(system_code, entity_code)  # getLocations
                 meta = msg.get_header().meta
                 meta['local_parents_params'] = {
@@ -197,7 +197,7 @@ class Scheduler(object):
                 }
                 producer = LocalProducer()
                 producer.send(msg)
-            except InternalError:
+            except LoggedException:
                 pass
 
     def get_times(self, system_code, entity_code):
@@ -229,7 +229,7 @@ class Scheduler(object):
                 }
                 producer = LocalProducer()
                 producer.send(msg)
-            except InternalError:
+            except LoggedException:
                 pass
 
     def get_birth_results(self, system_code, entity_code):
@@ -266,7 +266,7 @@ class Scheduler(object):
                 }
                 producer = LocalProducer()
                 producer.send(msg)
-            except InternalError:
+            except LoggedException:
                 pass
 
     def send_exchange_card(self, system_code, entity_code):
@@ -349,7 +349,7 @@ class Scheduler(object):
                     'TFOMSCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': '41'},  # todo: card_data['card_LPU']
                 }
                 LocalProducer().send(msg)
-            except InternalError:
+            except LoggedException:
                 pass
 
     def get_hospital_rec(self, system_code, entity_code):
@@ -387,5 +387,5 @@ class Scheduler(object):
                 }
                 producer = LocalProducer()
                 producer.send(msg)
-            except InternalError:
+            except LoggedException:
                 pass
