@@ -117,6 +117,7 @@ def api_events_binded():
         RegionCode.TAMBOV: [
             RisarEvents.SAVE_CHECKUP,
             RisarEvents.ENTER_MIS_EMPLOYEE,
+            RisarEvents.CREATE_REFERRAL,
         ],
     }
     res = bind_map[region_code]

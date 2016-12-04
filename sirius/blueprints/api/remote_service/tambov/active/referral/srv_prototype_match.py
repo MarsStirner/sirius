@@ -13,7 +13,8 @@ from sirius.blueprints.monitor.exception import InternalError
 
 class SrvPrototypeMatch(object):
     inited = False
-    fname = 'measure_prototype_01.csv'
+    # fname = 'measure_prototype_01.csv'
+    fname = 'measure_prototype_01_skiped_fake.csv'
     srv_prototype__measure__map = {}
     srv_prototype__measure_code__map = {}
     measure__srv_prototype__map = {}

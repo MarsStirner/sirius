@@ -13,7 +13,8 @@ from .test_data import request_tambov_patient_1, request_risar_first_checkup_215
     request_tambov_register_patient_card, request_risar_second_checkup_2159, \
     request_risar_measures_139, create_risar_card_1, \
     get_request_risar_get_measure_research, request_risar_first_checkup_31, \
-    request_risar_measures_3
+    request_risar_measures_3, request_risar_second_checkup_60, \
+    save_request_risar_get_measure_research
 from .request import request_remote, request_local, \
     request_client_local_id_by_remote_id, request_register_card_idents
 from sirius.blueprints.api.test.connect import make_login, release_token
@@ -21,7 +22,7 @@ from sirius.blueprints.api.test.connect import make_login, release_token
 session = None
 
 
-class _TestLocalApi:
+class TestLocalApi:
 
     def test_auth(self):
         global session
@@ -42,7 +43,7 @@ class _TestLocalApi:
         code = result['meta']['code']
         assert code == 200
 
-    def test_first_exam_patient(self, testapp):  # бизнес процесс первичного приема пациента
+    def _test_first_exam_patient(self, testapp):  # бизнес процесс первичного приема пациента
         # Добавляем/обновляем пациента по UID мис
         result = request_remote(testapp, session, request_tambov_patient_1)
         code = result['meta']['code']
@@ -83,6 +84,23 @@ class _TestLocalApi:
 
         # сохранение мероприятий
         result = request_local(testapp, session, request_risar_measures_3)
+        code = result['meta']['code']
+        assert code == 200
+
+    def _test_change_risar_checkup_second(self, testapp):
+        # сохранение первичного осмотра пациента, запрос выдачи талона
+        result = request_local(testapp, session, request_risar_second_checkup_60)
+        code = result['meta']['code']
+        assert code == 200
+
+        # сохранение мероприятий
+        result = request_local(testapp, session, request_risar_measures_3)
+        code = result['meta']['code']
+        assert code == 200
+
+    def test_save_referral(self, testapp):
+        # сохранение направления
+        result = request_local(testapp, session, save_request_risar_get_measure_research(3, 99))
         code = result['meta']['code']
         assert code == 200
 

@@ -50,6 +50,16 @@ request_risar_first_checkup_31 = {
     'method': 'post' if False else 'put',
 }
 
+request_risar_second_checkup_60 = {
+    'service_method': 'risar.api_checkup_obs_second_ticket25_get',
+    'request_url': '/risar/api/integration/0/card/3/checkup/obs/second/60/ticket25',
+    'request_method': 'get',
+    'request_params': {'card_id': 3},
+    'main_id': 60,
+    'main_param_name': 'exam_obs_id',
+    'method': 'post' if False else 'put',
+}
+
 request_risar_measures_139 = {
     'service_method': 'risar.api_measure_list_get',
     'request_url': '/risar/api/integration/0/card/139/measures/list/',
@@ -79,6 +89,20 @@ request_risar_second_checkup_2159 = {
     'main_param_name': 'exam_obs_id',
     'method': 'post' if False else 'put',
 }
+
+
+def save_request_risar_get_measure_research(card_id, main_id):
+    request_risar_get_measure_research = {
+        'service_method': 'risar.api_measure_get',
+        'request_url': '/risar/api/integration/0/card/%s/measures/%s' % (card_id, main_id),
+        'request_method': 'get',
+        'request_params': {'card_id': card_id},
+        'main_id': main_id,
+        'main_param_name': 'measure_id',
+        'method': 'post',
+        'event': 'create_referral',
+    }
+    return request_risar_get_measure_research
 
 
 def get_request_risar_get_measure_research(card_id, main_id):
