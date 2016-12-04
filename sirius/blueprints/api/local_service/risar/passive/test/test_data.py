@@ -31,8 +31,8 @@ create_risar_card_1 = {
 }
 
 request_risar_first_checkup_2159 = {
-    'service_method': 'api_checkup_obs_first_ticket25_get',
-    'request_url': 'http://localhost:6600/risar/api/integration/0/card/139/checkup/obs/first/2159/ticket25',
+    'service_method': 'risar.api_checkup_obs_first_ticket25_get',
+    'request_url': '/risar/api/integration/0/card/139/checkup/obs/first/2159/ticket25',
     'request_method': 'get',
     'request_params': {'card_id': 139},
     'main_id': 2159,
@@ -40,9 +40,19 @@ request_risar_first_checkup_2159 = {
     'method': 'post' if False else 'put',
 }
 
+request_risar_first_checkup_31 = {
+    'service_method': 'risar.api_checkup_obs_first_ticket25_get',
+    'request_url': '/risar/api/integration/0/card/3/checkup/obs/first/31/ticket25',
+    'request_method': 'get',
+    'request_params': {'card_id': 3},
+    'main_id': 31,
+    'main_param_name': 'exam_obs_id',
+    'method': 'post' if False else 'put',
+}
+
 request_risar_measures_139 = {
-    'service_method': 'api_measure_list_get',
-    'request_url': 'http://localhost:6600/risar/api/integration/0/card/139/measures/list/',
+    'service_method': 'risar.api_measure_list_get',
+    'request_url': '/risar/api/integration/0/card/139/measures/list/',
     'request_method': 'get',
     'request_params': {'card_id': 139},
     'main_id': None,
@@ -50,9 +60,19 @@ request_risar_measures_139 = {
     'method': 'post' if False else 'put',
 }
 
+request_risar_measures_3 = {
+    'service_method': 'risar.api_measure_list_get',
+    'request_url': '/risar/api/integration/0/card/3/measures/list/',
+    'request_method': 'get',
+    'request_params': {'card_id': 3},
+    'main_id': None,
+    'main_param_name': None,
+    'method': 'post' if False else 'put',
+}
+
 request_risar_second_checkup_2159 = {
-    'service_method': 'api_checkup_obs_second_ticket25_get',
-    'request_url': 'http://localhost:6600/risar/api/integration/0/card/139/checkup/obs/second/2159/ticket25',
+    'service_method': 'risar.api_checkup_obs_second_ticket25_get',
+    'request_url': '/risar/api/integration/0/card/139/checkup/obs/second/2159/ticket25',
     'request_method': 'get',
     'request_params': {'card_id': 139},
     'main_id': 2159,
@@ -63,8 +83,8 @@ request_risar_second_checkup_2159 = {
 
 def get_request_risar_get_measure_research(card_id, main_id):
     request_risar_get_measure_research = {
-        'service_method': 'api_measure_get',
-        'request_url': 'http://localhost:6600/risar/api/integration/0/card/%s/measures/%s' % (card_id, main_id),
+        'service_method': 'risar.api_measure_get',
+        'request_url': '/risar/api/integration/0/card/%s/measures/%s' % (card_id, main_id),
         'request_method': 'get',
         'request_params': {'card_id': card_id},
         'main_id': main_id,
@@ -78,7 +98,7 @@ def get_sch_ticket_data_required(is_delete, client_id, ticket_id, org_id, doctor
     return {
         'event': RisarEvents.MAKE_APPOINTMENT,
         'method': 'delete' if is_delete else 'post',
-        "service_method": 'api_schedule_tickets_get',
+        "service_method": 'risar.api_schedule_tickets_get',
         "request_params": {'client_id': client_id},
         "main_id": ticket_id,
         "main_param_name": 'schedule_ticket_id',
@@ -97,7 +117,7 @@ def get_send_to_mis_card_data(client_id, card_id, is_create):
         'request_method': 'get',
         'main_param_name': 'card_id',
         'request_params': {'client_id': client_id},
-        'request_url': 'http://localhost:6600/risar/api/integration/0/card/%s?client_id=%s' %
+        'request_url': '/risar/api/integration/0/card/%s?client_id=%s' %
                        (str(card_id), str(client_id)),
         'event': RisarEvents.CREATE_CARD,
         'main_id': card_id,
@@ -111,7 +131,7 @@ def get_send_to_mis_first_ticket25_data(card_id, checkup_id, is_create):
         'request_method': 'get',
         'main_param_name': 'external_id',
         'request_params': {'card_id': card_id},
-        'request_url': 'http://localhost:6600/risar/api/integration/0/card/%s/checkup/obs/first/%s/ticket25' % (card_id, checkup_id),
+        'request_url': '/risar/api/integration/0/card/%s/checkup/obs/first/%s/ticket25' % (card_id, checkup_id),
         'event': RisarEvents.SAVE_CHECKUP,
         'main_id': checkup_id,
         'method': 'post' if is_create else 'put',
@@ -124,7 +144,7 @@ def get_send_to_mis_second_ticket25_data(card_id, checkup_id, is_create):
         'request_method': 'get',
         'main_param_name': 'external_id',
         'request_params': {'card_id': card_id},
-        'request_url': 'http://localhost:6600/risar/api/integration/0/card/%s/checkup/obs/second/%s/ticket25' % (card_id, checkup_id),
+        'request_url': '/risar/api/integration/0/card/%s/checkup/obs/second/%s/ticket25' % (card_id, checkup_id),
         'event': RisarEvents.SAVE_CHECKUP,
         'main_id': checkup_id,
         'method': 'post' if is_create else 'put',
@@ -137,7 +157,7 @@ def get_send_to_mis_pc_ticket25_data(card_id, checkup_id, is_create):
         'request_method': 'get',
         'main_param_name': 'external_id',
         'request_params': {'card_id': card_id},
-        'request_url': 'http://localhost:6600/risar/api/integration/0/card/%s/checkup/pc/%s/ticket25' % (card_id, checkup_id),
+        'request_url': '/risar/api/integration/0/card/%s/checkup/pc/%s/ticket25' % (card_id, checkup_id),
         'event': RisarEvents.SAVE_CHECKUP,
         'main_id': checkup_id,
         'method': 'post' if is_create else 'put',
@@ -150,7 +170,7 @@ def get_send_to_mis_measures_data(card_id, is_create):
         'request_method': 'get',
         'main_param_name': 'card_id',
         'request_params': {'card_id': card_id},
-        'request_url': 'http://localhost:6600/risar/api/integration/0/card/%s/measures/list/' % card_id,
+        'request_url': '/risar/api/integration/0/card/%s/measures/list/' % card_id,
         'event': RisarEvents.SAVE_CHECKUP,
         'main_id': card_id,
         'method': 'post' if is_create else 'put',
@@ -163,7 +183,7 @@ def get_send_to_mis_epicrisis_data(card_id, is_create):
         'request_method': 'get',
         'main_param_name': 'card_id',
         'request_params': {'card_id': card_id},
-        'request_url': 'http://localhost:6600/risar/api/integration/0/card/%s/epicrisis/' % card_id,
+        'request_url': '/risar/api/integration/0/card/%s/epicrisis/' % card_id,
         'event': RisarEvents.CLOSE_CARD,
         'main_id': card_id,
         'method': 'post' if is_create else 'put',
