@@ -244,14 +244,15 @@ def beat_entry(function=None, self_pos=1):
                 # logg_to_MonitorDB(params)
                 reraise(Exception, LoggedException(params), sys.exc_info()[2])
             else:
-                params = {
-                    'stream': get_stream_data(module, func, obj, meta),
-                    'message': 'OK',
-                    'enter_time': enter_datetime,
-                    'work_time': exit_time - enter_time,
-                }
-                logger.info(unicode(params))
+                # params = {
+                #     'stream': get_stream_data(module, func, obj, meta),
+                #     'message': 'OK',
+                #     'enter_time': enter_datetime,
+                #     'work_time': exit_time - enter_time,
+                # }
+                # logger.info(unicode(params))
                 # logg_to_MonitorDB(params)
+                pass
             return res
         return wrapper
     if callable(function):
