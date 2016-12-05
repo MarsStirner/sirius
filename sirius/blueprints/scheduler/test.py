@@ -30,6 +30,6 @@ class TestSchedule:
 
             req_data = ScheduleGroupRequest.query.filter(
                 ScheduleGroupRequest.schedule_group_id == 1,
-                ScheduleGroupRequest.order == 4,
+                ScheduleGroupRequest.order == 5,
             ).one()
             sch.execute(req_data)

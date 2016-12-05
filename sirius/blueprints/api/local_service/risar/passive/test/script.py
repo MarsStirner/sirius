@@ -87,12 +87,29 @@ class TestLocalApi:
         code = result['meta']['code']
         assert code == 200
 
-    def _test_change_risar_checkup_second(self, testapp):
-        # сохранение первичного осмотра пациента, запрос выдачи талона
+        # сохранение повторного осмотра пациента, запрос выдачи талона
         result = request_local(testapp, session, request_risar_second_checkup_60)
         code = result['meta']['code']
         assert code == 200
 
+        # сохранение мероприятий
+        result = request_local(testapp, session, request_risar_measures_3)
+        code = result['meta']['code']
+        assert code == 200
+
+
+    def _test_change_risar_checkup_second(self, testapp):
+        # сохранение повторного осмотра пациента, запрос выдачи талона
+        result = request_local(testapp, session, request_risar_second_checkup_60)
+        code = result['meta']['code']
+        assert code == 200
+
+        # сохранение мероприятий
+        result = request_local(testapp, session, request_risar_measures_3)
+        code = result['meta']['code']
+        assert code == 200
+
+    def _test_change_risar_measures(self, testapp):
         # сохранение мероприятий
         result = request_local(testapp, session, request_risar_measures_3)
         code = result['meta']['code']
