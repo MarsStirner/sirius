@@ -1,4 +1,5 @@
 # coding: utf-8
+import logging
 
 import os
 
@@ -12,6 +13,7 @@ from celeryusagicompat import BICeleryUsagiClient
 
 
 logger = get_task_logger(__name__)
+smp_logger = logging.getLogger('simple')
 
 wsgi_app = init_sirius_app(BICeleryUsagiClient)
 
@@ -31,6 +33,7 @@ with wsgi_app.app_context():
         Based on http://stackoverflow.com/a/14146403/1198943
         """
         logger.debug('Initializing SQLAlchemy for PID {}.'.format(os.getpid()))
+        smp_logger.debug('Initializing SQLAlchemy for PID {}.'.format(os.getpid()))
         db.init_app(wsgi_app)
 
 

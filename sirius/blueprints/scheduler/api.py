@@ -10,6 +10,7 @@ import logging
 
 import os
 from sirius.blueprints.monitor.exception import InternalError, LoggedException
+from sirius.extensions import db
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message
 from sirius.models.operation import OperationCode
@@ -20,22 +21,35 @@ logger = logging.getLogger('simple')
 
 
 class Scheduler(object):
-    def run(self):
+    def run_(self):
         schedules = Schedule.get_schedules_to_execute()
         for schedule in schedules:
             logger.debug('Scheduler %s' % schedule.code)
             with schedule.acquire_group_lock() as is_success:
-                logger.debug('Scheduler locked %s %s' % (schedule.code, is_success))
+                logger.debug('Scheduler locked %s %s sessionId %s' % (
+                    schedule.code, is_success, id(db.session)
+                ))
                 if is_success:
                     for req_data in schedule.schedule_group.get_requests():
                         self.execute(req_data)
-                    return  # на след. цикле ошибка DetachedInstanceError:
-                    # Parent instance <Schedule> is not bound to a Session;
-                    # lazy load operation of attribute 'schedule_group' cannot proceed
+                        db.session.commit()
+                        # на след. цикле ошибка DetachedInstanceError:
+                        # Parent instance <Schedule> is not bound to a Session;
+                        # lazy load operation of attribute 'schedule_group' cannot proceed
+    def run(self):
+        schedules = Schedule.get_schedules_to_execute()
+        for schedule in schedules:
+            logger.debug('Scheduler locked %s sessionId %s' % (
+                schedule.code, id(db.session)
+            ))
+            for req_data in schedule.schedule_group.get_requests():
+                self.execute(req_data)
+                db.session.commit()
 
     def execute(self, req_data):
         from sirius.blueprints.api.local_service.producer import LocalProducer
 
+        logger.debug('Scheduler execute sessionId %s' % id(db.session))
         entity_code = req_data.entity.code
         system_code = req_data.system.code
         sampling_method_name = req_data.sampling_method
@@ -302,22 +316,32 @@ class Scheduler(object):
         with open(os.path.join(rel_path, fname)) as pr:
             template_text = pr.read()
         exch_card_req = {
+            # 'doc': {
+            #     'id': '0',  # 1181
+            #     'context_type': 'risar',
+            #     'template_text': template_text,
+            #     'template_name': 'exchange_card',
+            #     'context': {
+            #         # 'event_id': None,
+            #         'currentOrgStructure': None,
+            #         'currentOrganisation': None,
+            #         'currentPerson': None,  # 2
+            #     }
+            # }
+            # POST http://127.0.0.1:6601/print_subsystem/fill_template
             'doc': {
-                'id': '0',  # 1181
-                'context_type': 'risar',
+                'context_type': 'risar_exchange_card',
                 'template_text': template_text,
                 'template_name': 'exchange_card',
-                'context': {
-                    # 'event_id': None,
-                    'currentOrgStructure': None,
-                    'currentOrganisation': None,
-                    'currentPerson': None,  # 2
-                }
+                'id': 1,
+                'context': '',
+                'event_id': 345
             }
         }
         for card_data in card_msg.get_data():
             try:
-                exch_card_req['doc']['context']['event_id'] = card_data['card_id']
+                # exch_card_req['doc']['context']['event_id'] = card_data['card_id']
+                exch_card_req['doc']['event_id'] = card_data['card_id']
                 # /print_subsystem/fill_template
                 exch_card_method = reformer.get_api_method(
                     SystemCode.LOCAL, RisarEntityCode.EXCHANGE_CARD,

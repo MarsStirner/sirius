@@ -149,15 +149,13 @@ class CaseTambovBuilder(Builder):
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
                 'medicalOrganizationId': safe_traverse(ticket_data, 'hospital') or '',
                 'caseTypeId': '1',
-                'initGoalId': safe_traverse(ticket_data, 'visit_type') or '7',
                 'fundingSourceTypeId': '1',
                 'careRegimenId': '1',
                 'careLevelId': safe_traverse(ticket_data, 'medical_care'),
                 # неотложная или плановая
                 'careProvidingFormId': 2 if safe_traverse(ticket_data, 'medical_care_emergency') else 3
             }
-            # Unmarshalling Error: cvc-complex-type.2.4.a: Invalid content was found starting with element 'int:diagnoses'
-            # diagnosis = safe_traverse(ticket_data, 'diagnosis')
+            diagnosis = safe_traverse(ticket_data, 'diagnosis')
             # if diagnosis:
             #     main_item['body']['diagnoses'] = [{
             #         # 'stageId': 3,
@@ -165,6 +163,7 @@ class CaseTambovBuilder(Builder):
             #         'diagnosId': dm.safe_diag_id(diagnosis),
             #         'establishmentDate': to_date(safe_traverse(ticket_data, 'date_open')),
             #     }]
+            main_item['body']['initGoalId'] = safe_traverse(ticket_data, 'visit_type') or '7'
 
         checkup_node = pack_entity['addition'][checkup_code][0]
         checkup_data = checkup_node['data']
@@ -186,8 +185,7 @@ class CaseTambovBuilder(Builder):
                 'goalId': safe_traverse(ticket_data, 'visit_type') or '7',
                 'placeId': '1',
                 'profileId': safe_traverse(ticket_data, 'medical_care_profile'),
-                # ошибка уникальности ИД (видимо не те ИД храним по врачу
-                # 'resourceGroupId': ticket_data['doctor'],
+                'resourceGroupId': ticket_data['doctor'],
             }
             diagnosis_osn = safe_traverse(ticket_data, 'medical_report', 'diagnosis_osn')
             if diagnosis_osn:
@@ -245,8 +243,7 @@ class CaseTambovBuilder(Builder):
                     'quantity': safe_traverse(serv_code, 'medical_service_quantity'),
                     'fundingSourceTypeId': 1,
                     'diagnosisId': dm.diag_id(safe_traverse(ticket_data, 'diagnosis')),
-                    # ошибка уникальности ИД (видимо не те ИД храним по врачу
-                    # 'resourceGroupId': ticket_data['doctor'],
+                    'resourceGroupId': ticket_data['doctor'],
                 }
 
         return entities
