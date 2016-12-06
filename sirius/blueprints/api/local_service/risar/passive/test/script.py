@@ -98,6 +98,17 @@ class TestLocalApi:
         assert code == 200
 
 
+    def _test_change_risar_checkup_first(self, testapp):
+        # сохранение повторного осмотра пациента, запрос выдачи талона
+        result = request_local(testapp, session, request_risar_first_checkup_31)
+        code = result['meta']['code']
+        assert code == 200
+
+        # сохранение мероприятий
+        # result = request_local(testapp, session, request_risar_measures_3)
+        # code = result['meta']['code']
+        # assert code == 200
+
     def _test_change_risar_checkup_second(self, testapp):
         # сохранение повторного осмотра пациента, запрос выдачи талона
         result = request_local(testapp, session, request_risar_second_checkup_60)
@@ -105,9 +116,9 @@ class TestLocalApi:
         assert code == 200
 
         # сохранение мероприятий
-        result = request_local(testapp, session, request_risar_measures_3)
-        code = result['meta']['code']
-        assert code == 200
+        # result = request_local(testapp, session, request_risar_measures_3)
+        # code = result['meta']['code']
+        # assert code == 200
 
     def _test_change_risar_measures(self, testapp):
         # сохранение мероприятий
@@ -130,3 +141,44 @@ class TestLocalApi:
         result = request_local(testapp, session, get_request_risar_get_measure_research(139, 5637))
         code = result['meta']['code']
         assert code == 200
+
+    def _test_import_diags(self):
+        from sirius.blueprints.api.remote_service.tambov.lib.transfer import \
+            TambovTransfer
+        from sirius.blueprints.reformer.api import DataRequest
+        from sirius.models.protocol import ProtocolCode
+        with open('diagsf.csv', 'w') as diagsf:
+            transfer = TambovTransfer()
+            for partNumber in range(1, 31):
+                req = DataRequest()
+                req.set_req_params(
+                    url='https://test68.r-mis.ru/refbooks-ws/refbooksWS?wsdl',
+                    method='getRefbookPartial',
+                    protocol=ProtocolCode.SOAP,
+                    data={
+                        'refbookCode': '1.2.643.5.1.13.3.7728241212886.1.1.13',
+                        'version': 'CURRENT',
+                        'partNumber': partNumber,
+                    },
+                )
+                rows = transfer.execute(req)
+                for row in rows:
+                    d_id = d_code = gr_parent = gr_parent_id = None
+                    for col in row.column:
+                        if col.name == 'ID':
+                            d_id = col.data
+                        elif col.name == 'CODE':
+                            d_code = col.data
+                        elif col.name == 'GRANDPARENT_ID':
+                            gr_parent = True
+                            gr_parent_id = col.data
+                        if d_id and d_code and gr_parent:
+                            break
+                    if not gr_parent_id:
+                        continue
+                    if d_id and d_code:
+                        line = '#'.join((
+                            str(d_id),
+                            str(d_code),
+                        ))
+                        diagsf.write(line + '\n')

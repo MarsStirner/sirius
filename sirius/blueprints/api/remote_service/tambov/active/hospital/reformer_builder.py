@@ -13,6 +13,8 @@ from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
+from sirius.blueprints.api.remote_service.tambov.lib.diags_match import \
+    DiagsMatch
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
@@ -99,6 +101,7 @@ class HospitalTambovBuilder(Builder):
             },
         }
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
+        dm = DiagsMatch()
 
         entities = RequestEntities()
         hosp_entity = entities.set_main_entity(

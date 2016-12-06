@@ -291,7 +291,11 @@ def connect_entry(function=None, login=None):
                     res = func(*args, **kwargs)
                 except (ConnectError, ConnectionError) as exc:
                     traceback.print_exc()
-                    logger.error(str(exc))
+                    try:
+                        exc_txt = str(exc)
+                    except UnicodeDecodeError:
+                        exc_txt = exc.__name__
+                    logger.error(exc_txt)
                     # logg_to_MonitorDB(params)
                     if retry_count > max_retry:
                         # todo: stop celery workers (back rabbit msg)

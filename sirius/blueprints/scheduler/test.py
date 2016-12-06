@@ -14,7 +14,7 @@ from sirius.blueprints.scheduler.models import ScheduleGroup, \
     ScheduleGroupRequest
 
 
-class TestSchedule:
+class _TestSchedule:
 
     @beat_entry
     def test_execute(self):
