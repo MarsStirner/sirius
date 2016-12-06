@@ -6,15 +6,30 @@
 @date: 23.09.2016
 
 """
+from datetime import datetime, timedelta
+
 from sirius.blueprints.api.local_service.risar.lib.parser import \
     LocalAnswerParser
 from sirius.blueprints.monitor.exception import connect_entry
 from .connect import make_api_request, make_login
 
 
-@connect_entry(login=make_login)
-def request_by_url(method, url, data, session=None):
+# @connect_entry(login=make_login)
+# def request_by_url(method, url, data, session=None):
+#     parser = LocalAnswerParser()
+#     response = make_api_request(method, url, session, data)
+#     parser.check(response)
+#     return parser, response
+
+login_dt = None
+session = None
+@connect_entry
+def request_by_url(method, url, data):
+    global session, login_dt
     parser = LocalAnswerParser()
+    if not session or (datetime.today() - login_dt > timedelta(hours=2)):
+        session = make_login()
+        login_dt = datetime.today()
     response = make_api_request(method, url, session, data)
     parser.check(response)
     return parser, response
