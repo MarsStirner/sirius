@@ -81,8 +81,9 @@ def make_login():
 
 def make_api_request(method, url, session, json_data=None, url_args=None):
     authent_token, authoriz_token = session
+    # todo: если используется внешний cas, добавлять постфикс (параметр в конф)
     response = getattr(requests, method)(
-        url,
+        url + '?dont_check_tgt=true',
         json=json_data,
         params=url_args,
         cookies={authent_token_name: authent_token,

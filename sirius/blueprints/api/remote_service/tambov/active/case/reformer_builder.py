@@ -153,17 +153,17 @@ class CaseTambovBuilder(Builder):
                 'careRegimenId': '1',
                 'careLevelId': safe_traverse(ticket_data, 'medical_care'),
                 # неотложная или плановая
-                'careProvidingFormId': 2 if safe_traverse(ticket_data, 'medical_care_emergency') else 3
+                'careProvidingFormId': 2 if safe_traverse(ticket_data, 'medical_care_emergency') else 3,
+                'initGoalId': safe_traverse(ticket_data, 'visit_type') or '7',
             }
             diagnosis = safe_traverse(ticket_data, 'diagnosis')
-            # if diagnosis:
-            #     main_item['body']['diagnoses'] = [{
-            #         # 'stageId': 3,
-            #         # 'main': True,
-            #         'diagnosId': dm.safe_diag_id(diagnosis),
-            #         'establishmentDate': to_date(safe_traverse(ticket_data, 'date_open')),
-            #     }]
-            main_item['body']['initGoalId'] = safe_traverse(ticket_data, 'visit_type') or '7'
+            if diagnosis:
+                main_item['body']['diagnoses'] = [{
+                    'stageId': 3,
+                    'main': True,
+                    'diagnosId': dm.safe_diag_id(diagnosis),
+                    'establishmentDate': to_date(safe_traverse(ticket_data, 'date_open')),
+                }]
 
         checkup_node = pack_entity['addition'][checkup_code][0]
         checkup_data = checkup_node['data']

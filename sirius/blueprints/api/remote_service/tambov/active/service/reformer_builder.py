@@ -154,24 +154,44 @@ class ServiceTambovBuilder(Builder):
                 data=rend_service_data,
             )
 
+            # data_req = DataRequest()
+            # data_req.set_meta(
+            #     dst_system_code=self.remote_sys_code,
+            #     dst_entity_code=TambovEntityCode.DATA_REND_SERVICE,
+            #     dst_operation_code=OperationCode.READ_ONE,
+            #     dst_id=rend_service_id,
+            #     dst_parents_params=req_meta['dst_parents_params'],
+            #     dst_id_url_param_name='main_id',
+            # )
+            # # self.reformer.set_local_id(data_req)
+            # self.reformer.set_request_service(data_req)
+            # data_rend_srv_data = self.transfer__send_request(data_req)
+            # data_rend_srv_item = package.add_addition_pack_entity(
+            #     root_item=main_item,
+            #     parent_item=rend_srv_item,
+            #     entity_code=TambovEntityCode.DATA_REND_SERVICE,
+            #     main_id=rend_service_id,
+            #     data=data_rend_srv_data,
+            # )
             data_req = DataRequest()
             data_req.set_meta(
                 dst_system_code=self.remote_sys_code,
-                dst_entity_code=TambovEntityCode.DATA_REND_SERVICE,
-                dst_operation_code=OperationCode.READ_ONE,
-                dst_id=rend_service_id,
-                dst_parents_params=req_meta['dst_parents_params'],
+                dst_entity_code=TambovEntityCode.SERVICE_ATTACHMENT,
+                dst_operation_code=OperationCode.READ_MANY,
+                dst_id=None,
+                dst_parents_params={'rend_serv': {'id': rend_service_id,
+                                                  'entity': TambovEntityCode.REND_SERVICE}},
                 dst_id_url_param_name='main_id',
             )
             # self.reformer.set_local_id(data_req)
             self.reformer.set_request_service(data_req)
-            data_rend_srv_data = self.transfer__send_request(data_req)
-            data_rend_srv_item = package.add_addition_pack_entity(
+            srv_attachment_data = self.transfer__send_request(data_req)
+            package.add_addition_pack_entity(
                 root_item=main_item,
                 parent_item=rend_srv_item,
-                entity_code=TambovEntityCode.DATA_REND_SERVICE,
+                entity_code=TambovEntityCode.SERVICE_ATTACHMENT,
                 main_id=rend_service_id,
-                data=data_rend_srv_data,
+                data=srv_attachment_data,
             )
 
 

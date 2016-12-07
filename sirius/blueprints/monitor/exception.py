@@ -21,7 +21,7 @@ from six import reraise
 from sirius.lib.apiutils import ApiException, jsonify_api_exception, \
     jsonify_exception, RawApiResult, jsonify_ok, json_dumps
 from sqlalchemy.exc import OperationalError as SAOperationalError
-from zeep.exceptions import TransportError as ZeepTransportError, Error as ZeepError
+from zeep.exceptions import TransportError as ZeepTransportError, Error as ZeepError, LookupError as ZeepLookupError
 # from suds import WebFault as SudsError
 # from suds.transport import TransportError as SudsTransportError
 from zeep.exceptions import TransportError as SudsTransportError, Error as SudsError  # заглушка (вдруг понадобится suds)
@@ -65,7 +65,9 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
             except (StandardError, ZeepError, SudsError) as exc:
                 error_datetime = datetime.today()
                 traceback.print_exc()
-                if isinstance(exc, ZeepError):
+                if isinstance(exc, ZeepLookupError):
+                    message = ': '.join((type(exc).__name__, exc.message)).encode('utf-8')
+                elif isinstance(exc, ZeepError):
                     message = ': '.join((exc.code, exc.message)).encode('utf-8')
                 else:
                     message = traceback.format_exception_only(type(exc), exc)[-1]

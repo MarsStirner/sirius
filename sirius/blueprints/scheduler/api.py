@@ -24,11 +24,11 @@ class Scheduler(object):
     def run_(self):
         schedules = Schedule.get_schedules_to_execute()
         for schedule in schedules:
-            logger.debug('Scheduler %s' % schedule.code)
+            # logger.debug('Scheduler %s' % schedule.code)
             with schedule.acquire_group_lock() as is_success:
-                logger.debug('Scheduler locked %s %s sessionId %s' % (
-                    schedule.code, is_success, id(db.session)
-                ))
+                # logger.debug('Scheduler locked %s %s sessionId %s' % (
+                #     schedule.code, is_success, id(db.session)
+                # ))
                 if is_success:
                     for req_data in schedule.schedule_group.get_requests():
                         self.execute(req_data)
@@ -39,9 +39,9 @@ class Scheduler(object):
     def run(self):
         schedules = Schedule.get_schedules_to_execute()
         for schedule in schedules:
-            logger.debug('Scheduler locked %s sessionId %s' % (
-                schedule.code, id(db.session)
-            ))
+            # logger.debug('Scheduler locked %s sessionId %s' % (
+            #     schedule.code, id(db.session)
+            # ))
             for req_data in schedule.schedule_group.get_requests():
                 self.execute(req_data)
                 db.session.commit()
@@ -202,8 +202,8 @@ class Scheduler(object):
             try:
                 if not org_data['TFOMSCode']:
                     continue
-                # if not org_data['TFOMSCode'] == '1434663':  # права выданы только на это лпу
-                #     continue
+                if not org_data['TFOMSCode'] in ('1434663', '41'):  # права выданы только на это лпу
+                    continue
                 msg = self.create_message(system_code, entity_code)  # getLocations
                 meta = msg.get_header().meta
                 meta['local_parents_params'] = {

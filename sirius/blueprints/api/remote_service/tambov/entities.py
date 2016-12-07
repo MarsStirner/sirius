@@ -15,6 +15,7 @@ class TambovEntityCode(Enum):
     REFERRAL = 'referral'
     REND_SERVICE = 'rend_service'
     DATA_REND_SERVICE = 'data_rend_service'
+    SERVICE_ATTACHMENT = 'service_attachment'
     SERVICE = 'service'
     CASE = 'case'
     VISIT = 'visit'

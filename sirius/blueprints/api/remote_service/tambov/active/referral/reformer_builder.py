@@ -25,7 +25,7 @@ from sirius.lib.apiutils import ApiException
 from sirius.lib.xform import Undefined
 from sirius.models.operation import OperationCode
 from sirius.models.protocol import ProtocolCode
-from sirius.models.system import SystemCode
+from sirius.models.system import SystemCode, Host
 
 encode = lambda x: x and WebMisJsonEncoder().default(x)
 to_date = lambda x: x and datetime.strptime(x, '%Y-%m-%d')
@@ -239,8 +239,8 @@ class ReferralTambovBuilder(Builder):
         self, header_meta, entities, rend_serv_item, rend_serv_data, measure_item, measure_code
     ):
         src_operation_code = header_meta['remote_operation_code']
-        data_rend_serv_item = rend_serv_item['addition'][TambovEntityCode.DATA_REND_SERVICE][0]
-        data_rend_serv_data = data_rend_serv_item['data']
+        srv_attachment_item = rend_serv_item['addition'][TambovEntityCode.SERVICE_ATTACHMENT][0]
+        srv_attachment_data = srv_attachment_item['data']
 
         if measure_item:
             research_item = entities.set_child_entity(
@@ -273,10 +273,25 @@ class ReferralTambovBuilder(Builder):
                 'measure_type_code': measure_code,
                 'realization_date': encode(rend_serv_data['dateFrom']),
                 'lpu_code': safe_traverse_attrs(rend_serv_data, 'orgId') or '',
-                'results': json.dumps(data_rend_serv_data),
+                'results': self.make_refs(srv_attachment_data),
             }
 
         return entities
+
+    def make_refs(self, srv_attachment_data):
+        res = ''
+        if not srv_attachment_data:
+            return res
+        host = Host.get_url(SystemCode.TAMBOV).rstrip('/')
+        url = '{0}/service-attachments/rs/serviceAttachments/get/{1}'
+        for i, ref_id in enumerate(srv_attachment_data):
+            res_url = url.format(host, str(ref_id))
+            ref = u'<a href="%s">Прикрепление %s</a>' % (res_url, i + 1)
+            if res:
+                res = '\n'.join((res, ref))
+            else:
+                res = ref
+        return res
 
     def build_local_measure_specialists_checkup(
         self, header_meta, entities, rend_serv_data, measure_item, measure_code
@@ -313,28 +328,28 @@ class ReferralTambovBuilder(Builder):
                 'external_id': rend_serv_data['id'],
                 'measure_type_code': measure_code,
                 'checkup_date': encode(rend_serv_data['dateTo']),
-                'lpu_code': self.get_org_code(safe_traverse_attrs(rend_serv_data, 'orgId') or ''),
-                'doctor_code': self.get_doctor_code(safe_traverse_attrs(rend_serv_data, 'resourceGroupId') or ''),
+                'lpu_code': safe_traverse_attrs(rend_serv_data, 'orgId') or '',
+                'doctor_code': safe_traverse_attrs(rend_serv_data, 'resourceGroupId') or '',
             }
 
         return entities
 
-    def get_org_code(self, clinic_id):
-        res = None
-        if clinic_id:
-            res = self.reformer.get_local_id_by_remote(
-                RisarEntityCode.ORGANIZATION,
-                TambovEntityCode.CLINIC,
-                clinic_id,
-            )
-        return res
-
-    def get_doctor_code(self, location_id):
-        res = None
-        if location_id:
-            res = self.reformer.get_local_id_by_remote(
-                RisarEntityCode.DOCTOR,
-                TambovEntityCode.LOCATION,
-                location_id,
-            )
-        return res
+    # def get_org_code(self, clinic_id):
+    #     res = None
+    #     if clinic_id:
+    #         res = self.reformer.get_local_id_by_remote(
+    #             RisarEntityCode.ORGANIZATION,
+    #             TambovEntityCode.CLINIC,
+    #             clinic_id,
+    #         )
+    #     return res
+    #
+    # def get_doctor_code(self, location_id):
+    #     res = None
+    #     if location_id:
+    #         res = self.reformer.get_local_id_by_remote(
+    #             RisarEntityCode.DOCTOR,
+    #             TambovEntityCode.LOCATION,
+    #             location_id,
+    #         )
+    #     return res

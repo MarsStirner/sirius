@@ -281,26 +281,7 @@ class Reformer(IStreamMeta):
         meta['dst_method'] = method['method']
         meta['dst_url'] = method['template_url']
         meta['dst_protocol_code'] = method['protocol']
-        if method['protocol'] == ProtocolCode.REST:
-            dst_url_params = (meta.get('dst_parents_params') or {}).copy()
-            if meta['dst_operation_code'] != OperationCode.ADD:
-                # todo: изворот с ключем по name зашло далеко.
-                # todo: сделать ключ сущностью. вынести сущности в локалку.
-                # todo: убрать здесь проверку на вхождение.
-                # todo: убрать из builders дозаполнение нехватающей сущности.
-                # todo: удалить таблицу ServiceMethod.
-                if meta['dst_id_url_param_name'] and meta['dst_id_url_param_name'] not in dst_url_params:
-                    dst_url_params.update({
-                        meta['dst_id_url_param_name']: {
-                            'entity': meta['dst_entity_code'],
-                            'id': str(meta['dst_id']),
-                        }
-                    })
-            meta['dst_params_entities'] = method['params_entities']
-            # todo: убрать, когда наладим set_rest_url_params
-            # dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
-            # dst_param_ids = [dst_url_entities[param_entity] for param_entity in method['params_entities']]
-            # meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
+        meta['dst_params_entities'] = method['params_entities']
 
     def get_addition_data(self, missing_msgs):
         # пока считаем, что конвертировать локальные ID не придется
@@ -373,6 +354,19 @@ class Reformer(IStreamMeta):
         # todo: dst_protocol_code должен быть всегда
         if meta.get('dst_protocol_code', ProtocolCode.REST) == ProtocolCode.REST:
             dst_url_params = (meta.get('dst_parents_params') or {}).copy()
+            if meta['dst_operation_code'] != OperationCode.ADD:
+                # todo: изворот с ключем по name зашло далеко.
+                # todo: сделать ключ сущностью. вынести сущности в локалку.
+                # todo: убрать здесь проверку на вхождение.
+                # todo: убрать из builders дозаполнение нехватающей сущности.
+                # todo: удалить таблицу ServiceMethod.
+                if meta['dst_id_url_param_name'] and meta['dst_id_url_param_name'] not in dst_url_params:
+                    dst_url_params.update({
+                        meta['dst_id_url_param_name']: {
+                            'entity': meta['dst_entity_code'],
+                            'id': str(meta['dst_id']),
+                        }
+                    })
             dst_url_entities = dict((val['entity'], val['id']) for val in dst_url_params.values())
             dst_param_ids = [dst_url_entities[param_entity] for param_entity in meta['dst_params_entities']]
             meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)

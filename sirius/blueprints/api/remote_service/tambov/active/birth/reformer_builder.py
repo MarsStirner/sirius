@@ -41,6 +41,8 @@ class BirthTambovBuilder(Builder):
             },
         }
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
+        # todo для отладки по дев стенду
+        # header_meta['remote_parents_params']['patientUid']['id'] = '5568693'
 
         req_data = self.build_remote_request_common(header_meta, dst_entity_code)
         return req_data
@@ -109,6 +111,7 @@ class BirthTambovBuilder(Builder):
                     'delivery_date': encode(safe_traverse_attrs(part1, 'ChildBirth', 'Date')),
                     'delivery_time': encode(safe_traverse_attrs(part1, 'ChildBirth', 'Time')),
                     'pregnancy_final': safe_traverse_attrs(part1, 'ChildBirth', 'ChildBirthOutcome'),  # rbRisarPregnancy_Final
+                    # 'pregnancy_duration': safe_traverse_attrs(part1, 'ChildBirth', 'PregnantWeeks'),
                     'pregnancy_duration': days and int(days / 7) or 0,
                     'diagnosis_osn': 'A01.1',  # part1['Diagnoses']['Main'],
                     # --
@@ -197,3 +200,155 @@ class BirthTambovBuilder(Builder):
             main_item['body']['kids'] = kids
 
         return entities
+
+"""
+      <ChildBirthData xmlns="https://68.r-mis.ru/esb/services/">
+         <PatientId>5568693</PatientId>
+         <Part1 description="general data">
+            <InDate>2016-11-08+03:00</InDate>
+            <ClinicId>490</ClinicId>
+            <ChildBirth>
+               <Date>2016-11-08+03:00</Date>
+               <Time>00:00:00.000+03:00</Time>
+               <PregnantWeeks>12</PregnantWeeks>
+               <Diagnoses>
+                  <MainDiagnos>7778</MainDiagnos>
+                  <ComplicationDiagnoses>
+                     <Diagnos>G00.0</Diagnos>
+                  </ComplicationDiagnoses>
+                  <ExtraDiagnoses>
+                     <Diagnos>7778</Diagnos>
+                  </ExtraDiagnoses>
+               </Diagnoses>
+               <ChildBirthOutcome>Роды</ChildBirthOutcome>
+               <EmployeeId>90</EmployeeId>
+            </ChildBirth>
+            <OrgName/>
+            <BirthSpeciality/>
+            <AfterBirthSpeciality/>
+            <HelpProvided/>
+            <Abort/>
+         </Part1>
+         <Part2 description="mother death info">
+            <MotherDeathData>
+               <DeathDate>2016-11-17+03:00</DeathDate>
+               <DeathTime xsi:nil="true"/>
+               <MotherDeathReason xsi:nil="true"/>
+               <PatologicalDiagnos>Тестовая запись 2</PatologicalDiagnos>
+               <AcompanyDiagnos xsi:nil="true"/>
+               <ComplicationDiagnos xsi:nil="true"/>
+            </MotherDeathData>
+            <LkkResult/>
+         </Part2>
+         <Part3 description="complications">
+            <BirthWaterBreak/>
+            <PrenatalWaterBreak/>
+            <BirthPowerWeakness/>
+            <AmiaticWater/>
+            <PatologicPreliminaryPeriod/>
+            <BirthActivityAnomaly/>
+            <Horiamnionit/>
+            <PerinealRupture/>
+            <Nefropaty/>
+            <Anemia/>
+            <InfectionDuringBirth/>
+            <InfectionAfterBirth/>
+            <CordPatology/>
+            <PlacentaPatology/>
+         </Part3>
+         <Part4 description="matnipulation"/>
+         <Part5 description="surgery">
+            <CesarianDelivery/>
+            <Forceps/>
+            <Vacuum/>
+            <Indicator/>
+            <Speciality/>
+            <Anestesia/>
+            <Hysterectomy/>
+            <Complication/>
+            <Embryotomy/>
+         </Part5>
+         <Part6 description="children info">
+            <Child>
+               <Alive>true</Alive>
+               <Gender>2</Gender>
+               <Weight>1200</Weight>
+               <Height>55</Height>
+               <BirthDate>2016-11-08+03:00</BirthDate>
+               <BirthTime>00:00:00.000+03:00</BirthTime>
+               <FullTerm>Доношенный</FullTerm>
+               <Apgar_1min>4</Apgar_1min>
+               <Apgar_5min>5</Apgar_5min>
+               <Apgar_10min>5</Apgar_10min>
+               <DeathDate xsi:nil="true"/>
+               <DeathTime xsi:nil="true"/>
+               <DeathReason xsi:nil="true"/>
+               <NewbornSickness/>
+            </Child>
+            <Child>
+               <Alive>true</Alive>
+               <Gender>3</Gender>
+               <Weight>780</Weight>
+               <Height>50</Height>
+               <BirthDate>2016-11-08+03:00</BirthDate>
+               <BirthTime>00:00:00.000+03:00</BirthTime>
+               <FullTerm>Доношенный</FullTerm>
+               <Apgar_1min xsi:nil="true"/>
+               <Apgar_5min xsi:nil="true"/>
+               <Apgar_10min xsi:nil="true"/>
+               <DeathDate>2016-11-17+03:00</DeathDate>
+               <DeathTime xsi:nil="true"/>
+               <DeathReason xsi:nil="true"/>
+               <NewbornSickness/>
+            </Child>
+            <Child>
+               <Alive>true</Alive>
+               <Gender>3</Gender>
+               <Weight>2580</Weight>
+               <Height>53</Height>
+               <BirthDate>2016-11-08+03:00</BirthDate>
+               <BirthTime>00:00:00.000+03:00</BirthTime>
+               <FullTerm>Доношенный</FullTerm>
+               <Apgar_1min>5</Apgar_1min>
+               <Apgar_5min>5</Apgar_5min>
+               <Apgar_10min>8</Apgar_10min>
+               <DeathDate xsi:nil="true"/>
+               <DeathTime xsi:nil="true"/>
+               <DeathReason xsi:nil="true"/>
+               <NewbornSickness/>
+            </Child>
+            <Child>
+               <Alive>false</Alive>
+               <Gender>2</Gender>
+               <Weight>4300</Weight>
+               <Height>52</Height>
+               <BirthDate>2016-11-08+03:00</BirthDate>
+               <BirthTime>00:00:00.000+03:00</BirthTime>
+               <FullTerm>Доношенный</FullTerm>
+               <Apgar_1min>8</Apgar_1min>
+               <Apgar_5min>8</Apgar_5min>
+               <Apgar_10min>10</Apgar_10min>
+               <DeathDate>2016-11-08+03:00</DeathDate>
+               <DeathTime>00:00:00.000+03:00</DeathTime>
+               <DeathReason xsi:nil="true"/>
+               <NewbornSickness/>
+            </Child>
+            <Child>
+               <Alive>true</Alive>
+               <Gender>3</Gender>
+               <Weight>6000</Weight>
+               <Height>56</Height>
+               <BirthDate>2016-11-08+03:00</BirthDate>
+               <BirthTime>00:00:00.000+03:00</BirthTime>
+               <FullTerm>Доношенный</FullTerm>
+               <Apgar_1min xsi:nil="true"/>
+               <Apgar_5min xsi:nil="true"/>
+               <Apgar_10min xsi:nil="true"/>
+               <DeathDate>2016-11-17+03:00</DeathDate>
+               <DeathTime xsi:nil="true"/>
+               <DeathReason xsi:nil="true"/>
+               <NewbornSickness/>
+            </Child>
+         </Part6>
+      </ChildBirthData>
+"""
