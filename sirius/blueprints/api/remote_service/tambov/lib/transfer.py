@@ -44,7 +44,7 @@ class TambovTransfer(Transfer):
             return service_method(*a, **kw)
         wsdl_lib_code = 'zeep'
         # todo: wsdl на этот метод не читается zeep (библиотека на метод)
-        if req_meta['dst_entity_code'] == TambovEntityCode.BIRTH:
+        if req_meta.get('dst_entity_code') == TambovEntityCode.BIRTH:
             wsdl_lib_code = 'suds'
         client = self.get_soap_client(req.url, wsdl_lib_code)
         req_method = getattr(client, req.method, common_method)

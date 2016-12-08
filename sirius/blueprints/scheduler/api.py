@@ -21,7 +21,7 @@ logger = logging.getLogger('simple')
 
 
 class Scheduler(object):
-    def run_(self):
+    def run(self):
         schedules = Schedule.get_schedules_to_execute()
         for schedule in schedules:
             # logger.debug('Scheduler %s' % schedule.code)
@@ -36,7 +36,7 @@ class Scheduler(object):
                         # на след. цикле ошибка DetachedInstanceError:
                         # Parent instance <Schedule> is not bound to a Session;
                         # lazy load operation of attribute 'schedule_group' cannot proceed
-    def run(self):
+    def run_(self):
         schedules = Schedule.get_schedules_to_execute()
         for schedule in schedules:
             # logger.debug('Scheduler locked %s sessionId %s' % (

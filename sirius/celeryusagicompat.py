@@ -9,7 +9,6 @@ class BICeleryUsagiClient(BIUsagiClient):
     def on_configuration(self, configuration):
         if 'SQLALCHEMY_ECHO' in configuration:
             configuration['SQLALCHEMY_ECHO'] = False
-        # configuration['CELERYBEAT_SCHEDULE'] = CELERYBEAT_SCHEDULE
         configuration['CELERY_QUEUES'] = get_celery_queues(configuration)
         configuration['CELERYBEAT_SCHEDULE'] = CELERYBEAT_SCHEDULE
 
