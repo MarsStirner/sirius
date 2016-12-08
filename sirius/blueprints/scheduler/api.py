@@ -155,12 +155,13 @@ class Scheduler(object):
         card_list_method = reformer.get_api_method(
             SystemCode.LOCAL, RisarEntityCode.CARD, OperationCode.READ_MANY
         )
+        data = None
         # data = {
         #     'filters': {
-        #         'id': 3  # todo: при тестировании работаем пока с одной картой
+        #         'id': 14  # todo: при тестировании работаем пока с одной картой
         #     }
         # }
-        msg = Message(None)
+        msg = Message(data)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -202,8 +203,8 @@ class Scheduler(object):
             try:
                 if not org_data['TFOMSCode']:
                     continue
-                if not org_data['TFOMSCode'] in ('1434663', '41'):  # права выданы только на это лпу
-                    continue
+                # if not org_data['TFOMSCode'] in ('1434663', '41'):  # в Тамбове права выданы только на эти лпу
+                #     continue
                 msg = self.create_message(system_code, entity_code)  # getLocations
                 meta = msg.get_header().meta
                 meta['local_parents_params'] = {
@@ -259,12 +260,13 @@ class Scheduler(object):
         card_list_method = reformer.get_api_method(
             SystemCode.LOCAL, RisarEntityCode.CARD, OperationCode.READ_MANY
         )
+        data = None
         # data = {
         #     'filters': {
-        #         'id': 3  # todo: при тестировании работаем пока с одной картой
+        #         'id': 14  # todo: при тестировании работаем пока с одной картой
         #     }
         # }
-        msg = Message(None)
+        msg = Message(data)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -303,6 +305,11 @@ class Scheduler(object):
                 # 'id': 3,
             }
         }
+        # data = {
+        #     'filters': {
+        #         'id': 14  # todo: при тестировании работаем пока с одной картой
+        #     }
+        # }
         msg = Message(data)
         msg.to_local_service()
         msg.set_request_type()
@@ -311,41 +318,27 @@ class Scheduler(object):
         producer = RemoteProducer()
         card_msg = producer.send(msg, async=False)
 
-        fname = 'exchange_card_example.xml'
+        fname = 'exchange_card_template.xml'
         rel_path = 'sirius/blueprints/api/remote_service/tambov/active/service/'
         with open(os.path.join(rel_path, fname)) as pr:
             template_text = pr.read()
         exch_card_req = {
-            # 'doc': {
-            #     'id': '0',  # 1181
-            #     'context_type': 'risar',
-            #     'template_text': template_text,
-            #     'template_name': 'exchange_card',
-            #     'context': {
-            #         # 'event_id': None,
-            #         'currentOrgStructure': None,
-            #         'currentOrganisation': None,
-            #         'currentPerson': None,  # 2
-            #     }
-            # }
-            # POST http://127.0.0.1:6601/print_subsystem/fill_template
             'doc': {
                 'context_type': 'risar_exchange_card',
                 'template_text': template_text,
                 'template_name': 'exchange_card',
-                'id': 1,
+                'id': 0,
                 'context': '',
                 'event_id': 345
             }
         }
         for card_data in card_msg.get_data():
             try:
-                # exch_card_req['doc']['context']['event_id'] = card_data['card_id']
                 exch_card_req['doc']['event_id'] = card_data['card_id']
-                # /print_subsystem/fill_template
+                # POST /print_subsystem/fill_template
                 exch_card_method = reformer.get_api_method(
                     SystemCode.LOCAL, RisarEntityCode.EXCHANGE_CARD,
-                    OperationCode.READ_ONE
+                    OperationCode.ADD
                 )
                 msg = Message(exch_card_req)
                 msg.to_local_service()
@@ -370,7 +363,7 @@ class Scheduler(object):
 
                 meta['local_parents_params'] = {
                     'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
-                    'TFOMSCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': '41'},  # todo: card_data['card_LPU']
+                    'TFOMSCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': card_data['card_LPU']},
                 }
                 LocalProducer().send(msg)
             except LoggedException:
