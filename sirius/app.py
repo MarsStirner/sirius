@@ -16,7 +16,7 @@ def create_sirius_app():
     return init_sirius_app(BIUsagiClient, True)
 
 
-def init_sirius_app(usagi_client, new_app=False):
+def init_sirius_app(usagi_client, new_app=False, is_lazy_db=False):
     """An application factory, as explained here: http://flask.pocoo.org/docs/patterns/appfactories/.
 
     :param usagi_client: configuration client.
@@ -31,7 +31,7 @@ def init_sirius_app(usagi_client, new_app=False):
 
     # ini_app.json_encoder = WebMisJsonEncoder
 
-    register_extensions(ini_app)
+    register_extensions(ini_app, is_lazy_db)
     register_blueprints(ini_app)
     register_errorhandlers(ini_app)
     register_shellcontext(ini_app)
@@ -40,12 +40,13 @@ def init_sirius_app(usagi_client, new_app=False):
     return ini_app
 
 
-def register_extensions(app):
+def register_extensions(app, is_lazy_db):
     """Register Flask extensions."""
     assets.init_app(app)
     bcrypt.init_app(app)
     cache.init_app(app)
-    db.init_app(app)
+    if not is_lazy_db:
+        db.init_app(app)
     # csrf_protect.init_app(app)
     # principal.init_app(app)
     # beaker_session.init_app(app)
@@ -59,15 +60,16 @@ def register_extensions(app):
 
 def register_blueprints(app):
     """Register Flask blueprints."""
+    from sirius.models.system import RegionCode
     from sirius.blueprints import public, user, reformer, scheduler, api
     app.register_blueprint(public.views.blueprint)
     app.register_blueprint(user.views.blueprint)
     app.register_blueprint(scheduler.app.module)
     app.register_blueprint(reformer.app.module)
     app.register_blueprint(api.local_service.risar.app.module)
-    if app.config['REGION_CODE'] == 'tula':
+    if app.config['REGION_CODE'] == RegionCode.TULA:
         app.register_blueprint(api.remote_service.tula.app.module)
-    elif app.config['REGION_CODE'] == 'tambov':
+    elif app.config['REGION_CODE'] == RegionCode.TAMBOV:
         app.register_blueprint(api.remote_service.tambov.app.module)
     return None
 

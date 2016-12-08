@@ -15,7 +15,7 @@ from celeryusagicompat import BICeleryUsagiClient
 logger = get_task_logger(__name__)
 smp_logger = logging.getLogger('simple')
 
-wsgi_app = init_sirius_app(BICeleryUsagiClient)
+wsgi_app = init_sirius_app(BICeleryUsagiClient, is_lazy_db=True)
 
 
 # https://github.com/Robpol86/Flask-Large-Application-Example
@@ -32,8 +32,11 @@ with wsgi_app.app_context():
         exceptions to be raised by workers.
         Based on http://stackoverflow.com/a/14146403/1198943
         """
-        logger.debug('Initializing SQLAlchemy for PID {}.'.format(os.getpid()))
-        smp_logger.debug('Initializing SQLAlchemy for PID {}.'.format(os.getpid()))
+        log_txt = 'Initializing SQLAlchemy for PID {}, session ID {}.'.format(
+            os.getpid(), id(db.session)
+        )
+        logger.debug(log_txt)
+        smp_logger.debug(log_txt)
         db.init_app(wsgi_app)
 
 
