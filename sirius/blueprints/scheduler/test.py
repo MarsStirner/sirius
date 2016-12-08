@@ -33,7 +33,7 @@ class _TestSchedule:
                 # ScheduleGroupRequest.order == 3,  # get_doctors
                 # ScheduleGroupRequest.order == 4,  # get_measures_results
                 # ScheduleGroupRequest.order == 5,  # get_hospital_rec
-                # ScheduleGroupRequest.order == 6,  # send_exchange_card
-                ScheduleGroupRequest.order == 7,  # childbirth
+                ScheduleGroupRequest.order == 6,  # send_exchange_card
+                # ScheduleGroupRequest.order == 7,  # childbirth
             ).one()
             sch.execute(req_data)

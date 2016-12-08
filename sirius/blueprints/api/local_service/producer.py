@@ -12,7 +12,7 @@ from sirius.blueprints.monitor.exception import InternalError, LoggedException
 from sirius.celery_queue import main_queue_name
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message
-from sirius.lib.celery_tasks import local_task, remote_task
+from sirius.lib.celery_tasks import local_task, remote_task, sync_remote_task
 from sirius.lib.remote_system import remote_system
 from sirius.models.operation import OperationCode
 
@@ -41,10 +41,10 @@ class LocalProducer(object):
                 res = all(self.send_msgs(msgs, rmt_sys_code))
             elif msg.is_request:
                 rmt_sys_code = msg.get_header().meta['remote_system_code']
-                remote_task(msg, rmt_sys_code)
+                sync_remote_task(msg, rmt_sys_code)
             elif msg.is_result:
                 rmt_sys_code = msg.get_header().meta['remote_system_code']
-                remote_task(msg, rmt_sys_code)
+                sync_remote_task(msg, rmt_sys_code)
             else:
                 raise InternalError('Unexpected message type')
         else:
@@ -84,7 +84,7 @@ class LocalProducer(object):
         res = None
         # todo: на время тестирования без обработки исключений
         if not async or os.environ.get('TESTING') == '1':
-            res = remote_task(msg, rmt_sys_code)
+            res = sync_remote_task(msg, rmt_sys_code)
         else:
             remote_task.apply_async(args=(msg, rmt_sys_code),
                                     queue=queue_name)

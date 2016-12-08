@@ -110,7 +110,7 @@ class TestLocalApi:
         # code = result['meta']['code']
         # assert code == 200
 
-    def test_change_risar_checkup_second(self, testapp):
+    def _test_change_risar_checkup_second(self, testapp):
         # сохранение повторного осмотра пациента, запрос выдачи талона
         result = request_local(testapp, session, request_risar_second_checkup_60)
         code = result['meta']['code']
@@ -188,15 +188,20 @@ class TestLocalApi:
         from sirius.blueprints.api.remote_service.tambov.lib.transfer import \
             TambovTransfer
         from sirius.models.protocol import ProtocolCode
+        from sirius.blueprints.api.remote_service.tambov.active.connect import \
+            RequestModeCode
         fname = 'exchange_card_example.xml'
         rel_path = 'sirius/blueprints/api/remote_service/tambov/active/service/'
+        # fname = 'protocol_obmen_karta (17.11.16).xml'
+        # rel_path = 'C:/Users/Dima/Downloads'
         with open(os.path.join(rel_path, fname)) as pr:
             template_text = pr.read()
 
         transfer = TambovTransfer()
         client = transfer.get_rest_client()
         session = None, None
+        req_mode = RequestModeCode.MULTIPART_FILE
         req_result = client.make_api_request(
             'post', 'https://test68.r-mis.ru/medservices-ws/service-rs/renderedServiceProtocols/16424035',
-            ProtocolCode.SOAP, session, template_text)
+            session, {'report_ex1.xml': template_text}, req_mode=req_mode)
         print req_result

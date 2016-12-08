@@ -12,6 +12,8 @@ from datetime import date, datetime
 from hitsl_utils.safe import safe_traverse, safe_int
 from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
+from sirius.blueprints.api.remote_service.tambov.active.connect import \
+    RequestModeCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
@@ -403,12 +405,13 @@ class ServiceTambovBuilder(Builder):
             dst_parents_params=header_meta['remote_parents_params'],
             dst_main_id_name=None,
             dst_parent_id_name='id',
+            dst_request_mode=RequestModeCode.MULTIPART_FILE,
             src_operation_code=src_operation_code,
             src_entity_code=src_entity_code,
             src_main_id_name=header_meta['local_main_param_name'],
             src_id=header_meta['local_main_id'],
         )
         if src_operation_code != OperationCode.DELETE:
-            child_item['body'] = exch_card_data['exch_card']
+            child_item['body'] = {'exch_card_1.xml': exch_card_data['exch_card']}
 
         return entities

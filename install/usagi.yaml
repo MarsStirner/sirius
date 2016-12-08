@@ -314,9 +314,9 @@ subsystems:
           [program:{{ deployment.prefix }}_{{ this.name }}]
           environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
           ;command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ deployment.prefix }}_{{ this.name }}_queue
-          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q default_queue
+          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q default_queue -s {{ deployment.base_dir }}/celery
           ;command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker beat -l INFO
-          directory={{ deployment.base_dir }}/celery
+          directory={{ deployment.base_dir }}/code/sirius
 
           ;numprocs=1
           stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log

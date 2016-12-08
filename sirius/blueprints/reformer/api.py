@@ -992,7 +992,7 @@ class RequestEntities(object):
         self, dst_entity_code, dst_parents_params,
         dst_main_id_name, src_operation_code, src_entity_code,
         src_main_id_name, src_id, level_count, set_current_id_func=None,
-            src_id_prefix=None, dst_id_prefix=None
+            src_id_prefix=None, dst_id_prefix=None, dst_request_mode=None,
     ):
         def set_current_id_common_func(record):
             entity_meta = record['meta']
@@ -1017,6 +1017,7 @@ class RequestEntities(object):
                 'dst_id_url_param_name': dst_main_id_name,
                 'dst_id_prefix': dst_id_prefix,
                 'dst_parents_params': dst_parents_params,
+                'dst_request_mode': dst_request_mode,
                 'set_current_id_func': set_current_id_common_func,
             }
         )
@@ -1035,7 +1036,7 @@ class RequestEntities(object):
         dst_main_id_name, dst_parent_id_name, src_operation_code,
         src_entity_code, src_main_id_name, src_id,
         set_current_id_func=None, set_parent_id_func=None,
-        src_id_prefix=None, dst_id_prefix=None
+        src_id_prefix=None, dst_id_prefix=None, dst_request_mode=None,
     ):
         def set_current_id_common_func(record):
             entity_meta = record['meta']
@@ -1077,6 +1078,7 @@ class RequestEntities(object):
                 'dst_parents_params': dst_parents_params,
                 'dst_id_url_param_name': dst_main_id_name,
                 'dst_id_prefix': dst_id_prefix,
+                'dst_request_mode': dst_request_mode,
                 'set_current_id_func': set_current_id_common_func,
                 'set_parent_id_func': set_parent_id_common_func,
                 'parent_entity': parent_item,
@@ -1129,6 +1131,10 @@ class ReqEntity(dict):
     @property
     def options(self):
         return self['options']
+
+    @property
+    def req_mode(self):
+        return self['meta'].get('dst_request_mode')
 
 
 class DataRequest(object):
@@ -1201,6 +1207,6 @@ class DataRequest(object):
     def options(self):
         return self.req_data['options']
 
-    @property
-    def protocol(self):
-        return self.req_data['meta']['dst_protocol_code']
+    # @property
+    # def protocol(self):
+    #     return self.req_data['meta']['dst_protocol_code']

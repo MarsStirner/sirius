@@ -10,7 +10,7 @@ import os
 from sirius.app import app
 from sirius.blueprints.monitor.exception import InternalError
 from sirius.lib.message import Message
-from sirius.lib.celery_tasks import local_task, remote_task
+from sirius.lib.celery_tasks import local_task, remote_task, sync_local_task
 from sirius.celery_queue import main_queue_name
 
 
@@ -26,7 +26,7 @@ class RemoteProducer(object):
             if async:
                 local_task.apply_async(args=args, queue=main_queue_name)
             else:
-                res = local_task(*args)
+                res = sync_local_task(*args)
         else:
             raise InternalError('Unexpected message direct')
         return res

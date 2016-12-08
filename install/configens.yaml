@@ -68,7 +68,7 @@ supervisor:
       environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
       command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_{{ this.name }} -l INFO -c 1 -Q {{ this.configens.supervisor.queue | recurse }}
 
-      directory={{ deployment.base_dir }}
+      directory={{ deployment.base_dir }}/code/sirius
 
       ;numprocs=1
       stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log

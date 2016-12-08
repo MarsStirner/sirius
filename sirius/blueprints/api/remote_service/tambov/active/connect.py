@@ -7,6 +7,7 @@
 
 """
 import requests
+from hitsl_utils.enum import Enum
 from requests.auth import HTTPBasicAuth
 from sirius.blueprints.monitor.exception import ExternalError
 from sirius.lib.apiutils import ApiException
@@ -67,6 +68,11 @@ class TambovSOAPClient(object):
         return getattr(result, 'patientCard', {})
 
 
+class RequestModeCode(Enum):
+    MULTIPART_FILE = 'multipart_file'
+    JSON_DATA = 'json_data'
+
+
 class TambovRESTClient(object):
     basic_auth = HTTPBasicAuth(tambov_api_login, tambov_api_password)
 
@@ -80,11 +86,14 @@ class TambovRESTClient(object):
 
         return session
 
-    def make_api_request(self, method, url, protocol, session, any_data=None, url_args=None):
+    def make_api_request(self, method, url, session,
+                         any_data=None, url_args=None, req_mode=None):
         authent_token, authoriz_token = session
         data_type = 'json'
-        if protocol == ProtocolCode.SOAP:
-            data_type = 'data'
+        if req_mode == RequestModeCode.MULTIPART_FILE:
+            data_type = 'files'
+        # if protocol == ProtocolCode.SOAP:
+        #     data_type = 'data'
         response = getattr(requests, method)(
             url,
             params=url_args,
