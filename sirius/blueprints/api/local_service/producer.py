@@ -7,14 +7,18 @@
 
 """
 import os
-from sirius.blueprints.api.local_service.risar.active.request import request_by_url
+from sirius.app import app
 from sirius.blueprints.monitor.exception import InternalError, LoggedException
-from sirius.celery_queue import main_queue_name
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message
 from sirius.lib.celery_tasks import local_task, remote_task, sync_remote_task
 from sirius.lib.remote_system import remote_system
 from sirius.models.operation import OperationCode
+
+main_queues = app.config['main_queues']
+main_queue_name = main_queues['risar_main']
+error_1_queue_name = main_queues['risar_error_1']
+error_2_queue_name = main_queues['risar_error_2']
 
 
 class LocalProducer(object):

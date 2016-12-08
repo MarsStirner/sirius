@@ -24,7 +24,7 @@ def init_sirius_app(usagi_client, new_app=False, is_lazy_db=False):
     """
     ini_app = Flask(__name__) if new_app else app
 
-    conf_url = os.getenv('TSUKINO_USAGI_URL', 'http://127.0.0.1:6602')
+    conf_url = os.getenv('TSUKINO_USAGI_URL')
     usagi = usagi_client(ini_app, ini_app.wsgi_app, conf_url, 'sirius')
     ini_app.wsgi_app = usagi.app
     usagi()
