@@ -6,9 +6,9 @@
 @date: 27.09.2016
 
 """
+from sirius.app import app
 from sirius.blueprints.monitor.exception import InternalError
-from sirius.celery_queue import mis_tambov_queue_name, mis_tula_queue_name
-from sirius.models.system import SystemCode
+from sirius.models.system import SystemCode, RegionCode
 
 
 class RemoteSystem(object):
@@ -19,24 +19,30 @@ class RemoteSystem(object):
             # todo:
             pass
         self.is_init = True
+        self.region_code = app.config['REGION_CODE']
 
-    def get_code(self, queue_name):
-        self.initialise()
+        remote_queues = app.config['mis_queues']
         # todo:
-        # каждой очереди (мис) сопоставляется интеграционная группа
-        mis__system = {
-            mis_tambov_queue_name: SystemCode.TAMBOV,
-            mis_tula_queue_name: SystemCode.TULA,
+        self.all_systems = {
+            RegionCode.TAMBOV: {
+                SystemCode.TAMBOV: remote_queues
+            },
+            RegionCode.TULA: {
+                SystemCode.TULA: remote_queues
+            },
         }
-        if queue_name not in mis__system:
-            raise InternalError('Unexpected queue name')
-        res = mis__system[queue_name]
-        return res
 
-    # def get_queue_name(self, rmt_sys_code):
-    #     self.initialise()
-    #     # todo:
-    #     return 'qname'
+    def get_codes(self):
+        self.initialise()
+        return self.all_systems[self.region_code].keys()
+
+    def get_queue_names(self, system_code):
+        self.initialise()
+        # todo: упростить
+        res = []
+        for x in self.all_systems[self.region_code][system_code]:
+            res.extend(x.values())
+        return res
 
     def is_active(self, rmt_sys_code):
         self.initialise()

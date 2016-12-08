@@ -11,26 +11,11 @@ from kombu import Queue, Exchange
 from sirius.models.system import RegionCode
 from sirius.app import app
 
-dep_prefix = 'sir_test'  # app.config.get('deployment.prefix')
-
-main_queue_name = dep_prefix + '_risar_main_queue'
-error_1_queue_name = dep_prefix + '_risar_error_1_queue'
-error_2_queue_name = dep_prefix + '_risar_error_2_queue'
-mis_tula_queue_name = dep_prefix + '_mis_tula_queue'
-mis_tambov_queue_name = dep_prefix + '_mis_tambov_queue'
-
-# на каждую МИС региона своя очередь
-remote_queues = {
-    RegionCode.TULA: [
-        mis_tula_queue_name,
-    ],
-    RegionCode.TAMBOV: [
-        mis_tambov_queue_name,
-    ],
-}
-
-region_code = app.config.get('REGION_CODE', RegionCode.TAMBOV)
-remote_queue_name_list = remote_queues[region_code]
+main_queues = app.config['main_queues']
+main_queue_name = main_queues['risar_main']
+error_1_queue_name = main_queues['risar_error_1']
+error_2_queue_name = main_queues['risar_error_2']
+remote_queues = app.config['mis_queues']
 
 
 def get_celery_queues(conf):
@@ -42,5 +27,5 @@ def get_celery_queues(conf):
         Queue(error_1_queue_name, exchange=Exchange(error_1_queue_name)),
         Queue(error_2_queue_name, exchange=Exchange(error_2_queue_name)),
     ]
-    res.extend([Queue(q_name, exchange=Exchange(q_name)) for q_name in remote_queue_name_list])
+    res.extend([Queue(q_name, exchange=Exchange(q_name)) for q_name in remote_queues.items()])
     return tuple(res)

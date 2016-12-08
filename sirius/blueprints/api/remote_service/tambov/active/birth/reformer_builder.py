@@ -22,7 +22,7 @@ from sirius.models.system import SystemCode
 from sirius.lib.xform import Undefined
 from sirius.models.operation import OperationCode
 
-encode = lambda x: x and WebMisJsonEncoder().default(x)
+encode = lambda x: x is not None and WebMisJsonEncoder().default(x)
 to_date = lambda x: datetime.strptime(x, '%Y-%m-%d')
 
 
@@ -37,12 +37,12 @@ class BirthTambovBuilder(Builder):
         src_entity_code = header_meta['local_entity_code']
         params_map = {
             RisarEntityCode.CARD: {
-                'entity': TambovEntityCode.SMART_PATIENT, 'param': 'patientUid'
+                'entity': TambovEntityCode.SMART_PATIENT, 'param': 'patient_id'  # !!!
             },
         }
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
-        # todo для отладки по дев стенду
-        # header_meta['remote_parents_params']['patientUid']['id'] = '5568693'
+        # todo для отладки по стенду
+        # header_meta['remote_parents_params']['patient_id']['id'] = '1342306'
 
         req_data = self.build_remote_request_common(header_meta, dst_entity_code)
         return req_data
@@ -54,14 +54,17 @@ class BirthTambovBuilder(Builder):
         package = EntitiesPackage(self, self.remote_sys_code)
         req_meta = reformed_req.meta
 
+        for param_name, param_data in reformed_req.meta['dst_parents_params'].items():
+            reformed_req.data_update({param_name: param_data['id']})
         birth_data = self.transfer__send_request(reformed_req)
         main_item = package.add_main_pack_entity(
             entity_code=TambovEntityCode.BIRTH,
             method=reformed_req.method,
-            main_param_name='UID',
-            main_id=birth_data['UID'],
+            main_param_name='PatientId',
+            main_id=birth_data['PatientId'],
             parents_params=req_meta['dst_parents_params'],
             data=birth_data,
+            is_changed=True,  # см. todo в difference
         )
         return package
 
@@ -93,13 +96,14 @@ class BirthTambovBuilder(Builder):
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
+            sta = safe_traverse_attrs
             part1 = birth_data['Part1']
             part2 = birth_data['Part2']
             part3 = birth_data['Part3']
             part4 = birth_data['Part4']
             part5 = birth_data['Part5']
             part6 = birth_data['Part6']
-            days = safe_int(safe_traverse_attrs(part1, 'PregnantTimeSpan', 'Days'))
+            # days = safe_int(sta(part1, 'PregnantTimeSpan', 'Days'))
             main_item['body'] = {
                 # "required": ["admission_date", "pregnancy_duration",
                 #              "delivery_date", "delivery_time",
@@ -107,248 +111,104 @@ class BirthTambovBuilder(Builder):
                 #              "pregnancy_final"]
                 'general_info': {
                     'admission_date': encode(part1['InDate']),
-                    'maternity_hospital': safe_traverse_attrs(part1, 'BornClinic', 'OMS'),
-                    'delivery_date': encode(safe_traverse_attrs(part1, 'ChildBirth', 'Date')),
-                    'delivery_time': encode(safe_traverse_attrs(part1, 'ChildBirth', 'Time')),
-                    'pregnancy_final': safe_traverse_attrs(part1, 'ChildBirth', 'ChildBirthOutcome'),  # rbRisarPregnancy_Final
-                    # 'pregnancy_duration': safe_traverse_attrs(part1, 'ChildBirth', 'PregnantWeeks'),
-                    'pregnancy_duration': days and int(days / 7) or 0,
-                    'diagnosis_osn': 'A01.1',  # part1['Diagnoses']['Main'],
+                    'maternity_hospital': str(sta(part1, 'ClinicId')),
+                    'delivery_date': encode(sta(part1, 'ChildBirth', 'Date')),
+                    'delivery_time': encode(sta(part1, 'ChildBirth', 'Time'))[:5],
+
+                    # todo: test
+                    # 'pregnancy_final': sta(part1, 'ChildBirth', 'ChildBirthOutcome'),  # rbRisarPregnancy_Final
+                    'pregnancy_final': 'rodami',  # rbRisarPregnancy_Final
+
+                    'pregnancy_duration': sta(part1, 'ChildBirth', 'PregnantWeeks'),
+                    # 'pregnancy_duration': days and int(days / 7) or 0,
+                    'diagnosis_osn': sta(part1, 'ChildBirth', 'Diagnoses', 'MainDiagnos'),
                     # --
                     # 'diagnosis_sop': part1['Extra'] or Undefined,
                     # 'diagnosis_osl': part1['Complication'] or Undefined,
-                    'maternity_hospital_doctor': safe_traverse_attrs(part1, 'ChildBirth', 'Employee', 'FirstName') or Undefined,
-                    'curation_hospital': part1['OrgName'] or Undefined,
-                    'pregnancy_speciality': part1['BirthSpeciality'] or Undefined,
-                    'postnatal_speciality': part1['AfterBirthSpeciality'] or Undefined,
-                    'help': part1['HelpProvided'] or Undefined,
-                    'abortion': part1['Abort'] or Undefined,
+                    'maternity_hospital_doctor': (lambda x: x and str(x) or Undefined)(sta(part1, 'ChildBirth', 'EmployeeId')),
+                    'curation_hospital': sta(part1, 'CuratioLpu') or Undefined,
+                    'pregnancy_speciality': sta(part1, 'BirthSpeciality') or Undefined,
+                    'postnatal_speciality': sta(part1, 'AfterBirthSpeciality') or Undefined,
+                    'help': sta(part1, 'HelpProvided') or Undefined,
+                    # 'abortion': sta(part1, 'Abort') or Undefined,  # rbRisarAbort
                     # 'death': ???,
                 },
-                # "required": [
-                #     "reason_of_death",
-                #     "death_date",
-                #     "death_time"
-                # ]
-                'mother_death': {
-                    'death_date': safe_traverse_attrs(part2, 'MotherDeathData', 'DeathDate'),
-                    'death_time': safe_traverse_attrs(part2, 'MotherDeathData', 'DeathTime'),
-                    'reason_of_death': safe_traverse_attrs(part2, 'MotherDeathData', 'MotherDeathReason'),
-                    # --
-                    # 'pat_diagnosis_osn': safe_traverse_attrs(part2, 'MotherDeathData', 'PatologicalDiagnos'),
-                    # 'pat_diagnosis_sop': safe_traverse_attrs(part2, 'MotherDeathData', 'AcompanyDiagnos'),
-                    # 'pat_diagnosis_osl': safe_traverse_attrs(part2, 'MotherDeathData', 'ComplicationDiagnos'),
-                    'control_expert_conclusion': part2['LkkResult'] or Undefined,
-                },
                 'complications': {
-                    'delivery_waters': part3['BirthWaterBreak'] or Undefined,
+                    # 'delivery_waters': part3['BirthWaterBreak'] or Undefined,  # rbRisarDelivery_Waters
                     'pre_birth_delivery_waters': safe_bool_none(part3['PrenatalWaterBreak']) or Undefined,
-                    'weakness': part3['BirthPowerWeakness'] or Undefined,
-                    'meconium_color': safe_bool_none(part3['AmiaticWater']) or Undefined,
-                    'pathological_preliminary_period': safe_bool_none(part3['PatologicPreliminaryPeriod']) or Undefined,
-                    'abnormalities_of_labor': safe_bool_none(part3['BirthActivityAnomaly']) or Undefined,
-                    'chorioamnionitis': safe_bool_none(part3['Horiamnionit']) or Undefined,
-                    'perineal_tear': part3['PerinealRupture'] or Undefined,
-                    'eclampsia': part3['Nefropaty'] or Undefined,
-                    'anemia': safe_bool_none(part3['Anemia']) or Undefined,
-                    'infections_during_delivery': part3['InfectionDuringBirth'] or Undefined,
-                    'infections_after_delivery': part3['InfectionAfterBirth'] or Undefined,
-                    'funiculus': safe_traverse_attrs(part3, 'CordPatology', 'Term') or Undefined,
-                    'afterbirth': safe_traverse_attrs(part3, 'PlacentaPatology', 'Term') or Undefined,
+                    'weakness': sta(part3, 'BirthPowerWeakness') or Undefined,  # rbRisarWeakness
+                    'meconium_color': safe_bool_none(sta(part3, 'AmiaticWater')) or Undefined,
+                    'pathological_preliminary_period': safe_bool_none(sta(part3, 'PatologicPreliminaryPeriod')) or Undefined,
+                    'abnormalities_of_labor': safe_bool_none(sta(part3, 'BirthActivityAnomaly')) or Undefined,
+                    'chorioamnionitis': safe_bool_none(sta(part3, 'Horiamnionit')) or Undefined,
+                    # 'perineal_tear': part3['PerinealRupture'] or Undefined,  # rbPerinealTear
+                    # 'eclampsia': part3['Nefropaty'] or Undefined,  # rbRisarEclampsia
+                    'anemia': safe_bool_none(sta(part3, 'Anemia')) or Undefined,
+                    'infections_during_delivery': sta(part3, 'InfectionDuringBirth') or Undefined,
+                    'infections_after_delivery': sta(part3, 'InfectionAfterBirth') or Undefined,
+                    # 'funiculus': sta(part3, 'CordPatology', 'Term') or Undefined,  # rbRisarFuniculus
+                    # 'afterbirth': sta(part3, 'PlacentaPatology', 'Term') or Undefined,  # rbRisarAfterbirth
                 },
                 'manipulations': {
-                    'caul': safe_bool_none(part4['Amniotomy']) or Undefined,
-                    'calfbed': safe_bool_none(part4['ManualWombSurvey']) or Undefined,
-                    'perineotomy': part4['Perineotomy'] or Undefined,
-                    'secundines': safe_bool_none(part4['ManualRemovalAfterBirth']) or Undefined,
-                    'other_manipulations': part4['AnotherManipulations'] or Undefined,
+                    'caul': safe_bool_none(sta(part4, 'Amniotomy')) or Undefined,
+                    'calfbed': safe_bool_none(sta(part4, 'ManualWombSurvey')) or Undefined,
+                    'perineotomy': sta(part4, 'Perineotomy') or Undefined,
+                    'secundines': safe_bool_none(sta(part4, 'ManualRemovalAfterBirth')) or Undefined,
+                    'other_manipulations': sta(part4, 'AnotherManipulations') or Undefined,
                 },
                 'operations': {
-                    'caesarean_section': part5['CesarianDelivery'] or Undefined,
-                    'obstetrical_forceps': part5['Forceps'] or Undefined,
-                    'vacuum_extraction': safe_bool_none(part5['Vacuum']),
-                    'indication': part5['Indicator'] or Undefined,
-                    'specialities': part5['Speciality'] or Undefined,
-                    'anesthetization': part5['Anestesia'] or Undefined,
-                    'hysterectomy': part5['Hysterectomy'] or Undefined,
-                    # 'complications': part5['Complication'] or Undefined,
-                    'embryotomy': part5['Embryotomy'] or Undefined,
+                    # 'caesarean_section': part5['CesarianDelivery'] or Undefined,  #rbRisarCaesarean_Section
+                    # 'obstetrical_forceps': part5['Forceps'] or Undefined,  # rbRisarObstetrical_Forceps
+                    # 'vacuum_extraction': safe_bool_none(part5['Vacuum']),  # boolean
+                    # 'indication': part5['Indicator'] or Undefined,  # rbRisarIndication
+                    # 'specialities': part5['Speciality'] or Undefined,  # rbRisarSpecialities
+                    # 'anesthetization': part5['Anestesia'] or Undefined,  # rbRisarAnesthetization
+                    # 'hysterectomy': part5['Hysterectomy'] or Undefined,  # rbRisarHysterectomy
+                    # 'complications': part5['Complication'] or Undefined,  # MKB
+                    'embryotomy': safe_bool_none(sta(part5, 'Embryotomy')) or Undefined,
                 },
                 'kids': []
             }
+
+            mother_death_required = [
+                "reason_of_death",
+                "death_date",
+                "death_time"
+            ]
+            mother_death = {
+                'death_date': encode(sta(part2, 'MotherDeathData', 'DeathDate')),
+                'death_time': (encode(sta(part2, 'MotherDeathData', 'DeathTime')) or '')[:5],
+                'reason_of_death': sta(part2, 'MotherDeathData', 'MotherDeathReason'),
+                # --
+                # 'pat_diagnosis_osn': sta(part2, 'MotherDeathData', 'PatologicalDiagnos'),
+                # 'pat_diagnosis_sop': sta(part2, 'MotherDeathData', 'AcompanyDiagnos'),
+                # 'pat_diagnosis_osl': sta(part2, 'MotherDeathData', 'ComplicationDiagnos'),
+                'control_expert_conclusion': sta(part2, 'LkkResult') or Undefined,
+            }
+            if all(mother_death[x] for x in mother_death_required):
+                main_item['body']['mother_death'] = mother_death
+
             kids = []
             childs = part6['Child']
             for child in childs:
                 # "required": ["alive", "sex", "weight", "length", "date"]
                 kids.append({
-                    'alive': not safe_bool(safe_traverse_attrs(child, 'Child', 'IsDeath')),
-                    'sex': safe_int(safe_traverse_attrs(child, 'Child', 'Gender')),
-                    'weight': safe_double(safe_traverse_attrs(child, 'Child', 'Weight')),
-                    'length': safe_double(safe_traverse_attrs(child, 'Child', 'Height')),
-                    'date': encode(safe_traverse_attrs(child, 'Child', 'BirthDate')),
+                    'alive': safe_bool(sta(child, 'Alive')),
+                    'sex': safe_int(sta(child, 'Gender')) - 1,
+                    'weight': safe_double(sta(child, 'Weight')),
+                    'length': safe_double(sta(child, 'Height')),
+                    'date': encode(sta(child, 'BirthDate')),
                     # --
                     # 'time': ???,
-                    'maturity_rate': safe_traverse_attrs(child, 'Child', 'FullTerm') or Undefined,
-                    'apgar_score_1': safe_int(safe_traverse_attrs(child, 'Child', 'Apgar_1min')) or Undefined,
-                    'apgar_score_5': safe_int(safe_traverse_attrs(child, 'Child', 'Apgar_5min')) or Undefined,
-                    'apgar_score_10': safe_int(safe_traverse_attrs(child, 'Child', 'Apgar_10min')) or Undefined,
-                    'death_date': encode(safe_traverse_attrs(child, 'Child', 'DeathDate')) or Undefined,
-                    'death_time': encode(safe_traverse_attrs(child, 'Child', 'DeathTime')) or Undefined,
-                    'death_reason': safe_traverse_attrs(child, 'Child', 'DeathReason') or Undefined,
+                    # 'maturity_rate': sta(child, 'FullTerm') or Undefined,  # rbRisarMaturity_Rate
+                    'apgar_score_1': safe_int(sta(child, 'Apgar_1min')) or Undefined,
+                    'apgar_score_5': safe_int(sta(child, 'Apgar_5min')) or Undefined,
+                    'apgar_score_10': safe_int(sta(child, 'Apgar_10min')) or Undefined,
+                    'death_date': encode(sta(child, 'DeathDate')) or Undefined,
+                    'death_time': (encode(sta(child, 'DeathTime')) or '')[:5] or Undefined,
+                    'death_reason': sta(child, 'DeathReason') or Undefined,
                     # 'diseases': child['NewbornSeakness'] or Undefined,
                 })
             main_item['body']['kids'] = kids
 
         return entities
-
-"""
-      <ChildBirthData xmlns="https://68.r-mis.ru/esb/services/">
-         <PatientId>5568693</PatientId>
-         <Part1 description="general data">
-            <InDate>2016-11-08+03:00</InDate>
-            <ClinicId>490</ClinicId>
-            <ChildBirth>
-               <Date>2016-11-08+03:00</Date>
-               <Time>00:00:00.000+03:00</Time>
-               <PregnantWeeks>12</PregnantWeeks>
-               <Diagnoses>
-                  <MainDiagnos>7778</MainDiagnos>
-                  <ComplicationDiagnoses>
-                     <Diagnos>G00.0</Diagnos>
-                  </ComplicationDiagnoses>
-                  <ExtraDiagnoses>
-                     <Diagnos>7778</Diagnos>
-                  </ExtraDiagnoses>
-               </Diagnoses>
-               <ChildBirthOutcome>Роды</ChildBirthOutcome>
-               <EmployeeId>90</EmployeeId>
-            </ChildBirth>
-            <OrgName/>
-            <BirthSpeciality/>
-            <AfterBirthSpeciality/>
-            <HelpProvided/>
-            <Abort/>
-         </Part1>
-         <Part2 description="mother death info">
-            <MotherDeathData>
-               <DeathDate>2016-11-17+03:00</DeathDate>
-               <DeathTime xsi:nil="true"/>
-               <MotherDeathReason xsi:nil="true"/>
-               <PatologicalDiagnos>Тестовая запись 2</PatologicalDiagnos>
-               <AcompanyDiagnos xsi:nil="true"/>
-               <ComplicationDiagnos xsi:nil="true"/>
-            </MotherDeathData>
-            <LkkResult/>
-         </Part2>
-         <Part3 description="complications">
-            <BirthWaterBreak/>
-            <PrenatalWaterBreak/>
-            <BirthPowerWeakness/>
-            <AmiaticWater/>
-            <PatologicPreliminaryPeriod/>
-            <BirthActivityAnomaly/>
-            <Horiamnionit/>
-            <PerinealRupture/>
-            <Nefropaty/>
-            <Anemia/>
-            <InfectionDuringBirth/>
-            <InfectionAfterBirth/>
-            <CordPatology/>
-            <PlacentaPatology/>
-         </Part3>
-         <Part4 description="matnipulation"/>
-         <Part5 description="surgery">
-            <CesarianDelivery/>
-            <Forceps/>
-            <Vacuum/>
-            <Indicator/>
-            <Speciality/>
-            <Anestesia/>
-            <Hysterectomy/>
-            <Complication/>
-            <Embryotomy/>
-         </Part5>
-         <Part6 description="children info">
-            <Child>
-               <Alive>true</Alive>
-               <Gender>2</Gender>
-               <Weight>1200</Weight>
-               <Height>55</Height>
-               <BirthDate>2016-11-08+03:00</BirthDate>
-               <BirthTime>00:00:00.000+03:00</BirthTime>
-               <FullTerm>Доношенный</FullTerm>
-               <Apgar_1min>4</Apgar_1min>
-               <Apgar_5min>5</Apgar_5min>
-               <Apgar_10min>5</Apgar_10min>
-               <DeathDate xsi:nil="true"/>
-               <DeathTime xsi:nil="true"/>
-               <DeathReason xsi:nil="true"/>
-               <NewbornSickness/>
-            </Child>
-            <Child>
-               <Alive>true</Alive>
-               <Gender>3</Gender>
-               <Weight>780</Weight>
-               <Height>50</Height>
-               <BirthDate>2016-11-08+03:00</BirthDate>
-               <BirthTime>00:00:00.000+03:00</BirthTime>
-               <FullTerm>Доношенный</FullTerm>
-               <Apgar_1min xsi:nil="true"/>
-               <Apgar_5min xsi:nil="true"/>
-               <Apgar_10min xsi:nil="true"/>
-               <DeathDate>2016-11-17+03:00</DeathDate>
-               <DeathTime xsi:nil="true"/>
-               <DeathReason xsi:nil="true"/>
-               <NewbornSickness/>
-            </Child>
-            <Child>
-               <Alive>true</Alive>
-               <Gender>3</Gender>
-               <Weight>2580</Weight>
-               <Height>53</Height>
-               <BirthDate>2016-11-08+03:00</BirthDate>
-               <BirthTime>00:00:00.000+03:00</BirthTime>
-               <FullTerm>Доношенный</FullTerm>
-               <Apgar_1min>5</Apgar_1min>
-               <Apgar_5min>5</Apgar_5min>
-               <Apgar_10min>8</Apgar_10min>
-               <DeathDate xsi:nil="true"/>
-               <DeathTime xsi:nil="true"/>
-               <DeathReason xsi:nil="true"/>
-               <NewbornSickness/>
-            </Child>
-            <Child>
-               <Alive>false</Alive>
-               <Gender>2</Gender>
-               <Weight>4300</Weight>
-               <Height>52</Height>
-               <BirthDate>2016-11-08+03:00</BirthDate>
-               <BirthTime>00:00:00.000+03:00</BirthTime>
-               <FullTerm>Доношенный</FullTerm>
-               <Apgar_1min>8</Apgar_1min>
-               <Apgar_5min>8</Apgar_5min>
-               <Apgar_10min>10</Apgar_10min>
-               <DeathDate>2016-11-08+03:00</DeathDate>
-               <DeathTime>00:00:00.000+03:00</DeathTime>
-               <DeathReason xsi:nil="true"/>
-               <NewbornSickness/>
-            </Child>
-            <Child>
-               <Alive>true</Alive>
-               <Gender>3</Gender>
-               <Weight>6000</Weight>
-               <Height>56</Height>
-               <BirthDate>2016-11-08+03:00</BirthDate>
-               <BirthTime>00:00:00.000+03:00</BirthTime>
-               <FullTerm>Доношенный</FullTerm>
-               <Apgar_1min xsi:nil="true"/>
-               <Apgar_5min xsi:nil="true"/>
-               <Apgar_10min xsi:nil="true"/>
-               <DeathDate>2016-11-17+03:00</DeathDate>
-               <DeathTime xsi:nil="true"/>
-               <DeathReason xsi:nil="true"/>
-               <NewbornSickness/>
-            </Child>
-         </Part6>
-      </ChildBirthData>
-"""

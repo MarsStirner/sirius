@@ -11,7 +11,7 @@ from sirius.app import app
 from sirius.blueprints.monitor.exception import InternalError
 from sirius.lib.message import Message
 from sirius.lib.celery_tasks import local_task, remote_task
-from sirius.celery_queue import remote_queue_name_list, main_queue_name
+from sirius.celery_queue import main_queue_name
 
 
 class RemoteProducer(object):

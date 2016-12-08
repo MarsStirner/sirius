@@ -9,7 +9,7 @@
 import os
 from sirius.blueprints.api.local_service.risar.active.request import request_by_url
 from sirius.blueprints.monitor.exception import InternalError, LoggedException
-from sirius.celery_queue import remote_queue_name_list, main_queue_name
+from sirius.celery_queue import main_queue_name
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message
 from sirius.lib.celery_tasks import local_task, remote_task
@@ -27,11 +27,11 @@ class LocalProducer(object):
         elif msg.is_to_remote:
             if msg.is_send_data:
                 implement = Implementation()
-                for queue_name in remote_queue_name_list:
-                    rmt_sys_code = remote_system.get_code(queue_name)
-                    reformer = implement.get_reformer(rmt_sys_code)
-                    entity_package = reformer.get_entity_package_by_msg(msg)
-                    self.send_diff_data(entity_package, reformer, msg, rmt_sys_code, queue_name)
+                for rmt_sys_code in remote_system.get_codes():
+                    for queue_name in remote_system.get_queue_names(rmt_sys_code):
+                        reformer = implement.get_reformer(rmt_sys_code)
+                        entity_package = reformer.get_entity_package_by_msg(msg)
+                        self.send_diff_data(entity_package, reformer, msg, rmt_sys_code, queue_name)
             elif msg.is_send_event:
                 implement = Implementation()
                 rmt_sys_code = remote_system.get_event_system_code()

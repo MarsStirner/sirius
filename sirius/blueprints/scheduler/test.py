@@ -14,7 +14,7 @@ from sirius.blueprints.scheduler.models import ScheduleGroup, \
     ScheduleGroupRequest
 
 
-class TestSchedule:
+class _TestSchedule:
 
     @beat_entry
     def test_execute(self):
@@ -30,6 +30,10 @@ class TestSchedule:
 
             req_data = ScheduleGroupRequest.query.filter(
                 ScheduleGroupRequest.schedule_group_id == 1,
-                ScheduleGroupRequest.order == 4,
+                # ScheduleGroupRequest.order == 3,  # get_doctors
+                # ScheduleGroupRequest.order == 4,  # get_measures_results
+                # ScheduleGroupRequest.order == 5,  # get_hospital_rec
+                # ScheduleGroupRequest.order == 6,  # send_exchange_card
+                ScheduleGroupRequest.order == 7,  # childbirth
             ).one()
             sch.execute(req_data)

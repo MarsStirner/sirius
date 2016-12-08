@@ -123,6 +123,14 @@ subsystems:
         session.lock_dir: /tmp/session/lock
         session.key: sirius.session.id
 
+      main_queues:
+        risar_main: &CELERY_QUEUE_RISAR_MAIN risar_main_queue
+        risar_error_1: &CELERY_QUEUE_RISAR_ERROR_1 risar_error_1_queue
+        risar_error_2: &CELERY_QUEUE_RISAR_ERROR_2 risar_error_2_queue
+      mis_queues:
+        - mis_1: &CELERY_QUEUE_MIS_1 mis_1_queue
+        - mis_2: &CELERY_QUEUE_MIS_2 mis_2_queue
+
       prod:
         ENV: 'prod'
         DEBUG: False
@@ -268,49 +276,32 @@ subsystems:
 #
 #    url: *DEVOURER_URL
 
-  celery_queue:
-    risar_main: |
-      {{ deployment.prefix }}_risar_main_queue
-    risar_error_1: |
-      {{ deployment.prefix }}_risar_error_1_queue
-    risar_error_2: |
-      {{ deployment.prefix }}_risar_error_2_queue
-    mis_tula: |
-      {{ deployment.prefix }}_mis_tula_queue
-    mis_tambov: |
-      {{ deployment.prefix }}_mis_tambov_queue
-
   risar_main_worker:
     configens:
       supervisor:
         template: "{{ configens.supervisor.templates.worker | recurse }}"
-        queue: |
-          {{ subsystems.celery_queue.risar_main | recurse }}
+        queue: *CELERY_QUEUE_RISAR_MAIN
   risar_error_1_worker:
     configens:
       supervisor:
         template: "{{ configens.supervisor.templates.worker | recurse }}"
-        queue: |
-          {{ subsystems.celery_queue.risar_error_1 | recurse }}
+        queue: *CELERY_QUEUE_RISAR_ERROR_1
   risar_error_2_worker:
     configens:
       supervisor:
         template: "{{ configens.supervisor.templates.worker | recurse }}"
-        queue: |
-          {{ subsystems.celery_queue.risar_error_2 | recurse }}
+        queue: *CELERY_QUEUE_RISAR_ERROR_2
 
-  mis_tula_worker:
+  mis_1_worker:
     configens:
       supervisor:
         template: "{{ configens.supervisor.templates.worker | recurse }}"
-        queue: |
-          {{ subsystems.celery_queue.mis_tula | recurse }}
-  mis_tambov_worker:
+        queue: *CELERY_QUEUE_MIS_1
+  mis_2_worker:
     configens:
       supervisor:
         template: "{{ configens.supervisor.templates.worker | recurse }}"
-        queue: |
-          {{ subsystems.celery_queue.mis_tambov | recurse }}
+        queue: *CELERY_QUEUE_MIS_2
 
   celerybeat:
     configens:

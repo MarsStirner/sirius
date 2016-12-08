@@ -11,11 +11,13 @@ from json import dumps
 from collections import OrderedDict
 
 from hitsl_utils.wm_api import WebMisJsonEncoder
+from sirius.blueprints.api.remote_service.tambov.entities import \
+    TambovEntityCode
 from sirius.blueprints.monitor.exception import module_entry
 from sirius.models.entity import Entity, DiffEntityImage
 from sirius.models.operation import OperationCode
 from sirius.database import db
-# from suds.sudsobject import asdict
+from suds.sudsobject import asdict
 from zeep.xsd.valueobjects import CompoundValue
 
 
@@ -28,6 +30,17 @@ class Difference(object):
         flat_entities = {}
         system_code = entity_package.system_code
         pack_entities = entity_package.get_pack_entities()
+
+        if TambovEntityCode.BIRTH in pack_entities:
+            # todo: добавить выбор сериализатора в json в зависимости от
+            # клиента (может из клиента уже сериализованным давать)
+            # todo: добавить root_entity_id в EntityImage, DiffEntityImage
+            # конфликт TambovEntityCode.BIRTH с TambovEntityCode.SMART_PATIENT
+            # одинаковый main_id
+            # проверять по связке сущности + рутИд, считая, что не будет
+            # одинаковых сущностей 1-го уровня в разных потоках
+            return entity_package
+
         self.build_flat_entities(flat_entities, pack_entities)
         self.set_diffs(system_code, flat_entities)
         self.mark_entities(entity_package, flat_entities)
@@ -59,7 +72,7 @@ class Difference(object):
                     'root_external_id': (package_record.get('root_parent') or {}).get('main_id', main_id),
                     'external_id': main_id,
                     'content': dumps(self.serialize_object(package_record['data']), cls=WebMisJsonEncoder),
-                    # 'content': dumps(self.recursive_asdict(package_record['data']), encoding=WebMisJsonEncoder),
+                    # 'content': dumps(self.recursive_asdict(package_record['data']), cls=WebMisJsonEncoder),
                     'operation_code': OperationCode.READ_MANY,
                     'level': level,
                 }
@@ -161,20 +174,20 @@ class Difference(object):
             result[key] = value
         return result
 
-    # @classmethod
-    # def recursive_asdict(cls, d):
-    #     """Convert Suds object into serializable format."""
-    #     out = {}
-    #     for k, v in asdict(d).iteritems():
-    #         if hasattr(v, '__keylist__'):
-    #             out[k] = cls.recursive_asdict(v)
-    #         elif isinstance(v, list):
-    #             out[k] = []
-    #             for item in v:
-    #                 if hasattr(item, '__keylist__'):
-    #                     out[k].append(cls.recursive_asdict(item))
-    #                 else:
-    #                     out[k].append(item)
-    #         else:
-    #             out[k] = v
-    #     return out
+    @classmethod
+    def recursive_asdict(cls, d):
+        """Convert Suds object into serializable format."""
+        out = {}
+        for k, v in asdict(d).iteritems():
+            if hasattr(v, '__keylist__'):
+                out[k] = cls.recursive_asdict(v)
+            elif isinstance(v, list):
+                out[k] = []
+                for item in v:
+                    if hasattr(item, '__keylist__'):
+                        out[k].append(cls.recursive_asdict(item))
+                    else:
+                        out[k].append(item)
+            else:
+                out[k] = v
+        return out

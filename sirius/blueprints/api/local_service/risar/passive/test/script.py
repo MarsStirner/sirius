@@ -6,6 +6,7 @@
 @date: 25.10.2016
 
 """
+import os
 from sirius.app import app
 from sirius.blueprints.api.local_service.risar.active.request import \
     request_by_url as risar_request_by_url
@@ -109,7 +110,7 @@ class TestLocalApi:
         # code = result['meta']['code']
         # assert code == 200
 
-    def _test_change_risar_checkup_second(self, testapp):
+    def test_change_risar_checkup_second(self, testapp):
         # сохранение повторного осмотра пациента, запрос выдачи талона
         result = request_local(testapp, session, request_risar_second_checkup_60)
         code = result['meta']['code']
@@ -182,3 +183,20 @@ class TestLocalApi:
                             str(d_code),
                         ))
                         diagsf.write(line + '\n')
+
+    def _test_send_exch_card(self):
+        from sirius.blueprints.api.remote_service.tambov.lib.transfer import \
+            TambovTransfer
+        from sirius.models.protocol import ProtocolCode
+        fname = 'exchange_card_example.xml'
+        rel_path = 'sirius/blueprints/api/remote_service/tambov/active/service/'
+        with open(os.path.join(rel_path, fname)) as pr:
+            template_text = pr.read()
+
+        transfer = TambovTransfer()
+        client = transfer.get_rest_client()
+        session = None, None
+        req_result = client.make_api_request(
+            'post', 'https://test68.r-mis.ru/medservices-ws/service-rs/renderedServiceProtocols/16424035',
+            ProtocolCode.SOAP, session, template_text)
+        print req_result

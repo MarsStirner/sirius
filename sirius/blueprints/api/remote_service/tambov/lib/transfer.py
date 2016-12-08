@@ -6,6 +6,8 @@
 @date: 23.09.2016
 
 """
+from sirius.blueprints.api.remote_service.tambov.entities import \
+    TambovEntityCode
 from sirius.blueprints.api.remote_service.tambov.lib.answer import TambovAnswer
 from sirius.blueprints.api.remote_service.tambov.active.connect import TambovSOAPClient, \
     TambovRESTClient
@@ -39,15 +41,18 @@ class TambovTransfer(Transfer):
         def common_method(*a, **kw):
             service_method = getattr(client.client.service, req.method)
             return service_method(*a, **kw)
-        client = self.get_soap_client(req.url)
+        wsdl_lib_code = 'zeep'
+        if TambovEntityCode.BIRTH in req.meta['dst_entity_code']:
+            wsdl_lib_code = 'suds'
+        client = self.get_soap_client(req.url, wsdl_lib_code)
         req_method = getattr(client, req.method, common_method)
         req_result = connect_entry(function=req_method)(*req.options, **req.data)
         return req_result
 
     @connect_entry
-    def get_soap_client(self, wsdl):
+    def get_soap_client(self, wsdl, wsdl_lib_code):
         if wsdl not in self.clients:
-            self.clients[wsdl] = TambovSOAPClient(wsdl)
+            self.clients[wsdl] = TambovSOAPClient(wsdl, wsdl_lib_code)
         return self.clients[wsdl]
 
     def rest_protocol(self, req):

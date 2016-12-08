@@ -11,11 +11,8 @@ from requests.auth import HTTPBasicAuth
 from sirius.blueprints.monitor.exception import ExternalError
 from sirius.lib.apiutils import ApiException
 from sirius.models.protocol import ProtocolCode
-from zeep import Client, Transport
-from zeep.exceptions import Fault as WebFault
-# from suds.client import Client
-# from suds import WebFault
-# from suds.transport.https import HttpAuthenticated
+from zeep.exceptions import Fault as ZeepWebFault
+from suds import WebFault as sudsWebFault
 
 tambov_api_login = 'ekonyaev'
 tambov_api_password = 'P9QP6V43'
@@ -23,12 +20,26 @@ tambov_api_password = 'P9QP6V43'
 
 class TambovSOAPClient(object):
     """Класс SOAP-клиента для взаимодействия с сервисом МИС"""
-    def __init__(self, url):
+    def __init__(self, url, wsdl_lib_code):
+        if wsdl_lib_code == 'zeep':
+            self.init_zeep_lib(url)
+        if wsdl_lib_code == 'suds':
+            self.init_suds_lib(url)
+
+    def init_zeep_lib(self, url):
+        from zeep import Client, Transport
         transport_with_basic_auth = Transport(
             http_auth=(tambov_api_login, tambov_api_password)
         )
-        # credentials = dict(username=tambov_api_login, password=tambov_api_password)
-        # transport_with_basic_auth = HttpAuthenticated(**credentials)
+
+        self.client = Client(url, transport=transport_with_basic_auth)
+
+    def init_suds_lib(self, url):
+        from suds.client import Client
+        from suds.transport.https import HttpAuthenticated
+        credentials = dict(username=tambov_api_login, password=tambov_api_password)
+        transport_with_basic_auth = HttpAuthenticated(**credentials)
+
         self.client = Client(url, transport=transport_with_basic_auth)
 
     def check_error(self, result):

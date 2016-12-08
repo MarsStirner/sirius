@@ -17,7 +17,7 @@ from sirius.blueprints.api.remote_service.tambov.active.referral.srv_prototype_m
     SrvPrototypeMatch
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
-from sirius.blueprints.monitor.exception import InternalError
+from sirius.blueprints.monitor.exception import InternalError, ExternalError
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
@@ -161,6 +161,11 @@ class ReferralTambovBuilder(Builder):
                 },
             )
             srvs_data = self.transfer__send_request(req)
+            if not srvs_data:
+                raise ExternalError('%s not found for clinic="%s" prototype="%s"' % (
+                    TambovEntityCode.SERVICE,
+                    org_code, prototype_id
+                ))
             srv_data = srvs_data[0]  # считаем, что будет одна
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = {
@@ -273,6 +278,7 @@ class ReferralTambovBuilder(Builder):
                 'measure_type_code': measure_code,
                 'realization_date': encode(rend_serv_data['dateFrom']),
                 'lpu_code': safe_traverse_attrs(rend_serv_data, 'orgId') or '',
+                'doctor_code': safe_traverse_attrs(rend_serv_data, 'resourceGroupId') or '',
                 'results': self.make_refs(srv_attachment_data),
             }
 

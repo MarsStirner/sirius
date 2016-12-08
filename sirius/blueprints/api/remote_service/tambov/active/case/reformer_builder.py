@@ -18,7 +18,7 @@ from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
 from sirius.blueprints.api.remote_service.tambov.lib.diags_match import \
     DiagsMatch
-from sirius.blueprints.monitor.exception import InternalError
+from sirius.blueprints.monitor.exception import InternalError, ExternalError
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
@@ -219,17 +219,22 @@ class CaseTambovBuilder(Builder):
             )
             prototype_code = safe_traverse(serv_code, 'medical_service') or ''
             prototype_id = SrvPrototypeMatch.get_prototype_id_by_prototype_code(prototype_code)
+            org_code = safe_traverse(ticket_data, 'hospital') or ''
             req = DataRequest()
             req.set_req_params(
                 url=srv_api_method['template_url'],
                 method=srv_api_method['method'],
                 protocol=ProtocolCode.SOAP,
                 data={
-                    'clinic': safe_traverse(ticket_data, 'hospital') or '',
+                    'clinic': org_code,
                     'prototype': prototype_id,
                 },
             )
             srvs_data = self.transfer__send_request(req)
+            if not srvs_data:
+                raise ExternalError('%s not found for clinic="%s" prototype="%s"' % (
+                    TambovEntityCode.SERVICE, org_code, prototype_id
+                ))
             srv_data = srvs_data[0]  # считаем, что будет одна
             if src_operation_code != OperationCode.DELETE:
                 serv_item['body'] = {

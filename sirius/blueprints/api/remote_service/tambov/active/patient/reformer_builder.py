@@ -205,7 +205,8 @@ class PatientTambovBuilder(Builder):
                 main_item['body'].setdefault('document', {}).update({
                     'document_type_code': safe_int(document_data.type),
                     'document_number': document_data.number,
-                    'document_beg_date': encode(document_data.issueDate) or '',
+                    # 'document_beg_date': encode(document_data.issueDate) or '',
+                    'document_beg_date': '2000-01-01',
                     'document_series': document_data.series or Undefined,
                     'document_issuing_authority': document_issuing_authority,
                 })
@@ -216,11 +217,13 @@ class PatientTambovBuilder(Builder):
             local_addr = {
                 'KLADR_locality': None,  # заполняется в entry
                 'KLADR_street': None,  # заполняется в entry
-                'house': address_data['house'],  # заполняется в entry
+                # 'house': address_data['house'],  # заполняется в entry
+                'house': '0',
                 'locality_type': None,  # заполняется в entry
                 # todo:
                 # 'building': 'not-implemented' or Undefined,
-                'flat': address_data['apartment'] or Undefined,
+                # 'flat': address_data['apartment'] or Undefined,
+                'flat': '0' or Undefined,
             }
             # в схеме рисар пока не массив, а объект
             # main_item['body'].setdefault('residential_address', []).append(local_addr)
@@ -235,9 +238,11 @@ class PatientTambovBuilder(Builder):
                 elif entry['level'] == '6':
                     local_addr['KLADR_street'] = entry['kladrCode']
                 elif entry['level'] == '7':
-                    local_addr['house'] = entry['name']
+                    # local_addr['house'] = entry['name']
+                    local_addr['house'] = '0'
                 elif entry['level'] == '8':
-                    local_addr['flat'] = entry['name']
+                    # local_addr['flat'] = entry['name']
+                    local_addr['flat'] = '0'
             # в схеме рисар пока не массив, а объект
             break
 

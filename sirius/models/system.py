@@ -20,8 +20,8 @@ class RegionCode(Enum):
 
 class SystemCode(Enum):
     LOCAL = 'risar'
-    TULA = 'tula_gr_1'  # тульская интеграционная группа 1
-    TAMBOV = 'tambov_gr_1'  # тамбовская интеграционная группа 1
+    TULA = 'tula_gr_1'  # тульская интеграционная группа 1 /tula_mis_gr1
+    TAMBOV = 'tambov_gr_1'  # тамбовская интеграционная группа 1 /tambov_mis_gr1
 
 
 # class Region(Model):
