@@ -1210,3 +1210,7 @@ class DataRequest(object):
     # @property
     # def protocol(self):
     #     return self.req_data['meta']['dst_protocol_code']
+
+    @property
+    def req_mode(self):
+        return self.req_data['meta'].get('dst_request_mode')
