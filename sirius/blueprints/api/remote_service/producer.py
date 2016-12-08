@@ -11,10 +11,12 @@ from sirius.app import app
 from sirius.blueprints.monitor.exception import InternalError
 from sirius.lib.message import Message
 from sirius.lib.celery_tasks import local_task, remote_task, sync_local_task
-from sirius.celery_queue import main_queue_name
 
 
 class RemoteProducer(object):
+    main_queues = app.config['main_queues']
+    main_queue_name = main_queues['risar_main']
+
     def send(self, msg, async=True):
         assert isinstance(msg, Message)
         # todo: на время тестирования без обработки исключений
@@ -24,7 +26,7 @@ class RemoteProducer(object):
         if msg.is_to_local:
             args = (msg,)
             if async:
-                local_task.apply_async(args=args, queue=main_queue_name)
+                local_task.apply_async(args=args, queue=self.main_queue_name)
             else:
                 res = sync_local_task(*args)
         else:
