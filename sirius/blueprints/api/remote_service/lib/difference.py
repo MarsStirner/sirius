@@ -11,8 +11,6 @@ from json import dumps
 from collections import OrderedDict
 
 from hitsl_utils.wm_api import WebMisJsonEncoder
-from sirius.blueprints.api.remote_service.tambov.entities import \
-    TambovEntityCode
 from sirius.blueprints.monitor.exception import module_entry
 from sirius.models.entity import Entity, DiffEntityImage
 from sirius.models.operation import OperationCode
@@ -31,6 +29,8 @@ class Difference(object):
         system_code = entity_package.system_code
         pack_entities = entity_package.get_pack_entities()
 
+        from sirius.blueprints.api.remote_service.tambov.entities import \
+            TambovEntityCode
         if TambovEntityCode.BIRTH in pack_entities:
             # todo: добавить выбор сериализатора в json в зависимости от
             # клиента (может из клиента уже сериализованным давать)
@@ -128,6 +128,13 @@ class Difference(object):
     def save_change(self, msg):
         # вносит изменения в EntityImage
         meta = msg.get_header().meta
+
+        from sirius.blueprints.api.remote_service.tambov.entities import \
+            TambovEntityCode
+        # см. туду про BIRTH выше
+        if meta['remote_entity_code'] == TambovEntityCode.BIRTH:
+            return
+
         main_id = meta['remote_main_id']
         operation_code = meta['remote_operation_code']
         if operation_code == OperationCode.ADD:
