@@ -142,7 +142,7 @@ def params_to_str(params):
     return r.decode('utf-8')
 
 
-def task_entry(function=None, stream_pos=2, self_pos=1):
+def task_entry(function=None, stream_pos=1, self_pos=2):
     """
     Ловит ошибку на входе в таск, собирая входные данные
     """

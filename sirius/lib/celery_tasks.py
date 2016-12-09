@@ -17,11 +17,11 @@ from sirius.blueprints.scheduler.api import Scheduler
 
 
 @celery.task(bind=True, default_retry_delay=5*60, max_retries=12)
-@task_entry
 def local_task(self, msg):
     sync_local_task(msg, self)
 
 
+@task_entry
 def sync_local_task(msg, task=None):
     from sirius.blueprints.api.local_service.consumer import LocalConsumer
     receiver = LocalConsumer()
@@ -30,11 +30,11 @@ def sync_local_task(msg, task=None):
 
 
 @celery.task(bind=True, default_retry_delay=5*60, max_retries=12)
-@task_entry
 def remote_task(self, msg, rmt_sys_code):
     sync_remote_task(msg, rmt_sys_code, self)
 
 
+@task_entry
 def sync_remote_task(msg, rmt_sys_code, task=None):
     from sirius.blueprints.api.remote_service.consumer import RemoteConsumer
     receiver = RemoteConsumer()
