@@ -48,6 +48,7 @@ class PatientTambovBuilder(Builder):
             )
             all_patients = self.get_all_patients(reformed_req)
             changed_patients = self.get_changed_patients(reformed_req)
+            # changed_patients = ['1054287']  # for test
             self.set_patient_cards(changed_patients, package, req_meta)
             self.inject_all_patients(package, all_patients, api_method)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
@@ -216,7 +217,7 @@ class PatientTambovBuilder(Builder):
         for address_data in sm_patient_data['addresses']:
             local_addr = {
                 'KLADR_locality': None,  # заполняется в entry
-                'KLADR_street': None,  # заполняется в entry
+                'KLADR_street': '',  # todo: посмотреть в МР что будет если ''  # заполняется в entry
                 # 'house': address_data['house'],  # заполняется в entry
                 'house': '0',
                 'locality_type': None,  # заполняется в entry

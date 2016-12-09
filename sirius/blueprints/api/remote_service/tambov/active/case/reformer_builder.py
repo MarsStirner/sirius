@@ -155,7 +155,6 @@ class CaseTambovBuilder(Builder):
                 # неотложная или плановая
                 'careProvidingFormId': 2 if safe_traverse(ticket_data, 'medical_care_emergency') else 3,
                 'initGoalId': safe_traverse(ticket_data, 'visit_type') or '7',
-                'diseaseTypeId': safe_traverse(ticket_data, 'disease_character'),
             }
             diagnosis = safe_traverse(ticket_data, 'diagnosis')
             if diagnosis:
@@ -164,6 +163,7 @@ class CaseTambovBuilder(Builder):
                     'main': True,
                     'diagnosId': dm.safe_diag_id(diagnosis),
                     'establishmentDate': to_date(safe_traverse(ticket_data, 'date_open')),
+                    'diseaseTypeId': safe_traverse(ticket_data, 'disease_character'),
                 }]
 
         checkup_node = pack_entity['addition'][checkup_code][0]
@@ -187,7 +187,6 @@ class CaseTambovBuilder(Builder):
                 'placeId': '1',
                 'profileId': safe_traverse(ticket_data, 'medical_care_profile'),
                 'resourceGroupId': ticket_data['doctor'],
-                'diseaseTypeId': safe_traverse(ticket_data, 'disease_character'),
             }
             diagnosis_osn = safe_traverse(ticket_data, 'medical_report', 'diagnosis_osn')
             if diagnosis_osn:
@@ -196,6 +195,7 @@ class CaseTambovBuilder(Builder):
                     'main': True,
                     'diagnosId': dm.safe_diag_id(diagnosis_osn),
                     'establishmentDate': to_date(safe_traverse(checkup_data[gen_info], 'date')),
+                    'diseaseTypeId': safe_traverse(ticket_data, 'disease_character'),
                 }]
 
         srv_api_method = self.reformer.get_api_method(

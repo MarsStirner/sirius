@@ -225,7 +225,7 @@ class ReferralTambovBuilder(Builder):
             measure_item = None
 
         measure_type = SrvPrototypeMatch.get_measure_type(rend_serv_data['prototypeId'])
-        research_meas_types = ('lab_test', 'func_test')
+        research_meas_types = ('lab_test', 'func_test', 'healthcare', 'social_preventiv')
         checkup_meas_types = ('checkup',)
         if measure_type in checkup_meas_types:
             self.build_local_measure_specialists_checkup(
