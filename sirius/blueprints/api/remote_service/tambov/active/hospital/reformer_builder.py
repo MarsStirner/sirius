@@ -124,7 +124,7 @@ class HospitalTambovBuilder(Builder):
                 'diagnosis_out': 'A01.1',  # нет поля в сервисе, они будут доделывать
                 # --
                 'external_id': header_meta['remote_main_id'],
-                'date_in': encode(hospital_rec_data['admissionDate']),
-                'date_out': encode(hospital_rec_data['outcomeDate']),
+                'date_in': encode(hospital_rec_data['admissionDate']) or Undefined,
+                'date_out': encode(hospital_rec_data['outcomeDate']) or Undefined,
             }
         return entities

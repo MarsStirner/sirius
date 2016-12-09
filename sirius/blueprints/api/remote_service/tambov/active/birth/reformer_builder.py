@@ -85,6 +85,9 @@ class BirthTambovBuilder(Builder):
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
 
         entities = RequestEntities()
+        if not safe_traverse_attrs(birth_data, 'Part1', 'InDate'):
+            # пустой ответ
+            return entities
         main_item = entities.set_main_entity(
             dst_entity_code=RisarEntityCode.CHILDBIRTH,
             dst_parents_params=header_meta['local_parents_params'],
