@@ -163,7 +163,8 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                 retry = False
                 retry_count += 1
                 try:
-                    module = type(args[self_pos - 1])
+                    if len(args) >= self_pos:
+                        module = type(args[self_pos - 1])
                     if stream_pos is not None:
                         obj = args[stream_pos - 1]
                         meta = {'header': vars(obj.get_header())}

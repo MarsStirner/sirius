@@ -34,7 +34,7 @@ def remote_task(self, msg, rmt_sys_code):
     sync_remote_task(msg, rmt_sys_code, self)
 
 
-@task_entry
+@task_entry(self_pos=3)
 def sync_remote_task(msg, rmt_sys_code, task=None):
     from sirius.blueprints.api.remote_service.consumer import RemoteConsumer
     receiver = RemoteConsumer()
