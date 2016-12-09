@@ -129,10 +129,8 @@ class Difference(object):
         # вносит изменения в EntityImage
         meta = msg.get_header().meta
 
-        from sirius.blueprints.api.remote_service.tambov.entities import \
-            TambovEntityCode
         # см. туду про BIRTH выше
-        if meta['remote_entity_code'] == TambovEntityCode.BIRTH:
+        if not meta['remote_operation_code']:
             return
 
         main_id = meta['remote_main_id']
