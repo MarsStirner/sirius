@@ -8,6 +8,7 @@
 """
 import os
 from sirius.app import app
+from sirius.blueprints.difference.api import Difference
 from sirius.blueprints.monitor.exception import InternalError, LoggedException
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message

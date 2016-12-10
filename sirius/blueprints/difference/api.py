@@ -11,8 +11,9 @@ from json import dumps
 from collections import OrderedDict
 
 from hitsl_utils.wm_api import WebMisJsonEncoder
+from sirius.blueprints.difference.models.image import DiffEntityImage
 from sirius.blueprints.monitor.exception import module_entry
-from sirius.models.entity import Entity, DiffEntityImage
+from sirius.models.entity import Entity
 from sirius.models.operation import OperationCode
 from sirius.database import db
 from suds.sudsobject import asdict
@@ -20,34 +21,58 @@ from zeep.xsd.valueobjects import CompoundValue
 
 
 class Difference(object):
+    """
+    Проставляет исходную операцию и признак изменения основной сущности
+    """
+    # todo: рассмотреть возможность работы модуля после реформатора
+    # доп. затраты на обработку ожидаются не большие (по очереди пока не ясно),
+    # но появится возможность отсекать сущности, где менялись не используемые
+    # поля. если логика реформатора поменялась, то сообщения
+    # в очереди остаются валидными. транзакция сохранения
+    # сопоставления и диффа остается на одной стороне от брокера
+    # (возможно не актуально). возможность перегруппировки сущностей при их
+    # сборке, а не на этапе упаковки в пакеты
+    # проблемное место рассмотрения - обработка сопутствующих элементов (+/-)
+
+    # todo: добавить выбор сериализатора в json в зависимости от
+    # клиента (может из клиента уже сериализованным давать)
+    # todo: добавить root_entity_id (stream_id) в EntityImage, DiffEntityImage
+    # конфликт TambovEntityCode.BIRTH с TambovEntityCode.SMART_PATIENT
+    # одинаковый root_external_id при удалении в разных потоках.
+    # нет удаления основной сущности.
+    # проверять по root_entity_id, считая, что не будет одинаковых сущностей
+    # 1-го уровня в разных потоках, либо по stream_id (надо везде прокидывать)
+    # конфликт удаления по разным кускам списков (мероприятия по разным
+    # пациентам, врачи по разным ЛПУ) вводить мастер ИД и мастер сущность.
+    # проверку дифф включать в билдере. только там, где нужно удаление по списку
+
+    is_diff_check = True
+    is_delete_check = True
 
     # @module_entry
     def mark_diffs(self, entity_package):
-        # пометить изменения в Хранилище и в пакете
-        # в пакете проставляются operation_code, is_changed, удаляемые записи
+        """
+        пометить изменения в Хранилище и в пакете
+        в пакете проставляются operation_code, is_changed, удаляемые записи
+        """
+        if not entity_package.is_diff_check:
+            self.is_diff_check = False
+            return entity_package
+        self.is_delete_check = entity_package.is_delete_check
+        # см. туду выше
+        self.is_delete_check = False
+
         flat_entities = {}
         system_code = entity_package.system_code
         pack_entities = entity_package.get_pack_entities()
 
-        from sirius.blueprints.api.remote_service.tambov.entities import \
-            TambovEntityCode
-        if TambovEntityCode.BIRTH in pack_entities:
-            # todo: добавить выбор сериализатора в json в зависимости от
-            # клиента (может из клиента уже сериализованным давать)
-            # todo: добавить root_entity_id в EntityImage, DiffEntityImage
-            # конфликт TambovEntityCode.BIRTH с TambovEntityCode.SMART_PATIENT
-            # одинаковый main_id
-            # проверять по связке сущности + рутИд, считая, что не будет
-            # одинаковых сущностей 1-го уровня в разных потоках
-            return entity_package
-
-        self.build_flat_entities(flat_entities, pack_entities)
-        self.set_diffs(system_code, flat_entities)
-        self.mark_entities(entity_package, flat_entities)
+        self._build_flat_entities(flat_entities, pack_entities)
+        self._set_diffs(system_code, flat_entities)
+        self._mark_entities(entity_package, flat_entities)
         db.session.commit()
         return entity_package
 
-    def build_flat_entities(self, flat_entities, pack_entities, level=1):
+    def _build_flat_entities(self, flat_entities, pack_entities, level=1):
         for entity_code, records in pack_entities.iteritems():
             for record in records:
                 flat_entities.setdefault((level, entity_code), {}).update(
@@ -55,18 +80,18 @@ class Difference(object):
                 )
                 additions = record.get('addition')
                 if additions:
-                    self.build_flat_entities(flat_entities, additions, level + 1)
+                    self._build_flat_entities(flat_entities, additions, level + 1)
                 childs = record.get('childs')
                 if childs:
-                    self.build_flat_entities(flat_entities, childs, level + 1)
+                    self._build_flat_entities(flat_entities, childs, level + 1)
 
-    def set_diffs(self, system_code, flat_entities):
+    def _set_diffs(self, system_code, flat_entities):
         # DiffEntityImage.create_temp_table()
         DiffEntityImage.clear_temp_table()
         root_ext_ids = set()
         for (level, entity_code), fl_entity_dict in flat_entities.iteritems():
             entity_id = Entity.get_id(system_code, entity_code)
-            objects = [
+            objects = (
                 {
                     'entity_id': entity_id,
                     'root_external_id': (package_record.get('root_parent') or {}).get('main_id', main_id),
@@ -77,15 +102,17 @@ class Difference(object):
                     'level': level,
                 }
                 for main_id, package_record in fl_entity_dict.iteritems()
-            ]
+            )
             ids = DiffEntityImage.fill_temp_table(objects)
             root_ext_ids.update(ids)
-        for root_ext_id in root_ext_ids:
-            DiffEntityImage.set_deleted_data(root_ext_id)
+        if self.is_delete_check:
+            # после того как все записи добавлены можно смотреть чего не хватает
+            for root_ext_id in root_ext_ids:
+                DiffEntityImage.set_deleted_data(root_ext_id)
         DiffEntityImage.set_changed_data()
         DiffEntityImage.set_new_data()
 
-    def mark_entities(self, entity_package, flat_entities):
+    def _mark_entities(self, entity_package, flat_entities):
         diff_records = DiffEntityImage.get_marked_data()
         for diff_rec in diff_records:
             if diff_rec.operation_code != OperationCode.DELETE:
@@ -126,13 +153,12 @@ class Difference(object):
 
     # @module_entry
     def save_change(self, msg):
-        # вносит изменения в EntityImage
-        meta = msg.get_header().meta
-
-        # см. туду про BIRTH выше
-        if not meta['remote_operation_code']:
+        """
+        вносит изменения в EntityImage
+        """
+        if not self.is_diff_check:
             return
-
+        meta = msg.get_header().meta
         main_id = meta['remote_main_id']
         operation_code = meta['remote_operation_code']
         if operation_code == OperationCode.ADD:
@@ -145,7 +171,11 @@ class Difference(object):
         db.session.commit()
 
     def commit_all_changes(self):
-        # удаляет временные таблицы
+        """
+        удаляет временные таблицы
+        """
+        if not self.is_diff_check:
+            return
         # DiffEntityImage.drop_temp_table()
         DiffEntityImage.clear_temp_table()
         # фиксирует изменения в EntityImage, EntityImageDiff

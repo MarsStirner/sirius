@@ -10,7 +10,7 @@ from sirius.blueprints.monitor.exception import InternalError, LoggedException
 from sirius.lib.implement import Implementation
 from sirius.blueprints.api.remote_service.producer import RemoteProducer
 from sirius.blueprints.api.remote_service.lib.result import OperationResult
-from sirius.blueprints.api.remote_service.lib.difference import Difference
+from sirius.blueprints.difference.api import Difference
 from sirius.lib.message import Message
 from sirius.lib.remote_system import remote_system
 from sirius.models.operation import OperationCode

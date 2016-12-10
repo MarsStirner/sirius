@@ -13,6 +13,8 @@ from sirius.models.system import RegionCode, SystemCode, Host
 
 class RequestLocalData(object):
     service_method = None
+    entity_code = None
+    operation_code = None
     request_url = None
     request_method = None
     request_params = None
@@ -47,6 +49,8 @@ class RequestLocalData(object):
         self.request_url = data.get('request_url') and (Host.get_url(SystemCode.LOCAL).rstrip('/') + data.get('request_url'))
         self.request_method = data.get('request_method')
 
+        self.entity_code = data.get('entity_code')
+        self.operation_code = data.get('operation_code')
         self.service_method = data.get('service_method')
         self.request_params = data.get('request_params')
         self.method = data.get('method')
@@ -57,6 +61,8 @@ class RequestLocalData(object):
     def get_msg_meta(self):
         meta = {
             'local_service_code': self.service_method,
+            'local_entity_code': self.entity_code,
+            'local_operation_code': self.operation_code,
             'local_main_id': self.main_id,
             'local_main_param_name': self.main_param_name,
             'local_method': self.method,

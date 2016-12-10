@@ -113,59 +113,59 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
 
     @classmethod
     def set_new_data(cls):
-        # src.content != 'null'
+        # tmp.content != 'null'
         # пропускаем старые записи, добавленные для определения удаленных
         # возможно стоит указывать такие явно в ключе. старые пока только в пациентах
 
         set_query = '''
-        update %(src_table_name)s t
+        update %(temp_table_name)s t
         set operation_code = '%(operation_code)s'
         from (
-          select src.id
-          from %(src_table_name)s src
+          select tmp.id
+          from %(temp_table_name)s tmp
           where
-            src.content != 'null' and
+            tmp.content != 'null' and
             not exists(
-              select chk.id
-                from %(chk_table_name)s chk
+              select store.id
+                from %(store_table_name)s store
                 where
-                  chk.entity_id = src.entity_id and
-                  chk.external_id = src.external_id
+                  store.entity_id = tmp.entity_id and
+                  store.external_id = tmp.external_id
             )
         ) sq
         where
           t.id = sq.id;
         ''' % ({
-            'src_table_name': cls.temp_table_name,
-            'chk_table_name': EntityImage.__tablename__,
+            'temp_table_name': cls.temp_table_name,
+            'store_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.ADD,
         })
         db.session.execute(set_query)
 
     @classmethod
     def set_changed_data(cls):
-        # src.content != 'null'
+        # tmp.content != 'null'
         # пропускаем старые записи, добавленные для определения удаленных
         # возможно стоит указывать такие явно в ключе. старые пока только в пациентах
 
         set_query = '''
-        update %(src_table_name)s t
+        update %(temp_table_name)s t
         set operation_code = '%(operation_code)s'
         from (
-          select src.id
-          from %(src_table_name)s src
-          join %(chk_table_name)s chk on
-            chk.entity_id = src.entity_id and
-            chk.external_id = src.external_id
+          select tmp.id
+          from %(temp_table_name)s tmp
+          join %(store_table_name)s store on
+            store.entity_id = tmp.entity_id and
+            store.external_id = tmp.external_id
           where
-            src.content != 'null' and
-            chk.content != src.content
+            tmp.content != 'null' and
+            store.content != tmp.content
         ) sq
         where
           t.id = sq.id;
         ''' % ({
-            'src_table_name': cls.temp_table_name,
-            'chk_table_name': EntityImage.__tablename__,
+            'temp_table_name': cls.temp_table_name,
+            'store_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.CHANGE,
         })
         db.session.execute(set_query)
@@ -174,7 +174,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
     def set_deleted_data(cls, root_external_id):
         # content, -- убрать, если не понадобится
         set_query = '''
-        insert into %(src_table_name)s
+        insert into %(temp_table_name)s
         (
           entity_id,
           root_external_id,
@@ -185,26 +185,26 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
         )
         (
           select
-            chk.entity_id,
-            chk.root_external_id,
-            chk.external_id,
-            -- chk.content,
+            store.entity_id,
+            store.root_external_id,
+            store.external_id,
+            -- store.content,
             '%(operation_code)s',
-            chk.level
-          from %(chk_table_name)s chk
+            store.level
+          from %(store_table_name)s store
           where
-            chk.root_external_id = '%(root_external_id)s'
-            and not exists(
-              select src.id
-                from %(src_table_name)s src
+            store.root_external_id = '%(root_external_id)s' and
+            not exists(
+              select tmp.id
+                from %(temp_table_name)s tmp
                 where
-                  chk.entity_id = src.entity_id and
-                  chk.external_id = src.external_id
+                  store.entity_id = tmp.entity_id and
+                  store.external_id = tmp.external_id
             )
         );
         ''' % ({
-            'src_table_name': cls.temp_table_name,
-            'chk_table_name': EntityImage.__tablename__,
+            'temp_table_name': cls.temp_table_name,
+            'store_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.DELETE,
             'root_external_id': root_external_id,
         })
@@ -213,7 +213,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
     @classmethod
     def save_new_data(cls, root_external_id):
         set_query = '''
-        insert into %(chk_table_name)s
+        insert into %(store_table_name)s
         (
           entity_id,
           root_external_id,
@@ -223,19 +223,19 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
         )
         (
           select
-            src.entity_id,
-            src.root_external_id,
-            src.external_id,
-            src.content,
-            src.level
-          from %(src_table_name)s src
+            tmp.entity_id,
+            tmp.root_external_id,
+            tmp.external_id,
+            tmp.content,
+            tmp.level
+          from %(temp_table_name)s tmp
           where
-            src.operation_code = '%(operation_code)s'
-            and src.root_external_id = '%(root_external_id)s'
+            tmp.operation_code = '%(operation_code)s'
+            and tmp.root_external_id = '%(root_external_id)s'
         );
         ''' % ({
-            'src_table_name': cls.temp_table_name,
-            'chk_table_name': EntityImage.__tablename__,
+            'temp_table_name': cls.temp_table_name,
+            'store_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.ADD,
             'root_external_id': root_external_id,
         })
@@ -244,21 +244,21 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
     @classmethod
     def save_changed_data(cls, root_external_id):
         set_query = '''
-        update %(chk_table_name)s chk
+        update %(store_table_name)s store
         set content = sq.content
         from (
-          select src.content, src.entity_id, src.external_id
-          from %(src_table_name)s src
+          select tmp.content, tmp.entity_id, tmp.external_id
+          from %(temp_table_name)s tmp
           where
-            src.operation_code = '%(operation_code)s'
-            and src.root_external_id = '%(root_external_id)s'
+            tmp.operation_code = '%(operation_code)s'
+            and tmp.root_external_id = '%(root_external_id)s'
         ) sq
         where
-          chk.entity_id = sq.entity_id and
-          chk.external_id = sq.external_id;
+          store.entity_id = sq.entity_id and
+          store.external_id = sq.external_id;
         ''' % ({
-            'src_table_name': cls.temp_table_name,
-            'chk_table_name': EntityImage.__tablename__,
+            'temp_table_name': cls.temp_table_name,
+            'store_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.CHANGE,
             'root_external_id': root_external_id,
         })
@@ -267,16 +267,16 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
     @classmethod
     def save_deleted_data(cls, root_external_id):
         set_query = '''
-        delete from %(chk_table_name)s chk
-        using %(src_table_name)s src
+        delete from %(store_table_name)s store
+        using %(temp_table_name)s tmp
         where
-          src.operation_code = '%(operation_code)s' and
-          src.root_external_id = '%(root_external_id)s' and
-          chk.entity_id = src.entity_id and
-          chk.external_id = src.external_id;
+          tmp.operation_code = '%(operation_code)s' and
+          tmp.root_external_id = '%(root_external_id)s' and
+          store.entity_id = tmp.entity_id and
+          store.external_id = tmp.external_id;
         ''' % ({
-            'src_table_name': cls.temp_table_name,
-            'chk_table_name': EntityImage.__tablename__,
+            'temp_table_name': cls.temp_table_name,
+            'store_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.DELETE,
             'root_external_id': root_external_id,
         })
@@ -285,13 +285,13 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
     @classmethod
     def get_marked_data(cls):
         # set_query = '''
-        # select src.*
-        # from %(src_table_name)s src
+        # select tmp.*
+        # from %(temp_table_name)s tmp
         # where
-        #   src.operation_code != %(operation_code)s
-        # order by src.level desc;
+        #   tmp.operation_code != %(operation_code)s
+        # order by tmp.level desc;
         # ''' % ({
-        #     'src_table_name': cls.temp_table_name,
+        #     'temp_table_name': cls.temp_table_name,
         #     'operation_code': OperationCode.READ_MANY,
         # })
         # db.session.execute(set_query)

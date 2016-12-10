@@ -41,17 +41,16 @@ class MeasureTulaBuilder(Builder):
         params_meta = {'card_id': RisarEntityCode.CARD}
         self.set_src_parents_entity(msg_meta, params_meta)
 
-        src_entity = msg_meta['src_entity_code']
-
-        item = package.add_main_pack_entity(
-            entity_code=src_entity,
-            operation_code=msg_meta['src_operation_code'],
-            method=msg_meta['dst_method'],
-            main_param_name=msg_meta['src_main_param_name'],
-            main_id=msg_meta['src_main_id'],
-            parents_params=msg_meta['src_parents_params'],
-            data=measures,
-        )
+        for measure in measures:
+            item = package.add_main_pack_entity(
+                entity_code=msg_meta['src_entity_code'],
+                operation_code=msg_meta['src_operation_code'],
+                method=msg_meta['dst_method'],
+                main_param_name=msg_meta['src_main_param_name'],
+                main_id=measure['measure_id'],
+                parents_params=msg_meta['src_parents_params'],
+                data=measure,
+            )
 
     ##################################################################
     ##  reform entities to remote
@@ -85,7 +84,7 @@ class MeasureTulaBuilder(Builder):
         main_item = entities.set_main_entity(
             dst_entity_code=TulaEntityCode.MEASURE,
             dst_parents_params=header_meta['remote_parents_params'],
-            dst_main_id_name='card_id',
+            dst_main_id_name='measure_id',
             src_operation_code=src_operation_code,
             src_entity_code=src_entity_code,
             src_main_id_name=header_meta['local_main_param_name'],
