@@ -13,7 +13,10 @@ class IStreamMeta(object):
     # todo: когда пакеты перейдут в классы, эти данные будут приходить от объектов собщений
     __metaclass__ = ABCMeta
 
-    @classmethod
     @abstractmethod
-    def get_stream_meta(cls, obj):
+    def get_stream_meta(self):
+        pass
+
+    @abstractmethod
+    def get_stream_body(self):
         pass

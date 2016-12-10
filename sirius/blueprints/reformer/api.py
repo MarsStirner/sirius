@@ -746,7 +746,7 @@ class Builder(object):
                     raise InternalError('Unexpected src_entity_code')
 
 
-class EntitiesPackage(object):
+class EntitiesPackage(IStreamMeta):
     """
     root_parent проставляется только для узла, у которого есть childs, но
     сам этот узел не корневой.
@@ -803,6 +803,8 @@ class EntitiesPackage(object):
     pack_entities = None
     builder = None
     root_item = None
+    _is_diff_check = False
+    _is_delete_check = False
 
     def __init__(self, builder, system_code):
         self.pack_entities = {}
@@ -816,10 +818,16 @@ class EntitiesPackage(object):
         res = {'dict len': len(self.pack_entities)}
         return res
 
+    def get_stream_body(self):
+        res = self.__class__.__name__
+        return res
+
     def add_main_pack_entity(
         self, entity_code, method, main_param_name, main_id, parents_params,
         data, operation_code=None, is_changed=False
     ):
+        if not self._is_diff_check:
+            is_changed = True
         item = {
             'is_changed': is_changed,
             'method': method,  # зачем?
@@ -969,8 +977,22 @@ class EntitiesPackage(object):
         )
         return data
 
+    def disable_diff_check(self):
+        self._is_diff_check = False
 
-class RequestEntities(object):
+    def disable_delete_check(self):
+        self._is_delete_check = False
+
+    @property
+    def is_diff_check(self):
+        return self._is_diff_check
+
+    @property
+    def is_delete_check(self):
+        return self._is_delete_check
+
+
+class RequestEntities(IStreamMeta):
     req_entities = None
     operation_order = None
     level_count = None
@@ -986,6 +1008,10 @@ class RequestEntities(object):
 
     def get_stream_meta(self):
         res = {'list len': len(self.req_entities)}
+        return res
+
+    def get_stream_body(self):
+        res = self.__class__.__name__
         return res
 
     def set_main_entity(
@@ -1105,7 +1131,7 @@ class RequestEntities(object):
     #         meta['dst_url'] = meta['dst_url'].format(*dst_param_ids)
 
 
-class ReqEntity(dict):
+class ReqEntity(dict, IStreamMeta):
     def __init__(self, *a, **k):
         super(ReqEntity, self).__init__(*a, **k)
         self['meta'] = self.get('meta', {})
@@ -1113,7 +1139,11 @@ class ReqEntity(dict):
         self['options'] = self.get('options', tuple())
 
     def get_stream_meta(self):
-        res = {'meta': self['meta']}
+        res = {'params': self['meta'], 'options': self['options']}
+        return res
+
+    def get_stream_body(self):
+        res = self['body']
         return res
 
     @property
@@ -1137,7 +1167,7 @@ class ReqEntity(dict):
         return self['meta'].get('dst_request_mode')
 
 
-class DataRequest(object):
+class DataRequest(IStreamMeta):
     req_data = None
 
     def __init__(self):
@@ -1177,7 +1207,11 @@ class DataRequest(object):
         self.req_data['options'] = options
 
     def get_stream_meta(self):
-        return self.req_data
+        res = {'params': self.req_data['meta'], 'options': self.req_data['options']}
+        return res
+
+    def get_stream_body(self):
+        return self.req_data['body']
 
     def data_update(self, data):
         self.req_data['body'].update(data)

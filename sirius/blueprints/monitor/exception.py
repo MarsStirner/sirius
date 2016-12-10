@@ -53,13 +53,14 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            res = meta = module = obj = None
+            res = meta = body = module = obj = None
             enter_datetime = datetime.today()
             enter_time = time()
             try:
                 module = type(args[self_pos - 1])
                 obj = args[stream_pos - 1]
                 meta = obj.get_stream_meta()
+                body = obj.get_stream_body()
                 res = func(*args, **kwargs)
                 exit_time = time()
             except (StandardError, ZeepError, SudsError) as exc:
@@ -72,7 +73,7 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
                 else:
                     message = traceback.format_exception_only(type(exc), exc)[-1]
                 params = {
-                    'stream': get_stream_data(module, func, obj, meta),
+                    'stream': get_stream_data(module, func, obj, meta, body),
                     'message': message,
                     'enter_time': enter_datetime,
                     'error_time': error_datetime,
@@ -111,6 +112,7 @@ def check_point(function=None, stream_pos=2, self_pos=1):
                 module = type(args[self_pos - 1])
                 obj = args[stream_pos - 1]
                 meta = obj.get_stream_meta()
+                body = obj.get_stream_body()
                 res = func(*args, **kwargs)
                 exit_time = time()
             except (StandardError, ZeepError, SudsError) as exc:
@@ -121,7 +123,7 @@ def check_point(function=None, stream_pos=2, self_pos=1):
                 else:
                     message = traceback.format_exception_only(type(exc), exc)[-1]
                 params = {
-                    'stream': get_stream_data(module, func, obj, meta),
+                    'stream': get_stream_data(module, func, obj, meta, body),
                     'message': message,
                     'enter_time': enter_datetime,
                     'error_time': error_datetime,
@@ -316,12 +318,13 @@ def connect_entry(function=None, login=None):
     return decorator
 
 
-def get_stream_data(module, func, obj, meta):
+def get_stream_data(module, func, obj, meta, body=None):
     return {
         'module': module and module.__name__,
         'method': func and func.__name__,
         'stream type': obj and type(obj),
         'meta': meta,
+        'body': body,
     }
 
 
