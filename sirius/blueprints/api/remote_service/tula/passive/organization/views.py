@@ -15,7 +15,7 @@ from sirius.blueprints.api.remote_service.tula.passive.organization.xform import
 from sirius.blueprints.monitor.exception import remote_api_method
 from sirius.blueprints.monitor.logformat import hook
 
-main_id_name = 'TFOMSCode'
+main_id_name = 'LPU_id'
 
 
 @module.route('/api/integration/<int:api_version>/organization/',
