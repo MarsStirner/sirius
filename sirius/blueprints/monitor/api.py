@@ -10,7 +10,6 @@ from abc import ABCMeta, abstractmethod
 
 
 class IStreamMeta(object):
-    # todo: когда пакеты перейдут в классы, эти данные будут приходить от объектов собщений
     __metaclass__ = ABCMeta
 
     @abstractmethod

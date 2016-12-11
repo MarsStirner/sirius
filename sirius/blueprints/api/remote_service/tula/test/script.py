@@ -16,6 +16,10 @@ from sirius.blueprints.api.local_service.risar.passive.test.test_data import \
     get_send_to_mis_first_ticket25_data, get_send_to_mis_measures_data, \
     get_send_to_mis_epicrisis_data, get_send_to_mis_second_ticket25_data, \
     get_send_to_mis_pc_ticket25_data
+from sirius.blueprints.api.remote_service.tula.passive.checkup_first_ticket25.test.request import \
+    edit_checkup_first_ticket25
+from sirius.blueprints.api.remote_service.tula.passive.checkup_first_ticket25.test.test_data import \
+    get_first_ticket25_data_more
 from sirius.blueprints.api.remote_service.tula.passive.childbirth.test.request import \
     create_childbirth, edit_childbirth
 from sirius.blueprints.api.remote_service.tula.passive.childbirth.test.test_data import \
@@ -82,22 +86,25 @@ class _TestTula:
         second_checkup_id = 0  # создать вторичный осмотр в вебе
         pc_checkup_id = 0  # создать осмотр ПЦ в вебе
         # mr_to_mis_first_ticket25(testapp, card_id, first_checkup_id)
+        ext_first_checkup_id = 222
         # mr_to_mis_second_ticket25(testapp, card_id, second_checkup_id)
         # mr_to_mis_pc_ticket25(testapp, card_id, pc_checkup_id)
         # создать направления в вебе - осмотр, госпитализация, исследования
         # mr_to_mis_measures(testapp, card_id)
-        ext_ch_event_measure_id = 6255  # сразу отсылаем локальные ИД, т.к. пока нет преобразования в builder
-        ext_res_event_measure_id = 6258  # сразу отсылаем локальные ИД, т.к. пока нет преобразования в builder
+        # ch_event_measure_id = 6255
+        # res_event_measure_id = 6258
+        ext_ch_event_measure_id = 117
+        ext_res_event_measure_id = 118
 
         ext_sp_checkup_id = 114
         # mis_to_mr_meas_sp_checkup(testapp, ext_card_id, ext_org_id, ext_doctor_id,
         #                           ext_ch_event_measure_id, ext_sp_checkup_id)
         # ext_hosp_id = 115
-        # mis_to_mr_meas_hosp(testapp, card_id, ext_org_id, ext_doctor_id, event_measure_id, ext_hosp_id)
+        # mis_to_mr_meas_hosp(testapp, card_id, ext_org_id, ext_doctor_id, ext_ch_event_measure_id, ext_hosp_id)
         ext_research_id = 116
         # mis_to_mr_meas_research(testapp, ext_card_id, ext_org_id, ext_doctor_id,
         #                         ext_res_event_measure_id, ext_research_id)
-        # mis_to_mr_first_ticket25
+        mis_to_mr_first_ticket25(testapp, ext_card_id, ext_org_id, ext_doctor_id, ext_first_checkup_id)
         # mis_to_mr_second_ticket25
         # mis_to_mr_pc_ticket25
         # mis_to_mr_childbirth(testapp, ext_card_id, ext_org_id, ext_doctor_id)
@@ -106,18 +113,18 @@ class _TestTula:
 
 
 def mis_to_mr_organisation(testapp, org_id):
-    create_organization(testapp, risar_session, get_organization_data_required(org_id))
-    # edit_organization(testapp, risar_session, org_id, get_organization_data_more(org_id))
+    # create_organization(testapp, risar_session, get_organization_data_required(org_id))
+    edit_organization(testapp, risar_session, org_id, get_organization_data_more(org_id))
 
 
 def mis_to_mr_doctor(testapp, org_id, doctor_id):
-    create_doctor(testapp, risar_session, get_doctor_data_required(org_id, doctor_id))
-    # edit_doctor(testapp, risar_session, org_id, doctor_id, get_doctor_data_more(org_id, doctor_id))
+    # create_doctor(testapp, risar_session, get_doctor_data_required(org_id, doctor_id))
+    edit_doctor(testapp, risar_session, org_id, doctor_id, get_doctor_data_more(org_id, doctor_id))
 
 
 def mis_to_mr_client(testapp, client_id):
-    create_client(testapp, risar_session, get_client_data_required(client_id))
-    # edit_client(testapp, risar_session, client_id, get_client_data_more(client_id))
+    # create_client(testapp, risar_session, get_client_data_required(client_id))
+    edit_client(testapp, risar_session, client_id, get_client_data_more(client_id))
 
 
 def mr_make_appointment(testapp, client_id, ticket_id, doctor_id):
@@ -188,6 +195,11 @@ def mis_to_mr_meas_research(testapp, card_id, org_id, doctor_id, event_measure_i
         org_id, doctor_id, event_measure_id, meas_research_id))
     # edit_research(testapp, risar_session, card_id, meas_research_id, get_meas_research_data_more(
     #     org_id, doctor_id, event_measure_id, meas_research_id))
+
+
+def mis_to_mr_first_ticket25(testapp, card_id, org_id, doctor_id, checkup_id):
+    edit_checkup_first_ticket25(testapp, risar_session, card_id, checkup_id, get_first_ticket25_data_more(
+        org_id, doctor_id, checkup_id))
 
 
 def mis_to_mr_childbirth(testapp, card_id, org_id, doctor_id):

@@ -35,6 +35,26 @@ class CheckupsTicket25XFormSchema(Schema):
                     "description": "Оказываемая медицинская помощь, справочник rbRisarMedicalCare",
                     "type": "string"
                 },
+                "medical_care_emergency": {
+                    "description": "Форма оказания медицинской помощи (неотложная - да/нет)",
+                    "type": "boolean"
+                },
+                "medical_care_profile": {
+                    "description": "Профиль медицинской помощи, справочник rbProfMedHelp",
+                    "type": "string"
+                },
+                "medical_care_place": {
+                    "description": "Условия(место) оказания медицинской помощи, справочник rbConditionMedHelp",
+                    "type": "string"
+                },
+                "children": {
+                    "description": "Детское обращение (пациентка до 14 лет - да/нет)",
+                    "type": "boolean"
+                },
+                "visit_type": {
+                    "description": "Посещение (тип), справочник rbRisarVisit_Type",
+                    "type": "string"
+                },
                 "finished_treatment": {
                     "description": "Обращение (законченный случай лечения), справочник rbRisarFinishedTreatment",
                     "type": "string"
@@ -45,6 +65,10 @@ class CheckupsTicket25XFormSchema(Schema):
                 },
                 "treatment_result": {
                     "description": "Результат обращения, справочник rbResult",
+                    "type": "string"
+                },
+                "disease_outcome": {
+                    "description": "Исход заболевания, справочник rbAcheResult",
                     "type": "string"
                 },
                 "payment": {
@@ -78,6 +102,10 @@ class CheckupsTicket25XFormSchema(Schema):
                         "properties": {
                             "medical_service": {
                                 "description": "Медицинская услуга (код)",
+                                "type": "string"
+                            },
+                            "medical_service_quantity": {
+                                "description": "Медицинская услуга, количество",
                                 "type": "string"
                             },
                             "medical_service_doctor": {
@@ -197,6 +225,7 @@ class CheckupsTicket25XFormSchema(Schema):
                     "description": "Врач (код врача)",
                     "type": "string"
                 }
-            }
+            },
+            "required": ["doctor", "hospital", "diagnosis", "date_open"]
         }
     ]

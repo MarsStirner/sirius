@@ -59,7 +59,16 @@ class ApiMethod(Model):
             ApiMethod.version == version,
         ).first()
         if not method:
-            raise InternalError('Method not registered in %s' % cls.__name__)
+            params = {
+                'system_code': system_code,
+                'entity_code': entity_code,
+                'operation_code': operation_code,
+                'version': version,
+            }
+            raise InternalError(
+                'Method not registered in %s (%s)' %
+                (cls.__name__,
+                 ', '.join((k + '=%s' % v for k, v in params.items()))))
         params_entities = ApiMethodURLParamEntity.get(method.id)
         sys_url = method.host.url.rstrip('/')
         res = {

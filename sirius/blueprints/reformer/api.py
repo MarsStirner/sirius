@@ -24,7 +24,7 @@ from sirius.models.operation import OperationCode
 from sirius.models.system import SystemCode
 
 
-class Reformer(IStreamMeta):
+class Reformer(object):
     __metaclass__ = ABCMeta
 
     orig_msg = None

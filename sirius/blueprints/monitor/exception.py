@@ -105,7 +105,7 @@ def check_point(function=None, stream_pos=2, self_pos=1):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            res = meta = module = obj = None
+            res = meta = body = module = obj = None
             enter_datetime = datetime.today()
             enter_time = time()
             try:
@@ -153,7 +153,7 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            res = meta = module = obj = None
+            res = meta = body = module = obj = None
             enter_datetime = datetime.today()
             enter_time = time()
             # task = args[self_pos - 1]
@@ -169,7 +169,8 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                         module = type(args[self_pos - 1])
                     if stream_pos is not None:
                         obj = args[stream_pos - 1]
-                        meta = {'header': vars(obj.get_header())}
+                        meta = obj.get_stream_meta()
+                        body = obj.get_stream_body()
                     res = func(*args, **kwargs)
                     exit_time = time()
                 except LoggedException as exc:
@@ -189,7 +190,7 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                     traceback.print_exc()
                     message = traceback.format_exception_only(type(exc), exc)[-1]
                     params = {
-                        'stream': get_stream_data(module, func, obj, meta),
+                        'stream': get_stream_data(module, func, obj, meta, body),
                         'message': message,
                         'enter_time': enter_datetime,
                         'error_time': error_datetime,

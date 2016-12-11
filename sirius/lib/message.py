@@ -7,6 +7,7 @@
 
 """
 from hitsl_utils.enum import Enum
+from sirius.blueprints.monitor.api import IStreamMeta
 
 
 class Direct(Enum):
@@ -60,7 +61,7 @@ class Header(object):
         # (ID/params, entity_code)
 
 
-class Message(object):
+class Message(IStreamMeta):
     header = None
     body = None
 
@@ -121,8 +122,11 @@ class Message(object):
         return res
 
     def get_stream_meta(self):
-        res = {'header': vars(self.get_header())}
+        res = vars(self.get_header())
         return res
+
+    def get_stream_body(self):
+        return self.body
 
     @property
     def is_to_local(self):
