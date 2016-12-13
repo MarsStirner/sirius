@@ -7,7 +7,10 @@
 
 """
 from sirius.blueprints.api.remote_service.lib.answer import RemoteAnswer
+import xml.etree.ElementTree as ET
 
 
 class TulaAnswer(RemoteAnswer):
-    pass
+    def xml_to_dict(self, result):
+        e = ET.XML(result.content)
+        return e

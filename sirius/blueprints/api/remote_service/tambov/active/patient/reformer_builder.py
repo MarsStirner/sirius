@@ -39,8 +39,6 @@ class PatientTambovBuilder(Builder):
 
     def build_remote_entity_packages(self, reformed_req):
         package = EntitiesPackage(self, self.remote_sys_code)
-        # проблема определения по куску данных (выборка по диапазону дат)
-        package.disable_delete_check()
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
             api_method = self.reformer.get_api_method(

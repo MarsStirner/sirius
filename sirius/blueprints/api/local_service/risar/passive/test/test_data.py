@@ -40,25 +40,28 @@ request_risar_first_checkup_2159 = {
     'method': 'post' if False else 'put',
 }
 
-request_risar_first_checkup_31 = {
-    'service_method': 'risar.api_checkup_obs_first_ticket25_get',
-    'request_url': '/risar/api/integration/0/card/3/checkup/obs/first/31/ticket25',
-    'request_method': 'get',
-    'request_params': {'card_id': 3},
-    'main_id': 31,
-    'main_param_name': 'exam_obs_id',
-    'method': 'post' if False else 'put',
-}
 
-request_risar_second_checkup_60 = {
-    'service_method': 'risar.api_checkup_obs_second_ticket25_get',
-    'request_url': '/risar/api/integration/0/card/3/checkup/obs/second/60/ticket25',
-    'request_method': 'get',
-    'request_params': {'card_id': 3},
-    'main_id': 60,
-    'main_param_name': 'exam_obs_id',
-    'method': 'post' if False else 'put',
-}
+def get_request_risar_first_checkup(card_id, exam_id):
+    return {
+        'service_method': 'risar.api_checkup_obs_first_ticket25_get',
+        'request_url': '/risar/api/integration/0/card/%s/checkup/obs/first/%s/ticket25' % (card_id, exam_id),
+        'request_method': 'get',
+        'request_params': {'card_id': card_id},
+        'main_id': exam_id,
+        'main_param_name': 'exam_obs_id',
+        'method': 'post' if False else 'put',
+    }
+
+def get_request_risar_second_checkup(card_id, exam_id):
+    return {
+        'service_method': 'risar.api_checkup_obs_second_ticket25_get',
+        'request_url': '/risar/api/integration/0/card/%s/checkup/obs/second/%s/ticket25' % (card_id, exam_id),
+        'request_method': 'get',
+        'request_params': {'card_id': card_id},
+        'main_id': exam_id,
+        'main_param_name': 'exam_obs_id',
+        'method': 'post' if False else 'put',
+    }
 
 request_risar_measures_139 = {
     'service_method': 'risar.api_measure_list_get',

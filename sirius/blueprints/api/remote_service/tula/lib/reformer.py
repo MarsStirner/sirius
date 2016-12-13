@@ -19,6 +19,8 @@ from sirius.blueprints.api.remote_service.tula.active.epicrisis.reformer_builder
     EpicrisisTulaBuilder
 from sirius.blueprints.api.remote_service.tula.active.measures.reformer_builder import \
     MeasureTulaBuilder
+from sirius.blueprints.api.remote_service.tula.active.schedule.reformer_builder import \
+    ScheduleTulaBuilder
 from sirius.blueprints.api.remote_service.tula.active.schedule_ticket.reformer_builder import \
     ScheduleTicketTulaBuilder
 from sirius.blueprints.api.remote_service.tula.entities import TulaEntityCode
@@ -83,6 +85,8 @@ class TulaReformer(Reformer):
             res = PassCheckupSecondTicket25TulaBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TulaEntityCode.CHECKUP_PC_TICKET:
             res = PassCheckupPCTicket25TulaBuilder(self).build_local_entities(header_meta, data)
+        elif remote_entity_code == TulaEntityCode.SCHEDULE:
+            res = ScheduleTulaBuilder(self).build_local_entities(header_meta, data)
         else:
             raise InternalError('Unexpected remote_entity_code')
         return res
@@ -106,6 +110,20 @@ class TulaReformer(Reformer):
         else:
             raise InternalError('Unexpected local_entity_code')
         return res
+
+    ##################################################################
+    ##  reform requests
+
+    def get_remote_request(self, header_meta):
+        remote_entity_code = header_meta.get('remote_entity_code')
+        local_entity_code = header_meta.get('local_entity_code')
+        if local_entity_code == RisarEntityCode.SCHEDULE or remote_entity_code == TulaEntityCode.SCHEDULE:
+            data_req = ScheduleTulaBuilder(self).build_remote_request(header_meta, TulaEntityCode.SCHEDULE)
+        else:
+            raise InternalError('Unexpected local_entity_code (%s)' % local_entity_code)
+        self.set_remote_request_params(data_req)
+        self.set_request_service(data_req)
+        return data_req
 
     ##################################################################
     ##  build packages
@@ -135,4 +153,23 @@ class TulaReformer(Reformer):
             res = EpicrisisTulaBuilder(self).build_local_entity_packages(msg)
         else:
             raise InternalError('Unexpected entity code')
+        return res
+
+    @module_entry
+    def get_entity_package_by_req(self, req):
+        """
+        Сбор сущностей в пакеты дозапросами. Сюда приходим из планировщика.
+
+        Args:
+            req: данные для запроса корневой сущности
+
+        Returns: мета данные и пакеты сущностей
+        """
+        # todo: рассмотреть возможность использования MatchingEntity для автосборки пакетов
+        meta = req.meta
+        dst_entity = meta['dst_entity_code']
+        if dst_entity == TulaEntityCode.SCHEDULE:
+            res = ScheduleTulaBuilder(self).build_remote_entity_packages(req)
+        else:
+            raise InternalError('Unexpected dst_entity (%s)' % dst_entity)
         return res

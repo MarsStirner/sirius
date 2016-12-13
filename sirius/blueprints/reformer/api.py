@@ -805,6 +805,7 @@ class EntitiesPackage(IStreamMeta):
     root_item = None
     _is_diff_check = False
     _is_delete_check = False
+    _diff_key_range = None
 
     def __init__(self, builder, system_code):
         self.pack_entities = {}
@@ -824,7 +825,7 @@ class EntitiesPackage(IStreamMeta):
 
     def add_main_pack_entity(
         self, entity_code, method, main_param_name, main_id, parents_params,
-        data, operation_code=None, is_changed=False
+        data, operation_code=None, is_changed=False, diff_key=None,
     ):
         if not self._is_diff_check:
             is_changed = True
@@ -836,13 +837,15 @@ class EntitiesPackage(IStreamMeta):
             'parents_params': parents_params,
             'data': data,
             'operation_code': operation_code,  # зачем?
+            'diff_key': diff_key,
         }
         self.pack_entities.setdefault(entity_code, []).append(item)
         self.root_item = item
         return item
 
     def add_child_pack_entity(
-        self, root_item, parent_item, entity_code, method, main_id, data
+        self, root_item, parent_item, entity_code,
+        method, main_id, data, diff_key=None,
     ):
         item_childs = parent_item.setdefault('childs', {})
         item = {
@@ -850,18 +853,20 @@ class EntitiesPackage(IStreamMeta):
             'method': method,
             'main_id': main_id,
             'data': data,
+            'diff_key': diff_key,
         }
         item_childs.setdefault(entity_code, []).append(item)
         return item
 
     def add_addition_pack_entity(
-        self, root_item, parent_item, entity_code, main_id, data
+        self, root_item, parent_item, entity_code, main_id, data, diff_key=None,
     ):
         item_childs = parent_item.setdefault('addition', {})
         item = {
             'root_parent': root_item,
             'main_id': main_id,
             'data': data,
+            'diff_key': diff_key,
         }
         item_childs.setdefault(entity_code, []).append(item)
 
@@ -977,11 +982,19 @@ class EntitiesPackage(IStreamMeta):
         )
         return data
 
-    def disable_diff_check(self):
-        self._is_diff_check = False
+    def enable_diff_check(self):
+        self._is_diff_check = True
 
-    def disable_delete_check(self):
-        self._is_delete_check = False
+    def enable_delete_check(self):
+        self._is_delete_check = True
+
+    def set_diff_key_range(self, key_range):
+        assert (
+            isinstance(key_range, tuple) and
+            len(key_range) == 2 and
+            all(isinstance(x, str) and len(x) < 80 for x in key_range)
+        )
+        self._diff_key_range = key_range
 
     @property
     def is_diff_check(self):
@@ -990,6 +1003,9 @@ class EntitiesPackage(IStreamMeta):
     @property
     def is_delete_check(self):
         return self._is_delete_check
+
+    def get_diff_key_range(self):
+        return self._diff_key_range
 
 
 class RequestEntities(IStreamMeta):
@@ -1244,6 +1260,9 @@ class DataRequest(IStreamMeta):
     # @property
     # def protocol(self):
     #     return self.req_data['meta']['dst_protocol_code']
+
+    def set_req_mode(self, req_mode):
+        self.req_data['meta']['dst_request_mode'] = req_mode
 
     @property
     def req_mode(self):

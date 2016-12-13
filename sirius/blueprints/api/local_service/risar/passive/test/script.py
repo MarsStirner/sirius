@@ -13,9 +13,10 @@ from sirius.blueprints.api.local_service.risar.active.request import \
 from .test_data import request_tambov_patient_1, request_risar_first_checkup_2159, \
     request_tambov_register_patient_card, request_risar_second_checkup_2159, \
     request_risar_measures_139, create_risar_card_1, \
-    get_request_risar_get_measure_research, request_risar_first_checkup_31, \
-    request_risar_measures_3, request_risar_second_checkup_60, \
-    save_request_risar_get_measure_research
+    get_request_risar_get_measure_research, \
+    request_risar_measures_3, \
+    save_request_risar_get_measure_research, get_request_risar_first_checkup, \
+    get_request_risar_second_checkup
 from .request import request_remote, request_local, \
     request_client_local_id_by_remote_id, request_register_card_idents
 from sirius.blueprints.api.test.connect import make_login, release_token
@@ -79,7 +80,7 @@ class TestLocalApi:
         # переход на страницу карты пациента по ID карты (/risar/inspection.html?event_id=127)
 
         # сохранение первичного осмотра пациента, запрос выдачи талона
-        result = request_local(testapp, session, request_risar_first_checkup_31)
+        result = request_local(testapp, session, get_request_risar_first_checkup(3, 31))
         code = result['meta']['code']
         assert code == 200
 
@@ -89,7 +90,7 @@ class TestLocalApi:
         assert code == 200
 
         # сохранение повторного осмотра пациента, запрос выдачи талона
-        result = request_local(testapp, session, request_risar_second_checkup_60)
+        result = request_local(testapp, session, get_request_risar_second_checkup(3, 60))
         code = result['meta']['code']
         assert code == 200
 
@@ -101,7 +102,7 @@ class TestLocalApi:
 
     def _test_change_risar_checkup_first(self, testapp):
         # сохранение повторного осмотра пациента, запрос выдачи талона
-        result = request_local(testapp, session, request_risar_first_checkup_31)
+        result = request_local(testapp, session, get_request_risar_first_checkup(3, 31))
         code = result['meta']['code']
         assert code == 200
 
@@ -112,7 +113,8 @@ class TestLocalApi:
 
     def _test_change_risar_checkup_second(self, testapp):
         # сохранение повторного осмотра пациента, запрос выдачи талона
-        result = request_local(testapp, session, request_risar_second_checkup_60)
+        result = request_local(testapp, session, get_request_risar_second_checkup(3, 60))
+        # result = request_local(testapp, session, get_request_risar_second_checkup(32, 697))
         code = result['meta']['code']
         assert code == 200
 

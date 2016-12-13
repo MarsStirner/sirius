@@ -19,56 +19,21 @@ from sirius.models.protocol import ProtocolCode
 
 
 class TambovTransfer(Transfer):
-    clients = {}
     answer = TambovAnswer()
 
-    @module_entry
-    def execute(self, req):
-        if isinstance(req, DataRequest):
-            req_meta = req.meta  # .protocol
-        else:
-            assert isinstance(req, ReqEntity)
-            req_meta = req['meta']
-        if req_meta.get('dst_protocol_code', ProtocolCode.SOAP) == ProtocolCode.SOAP:
-            req_result = self.soap_protocol(req, req_meta)
-        elif req_meta['dst_protocol_code'] == ProtocolCode.REST:
-            req_result = self.rest_protocol(req, req_meta)
-        else:
-            raise InternalError('Unexpected protocol (%s)' % req_meta['dst_protocol_code'])
-        res = self.answer.process(req_result, req_meta)
-        return res
-
     def soap_protocol(self, req, req_meta):
-        def common_method(*a, **kw):
-            service_method = getattr(client.client.service, req.method)
-            return service_method(*a, **kw)
-        wsdl_lib_code = 'zeep'
+        self.wsdl_lib_code = 'zeep'
         # todo: wsdl на этот метод не читается zeep (библиотека на метод)
         if req_meta.get('dst_entity_code') == TambovEntityCode.BIRTH:
-            wsdl_lib_code = 'suds'
-        client = self.get_soap_client(req.url, wsdl_lib_code)
-        req_method = getattr(client, req.method, common_method)
-        req_result = connect_entry(function=req_method)(*req.options, **req.data)
+            self.wsdl_lib_code = 'suds'
+        req_result = super(TambovTransfer, self).soap_protocol(req, req_meta)
         return req_result
 
     @connect_entry
-    def get_soap_client(self, wsdl, wsdl_lib_code):
+    def get_soap_client(self, wsdl):
         if wsdl not in self.clients:
-            self.clients[wsdl] = TambovSOAPClient(wsdl, wsdl_lib_code)
+            self.clients[wsdl] = TambovSOAPClient(wsdl, self.wsdl_lib_code)
         return self.clients[wsdl]
-
-    def rest_protocol(self, req, req_meta):
-        client = self.get_rest_client()
-        # req_result = connect_entry(
-        #     function=client.make_api_request,
-        #     login=client.make_login
-        # )(req.method, req.url, req.data)
-        session = None, None
-        req_result = client.make_api_request(
-            req.method, req.url, session,
-            req.data, req_mode=req.req_mode,
-        )
-        return req_result
 
     def get_rest_client(self):
         rest_client_code = 'rest'

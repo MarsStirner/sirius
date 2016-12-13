@@ -406,3 +406,68 @@ class Scheduler(object):
                 producer.send(msg)
             except LoggedException:
                 pass
+
+    def get_tula_schedules(self, system_code, entity_code):
+        from sirius.blueprints.api.local_service.producer import LocalProducer
+        from sirius.blueprints.api.remote_service.producer import RemoteProducer
+        from sirius.blueprints.api.local_service.risar.entities import \
+            RisarEntityCode
+
+        implement = Implementation()
+        reformer = implement.get_reformer(system_code)
+
+        org_list_method = reformer.get_api_method(
+            SystemCode.LOCAL, RisarEntityCode.ORGANIZATION, OperationCode.READ_MANY
+        )
+        msg = Message(None)
+        msg.to_local_service()
+        msg.set_request_type()
+        msg.set_immediate_answer()
+        msg.set_method(org_list_method['method'],
+                       org_list_method['template_url'])
+        producer = RemoteProducer()
+        org_msg = producer.send(msg, async=False)
+        for org_data in org_msg.get_data():
+
+            doctor_list_method = reformer.get_api_method(
+                SystemCode.LOCAL, RisarEntityCode.DOCTOR, OperationCode.READ_MANY
+            )
+            dst_url_params = {}
+            dst_url_params.update({
+                'organization': {
+                    'entity': RisarEntityCode.ORGANIZATION,
+                    'id': str(org_data['LPU_id']),
+                }
+            })
+            dst_url_entities = dict(
+                (val['entity'], val['id']) for val in dst_url_params.values())
+            dst_param_ids = [dst_url_entities[param_entity] for param_entity in
+                             doctor_list_method['params_entities']]
+            dst_url = doctor_list_method['template_url'].format(*dst_param_ids)
+
+            msg = Message(None)
+            msg.to_local_service()
+            msg.set_request_type()
+            msg.set_immediate_answer()
+            msg.set_method(
+                doctor_list_method['method'],
+                dst_url,
+            )
+            producer = RemoteProducer()
+            doctor_msg = producer.send(msg, async=False)
+            for doctor_data in doctor_msg.get_data():
+                if not doctor_data['regional_code']:
+                    # мусор
+                    continue
+                msg = self.create_message(
+                    system_code, entity_code, OperationCode.ADD
+                )  # WebSchedule
+                meta = msg.get_header().meta
+                meta['local_parents_params'] = {
+                    'LPU_id': {'entity': RisarEntityCode.ORGANIZATION,
+                                   'id': org_data['LPU_id']},
+                    'regional_code': {'entity': RisarEntityCode.DOCTOR,
+                                   'id': doctor_data['regional_code']},
+                }
+                producer = LocalProducer()
+                producer.send(msg)

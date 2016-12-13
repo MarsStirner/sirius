@@ -24,6 +24,7 @@ class EntityImage(Model):
     parent = relationship('EntityImage')
     root_external_id = Column(db.String(80), unique=False, nullable=False)
     external_id = Column(db.String(80), unique=False, nullable=False, index=True)
+    key = Column(db.String(80), unique=False, nullable=False, index=True, server_default='')
     content = Column(JSONB, unique=False, nullable=False)
     level = Column(db.Integer, unique=False, nullable=False)
     created = Column(db.DateTime, unique=False, nullable=False, server_default=text('now()'))
@@ -38,6 +39,7 @@ class EntityImageDiff(Model):
     entity = relationship('Entity', backref='set_entity_image_diff')
     root_external_id = Column(db.String(80), unique=False, nullable=False)
     external_id = Column(db.String(80), unique=False, nullable=False, index=True)
+    key = Column(db.String(80), unique=False, nullable=False, index=True, server_default='')
     content = Column(JSONB, unique=False, nullable=True)
     operation_code = Column(db.String(80), unique=False, nullable=False)
     level = Column(db.Integer, unique=False, nullable=False)
@@ -112,10 +114,15 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
         db.session.execute(drop_query)
 
     @classmethod
-    def set_new_data(cls):
+    def set_new_data(cls, key_range):
         # tmp.content != 'null'
         # пропускаем старые записи, добавленные для определения удаленных
         # возможно стоит указывать такие явно в ключе. старые пока только в пациентах
+
+        key_range_beg = key_range_end = ''
+        if key_range:
+            key_range_beg = key_range[0]
+            key_range_end = key_range[1]
 
         set_query = '''
         update %(temp_table_name)s t
@@ -130,7 +137,11 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
                 from %(store_table_name)s store
                 where
                   store.entity_id = tmp.entity_id and
-                  store.external_id = tmp.external_id
+                  store.external_id = tmp.external_id and
+                  (
+                    '%(key_range_beg)s' = '' or
+                    store.key between '%(key_range_beg)s' and '%(key_range_end)s'
+                  )
             )
         ) sq
         where
@@ -139,14 +150,21 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             'temp_table_name': cls.temp_table_name,
             'store_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.ADD,
+            'key_range_beg': key_range_beg,
+            'key_range_end': key_range_end,
         })
         db.session.execute(set_query)
 
     @classmethod
-    def set_changed_data(cls):
+    def set_changed_data(cls, key_range):
         # tmp.content != 'null'
         # пропускаем старые записи, добавленные для определения удаленных
         # возможно стоит указывать такие явно в ключе. старые пока только в пациентах
+
+        key_range_beg = key_range_end = ''
+        if key_range:
+            key_range_beg = key_range[0]
+            key_range_end = key_range[1]
 
         set_query = '''
         update %(temp_table_name)s t
@@ -159,7 +177,11 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             store.external_id = tmp.external_id
           where
             tmp.content != 'null' and
-            store.content != tmp.content
+            store.content != tmp.content and
+            (
+              '%(key_range_beg)s' = '' or
+              store.key between '%(key_range_beg)s' and '%(key_range_end)s'
+            )
         ) sq
         where
           t.id = sq.id;
@@ -167,11 +189,18 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             'temp_table_name': cls.temp_table_name,
             'store_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.CHANGE,
+            'key_range_beg': key_range_beg,
+            'key_range_end': key_range_end,
         })
         db.session.execute(set_query)
 
     @classmethod
-    def set_deleted_data(cls, root_external_id):
+    def set_deleted_data(cls, root_external_id, key_range):
+        key_range_beg = key_range_end = ''
+        if key_range:
+            key_range_beg = key_range[0]
+            key_range_end = key_range[1]
+
         # content, -- убрать, если не понадобится
         set_query = '''
         insert into %(temp_table_name)s
@@ -179,6 +208,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
           entity_id,
           root_external_id,
           external_id,
+          key,
           -- content,
           operation_code,
           level
@@ -188,12 +218,17 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             store.entity_id,
             store.root_external_id,
             store.external_id,
+            store.key,
             -- store.content,
             '%(operation_code)s',
             store.level
           from %(store_table_name)s store
           where
             store.root_external_id = '%(root_external_id)s' and
+            (
+              '%(key_range_beg)s' = '' or
+              store.key between '%(key_range_beg)s' and '%(key_range_end)s'
+            ) and
             not exists(
               select tmp.id
                 from %(temp_table_name)s tmp
@@ -207,6 +242,8 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             'store_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.DELETE,
             'root_external_id': root_external_id,
+            'key_range_beg': key_range_beg,
+            'key_range_end': key_range_end,
         })
         db.session.execute(set_query)
 

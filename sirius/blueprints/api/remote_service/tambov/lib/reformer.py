@@ -124,7 +124,7 @@ class TambovReformer(Reformer):
     @module_entry
     def get_entity_package_by_req(self, req):
         """
-        Сбор сущностей в пакеты дозапросами.
+        Сбор сущностей в пакеты дозапросами. Сюда приходим из планировщика.
 
         Args:
             req: данные для запроса корневой сущности

@@ -30,8 +30,8 @@ class TulaRESTClient(object):
         data_type = 'json'
         if req_mode == RequestModeCode.MULTIPART_FILE:
             data_type = 'files'
-        # if protocol == ProtocolCode.SOAP:
-        #     data_type = 'data'
+        if req_mode == RequestModeCode.XML_DATA:
+            data_type = 'data'
         response = getattr(requests, method)(
             url,
             params=url_args,

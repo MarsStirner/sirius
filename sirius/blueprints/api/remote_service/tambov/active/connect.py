@@ -71,6 +71,7 @@ class TambovSOAPClient(object):
 class RequestModeCode(Enum):
     MULTIPART_FILE = 'multipart_file'
     JSON_DATA = 'json_data'
+    XML_DATA = 'xml_data'
 
 
 class TambovRESTClient(object):

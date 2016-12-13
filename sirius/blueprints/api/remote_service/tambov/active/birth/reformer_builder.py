@@ -52,9 +52,6 @@ class BirthTambovBuilder(Builder):
 
     def build_remote_entity_packages(self, reformed_req):
         package = EntitiesPackage(self, self.remote_sys_code)
-        # конфликт TambovEntityCode.BIRTH с TambovEntityCode.SMART_PATIENT
-        # в Difference
-        package.disable_diff_check()
         req_meta = reformed_req.meta
 
         for param_name, param_data in reformed_req.meta['dst_parents_params'].items():

@@ -9,6 +9,8 @@
 # from cPickle import Pickler
 from json import dumps
 from collections import OrderedDict
+import xmltodict
+import xml.etree.ElementTree as ET
 
 from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.difference.models.image import DiffEntityImage
@@ -48,8 +50,9 @@ class Difference(object):
 
     is_diff_check = True
     is_delete_check = True
+    key_range = None
 
-    # @module_entry
+    @module_entry
     def mark_diffs(self, entity_package):
         """
         пометить изменения в Хранилище и в пакете
@@ -59,8 +62,7 @@ class Difference(object):
             self.is_diff_check = False
             return entity_package
         self.is_delete_check = entity_package.is_delete_check
-        # см. туду выше
-        self.is_delete_check = False
+        self.key_range = entity_package.get_diff_key_range()
 
         flat_entities = {}
         system_code = entity_package.system_code
@@ -96,8 +98,10 @@ class Difference(object):
                     'entity_id': entity_id,
                     'root_external_id': (package_record.get('root_parent') or {}).get('main_id', main_id),
                     'external_id': main_id,
-                    'content': dumps(self.serialize_object(package_record['data']), cls=WebMisJsonEncoder),
+                    'key': package_record.get('diff_key'),
+                    # 'content': dumps(self.serialize_object(package_record['data']), cls=WebMisJsonEncoder),
                     # 'content': dumps(self.recursive_asdict(package_record['data']), cls=WebMisJsonEncoder),
+                    'content': dumps(xmltodict.parse(ET.tostring(package_record['data'], encoding='utf-8', method='xml')), encoding=WebMisJsonEncoder),
                     'operation_code': OperationCode.READ_MANY,
                     'level': level,
                 }
@@ -108,9 +112,9 @@ class Difference(object):
         if self.is_delete_check:
             # после того как все записи добавлены можно смотреть чего не хватает
             for root_ext_id in root_ext_ids:
-                DiffEntityImage.set_deleted_data(root_ext_id)
-        DiffEntityImage.set_changed_data()
-        DiffEntityImage.set_new_data()
+                DiffEntityImage.set_deleted_data(root_ext_id, self.key_range)
+        DiffEntityImage.set_changed_data(self.key_range)
+        DiffEntityImage.set_new_data(self.key_range)
 
     def _mark_entities(self, entity_package, flat_entities):
         diff_records = DiffEntityImage.get_marked_data()
@@ -151,7 +155,7 @@ class Difference(object):
     #     DiffEntityImage.save_deleted_data()
     #     DiffEntityImage.drop_temp_table()
 
-    # @module_entry
+    @module_entry
     def save_change(self, msg):
         """
         вносит изменения в EntityImage
