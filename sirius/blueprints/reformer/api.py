@@ -605,6 +605,29 @@ class Reformer(object):
         )
         return res
 
+    def update_remote_match_prefix(
+        self, remote_entity_code, local_entity_code, remote_id, remote_id_prefix,
+    ):
+        m = MatchingId.first_by_remote_id_without_prefix(
+            local_entity_code=local_entity_code,
+            remote_entity_code=remote_entity_code,
+            remote_id=remote_id,
+            remote_sys_code=self.remote_sys_code,
+        )
+        if m:
+            m.update(
+                remote_id_prefix=(remote_id_prefix or ''),
+            )
+
+    def get_prefix_by_remote_id(self, local_entity_code, remote_entity_code, remote_id):
+        res = MatchingId.get_remote_prefix_id(
+            local_entity_code,
+            remote_entity_code,
+            remote_id,
+            self.remote_sys_code,
+        )
+        return res
+
     def get_remote_id_by_local(self, remote_entity_code, local_entity_code, local_id):
         res = MatchingId.get_remote_id(
             local_entity_code,

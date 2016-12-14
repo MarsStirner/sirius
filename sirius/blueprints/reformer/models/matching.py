@@ -216,6 +216,54 @@ class MatchingId(Model):
         return res.remote_id
 
     @classmethod
+    def first_by_remote_id_without_prefix(cls, local_entity_code, remote_entity_code, remote_id, remote_sys_code):
+        # специальный для обновления филиала врача в Туле
+        # по хорошему филиал обновлять при синхронизации врачей (но долго)
+        LocalEntity = aliased(Entity, name='LocalEntity')
+        LocalSystem = aliased(System, name='LocalSystem')
+        RemoteEntity = aliased(Entity, name='RemoteEntity')
+        RemoteSystem = aliased(System, name='RemoteSystem')
+        res = cls.query.join(
+            LocalEntity, LocalEntity.id == cls.local_entity_id
+        ).join(
+            LocalSystem, LocalSystem.id == LocalEntity.system_id
+        ).join(
+            RemoteEntity, RemoteEntity.id == cls.remote_entity_id
+        ).join(
+            RemoteSystem, RemoteSystem.id == RemoteEntity.system_id
+        ).filter(
+            LocalEntity.code == local_entity_code,
+            LocalSystem.code == SystemCode.LOCAL,
+            cls.remote_id == str(remote_id),
+            RemoteEntity.code == remote_entity_code,
+            RemoteSystem.code == remote_sys_code,
+        ).first()
+        return res
+
+    @classmethod
+    def get_remote_prefix_id(cls, local_entity_code, remote_entity_code, remote_id, remote_sys_code):
+        LocalEntity = aliased(Entity, name='LocalEntity')
+        LocalSystem = aliased(System, name='LocalSystem')
+        RemoteEntity = aliased(Entity, name='RemoteEntity')
+        RemoteSystem = aliased(System, name='RemoteSystem')
+        res = cls.query.join(
+            LocalEntity, LocalEntity.id == cls.local_entity_id
+        ).join(
+            LocalSystem, LocalSystem.id == LocalEntity.system_id
+        ).join(
+            RemoteEntity, RemoteEntity.id == cls.remote_entity_id
+        ).join(
+            RemoteSystem, RemoteSystem.id == RemoteEntity.system_id
+        ).filter(
+            LocalEntity.code == local_entity_code,
+            LocalSystem.code == SystemCode.LOCAL,
+            cls.remote_id == str(remote_id),
+            RemoteEntity.code == remote_entity_code,
+            RemoteSystem.code == remote_sys_code,
+        ).one()
+        return res.remote_id_prefix
+
+    @classmethod
     def add(
         cls,
         local_entity_id=None,

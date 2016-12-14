@@ -71,8 +71,8 @@ class ScheduleTulaBuilder(Builder):
         today = datetime.today().date()
 
         # todo: TEST
-        # doct_code = '130000003'
-        # today = datetime(2016, 12, 13).date()
+        # doct_code = '120000186'
+        # today = datetime(2016, 12, 14).date()
 
         begin_date = today.isoformat().replace('-', '')
         end_date = (today + timedelta(weeks=2)).isoformat().replace('-', '')
@@ -88,6 +88,11 @@ class ScheduleTulaBuilder(Builder):
         doct_sch_req.req_data['body'] = doct_sch_req_data
         doct_schedules = self.transfer__send_request(doct_sch_req)
         find_prefix = './/{http://sdsys.ru/}'
+
+        doct_schedule_frst = doct_schedules.find(find_prefix + 'DOCTSCHED')
+        if doct_schedule_frst:
+            filial_code = doct_schedule_frst.findtext(find_prefix + 'FILIAL')
+            self.save_doct_filial(doct_code, filial_code)
 
         for doct_sch_data in doct_schedules.findall(find_prefix + 'DOCTSCHED'):
             sch_req_data = self.get_sch_req_data(doct_sch_data.findtext(find_prefix + 'FILIAL'),
@@ -225,14 +230,14 @@ class ScheduleTulaBuilder(Builder):
                 'doctor': header_meta['local_parents_params'][RisarEntityCode.DOCTOR]['id'],
                 'hospital': header_meta['local_parents_params'][RisarEntityCode.ORGANIZATION]['id'],
             }
-            build_slots = []
+            build_schedule_tickets = []
             for INTERVAL in SCHEDINT.findall(find_prefix + 'INTERVAL'):
-                build_slots.append({
+                build_schedule_tickets.append({
                     'time_begin': self.time_misf_mrf(INTERVAL, find_prefix + 'BHOUR', find_prefix + 'BMIN'),
                     'time_end': self.time_misf_mrf(INTERVAL, find_prefix + 'FHOUR', find_prefix + 'FMIN'),
                     'patient': INTERVAL.findtext(find_prefix + 'PCODE'),
                 })
-            main_item['body']['slots'] = build_slots
+            main_item['body']['schedule_tickets'] = build_schedule_tickets
 
         return entities
 
@@ -241,3 +246,13 @@ class ScheduleTulaBuilder(Builder):
 
     def time_misf_mrf(self, el, t1, t2):
         return datetime.strptime(el.findtext(t1) + el.findtext(t2), '%H%M').time().isoformat()[:5]
+
+    def save_doct_filial(self, doct_code, filial_code):
+        if not filial_code:
+            return
+        self.reformer.update_remote_match_prefix(
+            TulaEntityCode.DOCTOR,
+            RisarEntityCode.DOCTOR,
+            doct_code,
+            filial_code,
+        )
