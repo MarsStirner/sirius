@@ -232,10 +232,18 @@ class ScheduleTulaBuilder(Builder):
             }
             build_schedule_tickets = []
             for INTERVAL in SCHEDINT.findall(find_prefix + 'INTERVAL'):
+                client_id = None
+                pcode = INTERVAL.findtext(find_prefix + 'PCODE')
+                if pcode:
+                    client_id = self.reformer.get_local_id_by_remote(
+                        RisarEntityCode.CLIENT,
+                        TulaEntityCode.CLIENT,
+                        pcode,
+                    )
                 build_schedule_tickets.append({
                     'time_begin': self.time_misf_mrf(INTERVAL, find_prefix + 'BHOUR', find_prefix + 'BMIN'),
                     'time_end': self.time_misf_mrf(INTERVAL, find_prefix + 'FHOUR', find_prefix + 'FMIN'),
-                    'patient': INTERVAL.findtext(find_prefix + 'PCODE'),
+                    'patient': client_id or Undefined,
                 })
             main_item['body']['schedule_tickets'] = build_schedule_tickets
 

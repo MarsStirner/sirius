@@ -139,9 +139,13 @@ class ScheduleTicketTulaBuilder(Builder):
         self.reformer.set_request_service(sched_reserve_req)
         sched_reserve_req.req_data['body'] = sched_reserve_req_data
         req_result = self.transfer__send_request(sched_reserve_req)
-        res = req_result.findtext('SPRESULT')
+        find_prefix = './/{http://sdsys.ru/}'
+        res = req_result.findtext(find_prefix + 'SPRESULT')
         if res != '1':
-            raise ExternalError('Reject reserve ticket %s' % schedule_ticket_data['schedule_ticket_id'])
+            raise ApiException(
+                200, 'Reject reserve ticket %s' % schedule_ticket_data['schedule_ticket_id'],
+                reject=1,
+            )
 
         return entities
 

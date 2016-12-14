@@ -133,10 +133,12 @@ class TulaReformer(Reformer):
         assert isinstance(msg, Message)
 
         meta = msg.get_header().meta
-        serv_method = ServiceMethod.get_entity(meta['local_service_code'])
-        src_system_code = serv_method['system_code']
-        src_entity = serv_method['entity_code']
-        meta['local_entity_code'] = src_entity
+        src_entity = meta['local_entity_code']
+        if not src_entity:
+            serv_method = ServiceMethod.get_entity(meta['local_service_code'])
+            src_system_code = serv_method['system_code']
+            src_entity = serv_method['entity_code']
+            meta['local_entity_code'] = src_entity
         if src_entity == RisarEntityCode.SCHEDULE_TICKET:
             res = ScheduleTicketTulaBuilder(self).build_local_entity_packages(msg)
         elif src_entity == RisarEntityCode.CARD:

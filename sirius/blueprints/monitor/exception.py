@@ -185,6 +185,9 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                     retry = True
                     sleep(sleep_timeout)
                 except Exception as exc:
+                    if isinstance(exc, ApiException):
+                        if exc.code == 200:
+                            raise
                     db.session.rollback()
                     error_datetime = datetime.today()
                     traceback.print_exc()
