@@ -31,7 +31,7 @@ def api_refbook_change(api_version, reference_book_code, **kwargs):
     if not delete:
         data = request.get_json()
         xform.validate(data)
-        item_code = data.get(item_code_name)
+        item_code = item_code or data.get(item_code_name)
     # xform.check_params(card_id, refbook_id, data)
     service_name = sys._getframe().f_code.co_name
     # т.к. на множество справочников один метод, чтобы не плодить сущности

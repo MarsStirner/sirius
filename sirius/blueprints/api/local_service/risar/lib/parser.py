@@ -6,6 +6,7 @@
 @date: 26.09.2016
 
 """
+from sirius.app import app
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.monitor.exception import InternalError, ExternalError
 from sirius.models.system import RegionCode, SystemCode, Host
@@ -76,6 +77,18 @@ class LocalAnswerParser(object):
         # разбирает ответ локальной системы и достает полезные данные
         result = self.get_data(response)
         if entity_code == RisarEntityCode.CLIENT:
+
+            # для Тулы первичная посадка пациентов, которые есть в МР, но нет в шине
+            # если придет реальный дубль, то он сядет в matching_id и следующие PUT будут падать
+            if response.status_code == 409:
+                j = response.json()
+                client_id = j['meta']['client_id']
+                res = {
+                    'main_id': client_id,
+                    'param_name': param_name,
+                }
+                return res
+
             param_name = 'client_id'
             res = {
                 'main_id': result[param_name],
@@ -98,6 +111,11 @@ class LocalAnswerParser(object):
 
     def check(self, response):
         if response.status_code != 200:
+
+            # для Тулы первичная посадка пациентов, которые есть в МР, но нет в шине
+            if response.status_code == 409 and app.config('REGION_CODE') == 'tula':
+                return
+
             try:
                 j = response.json()
                 meta = j['meta']

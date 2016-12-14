@@ -41,3 +41,17 @@ class TulaRESTClient(object):
             **{data_type: any_data}
         )
         return response
+
+# class Response():
+#     text = 'text'
+#     content = 'content'
+#     status_code = 200
+#     def json(self):
+#         trans_res = {"meta": {"code": 200, "name": "OK"}, "result": {
+#             "card_id": "381",
+#             "client_id": "3347210",
+#             "card_set_date": "2016-12-13",
+#             "card_doctor": "120000186",
+#             "card_LPU": "120000001"
+#         }}
+#         return trans_res

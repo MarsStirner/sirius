@@ -7,21 +7,18 @@
 
 """
 from abc import ABCMeta, abstractmethod
-
 from sirius.blueprints.monitor.api import IStreamMeta
 from sirius.blueprints.monitor.exception import module_entry, InternalError, \
     LoggedException, check_point
-from sirius.extensions import db
+from sirius.lib.apiutils import ApiException
+from sirius.lib.message import Message
 from sirius.lib.xform import simplify
 from sirius.models.entity import Entity
+from sirius.models.operation import OperationCode
 from sirius.models.protocol import ProtocolCode
+from sirius.models.system import SystemCode
 from .models.matching import MatchingId
 from .models.method import ApiMethod
-from sirius.lib.apiutils import ApiException
-
-from sirius.lib.message import Message
-from sirius.models.operation import OperationCode
-from sirius.models.system import SystemCode
 
 
 class Reformer(object):
@@ -161,7 +158,8 @@ class Reformer(object):
             #     rec_meta['dst_id'] = rec_meta['dst_parents_params'][rec_meta['dst_id_url_param_name']]['id']
             # else:
             #     rec_meta['dst_id'] = trans_res
-            rec_meta['dst_id'] = trans_res
+            # rec_meta['dst_id'] = trans_res
+            rec_meta['dst_id'] = trans_res['main_id']
             MatchingId.add(
                 local_entity_id=rec_meta['src_entity_id'],
                 local_id=rec_meta['src_id'],

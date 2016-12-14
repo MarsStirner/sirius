@@ -32,7 +32,7 @@ def api_checkup_first_ticket25_change(api_version, **kwargs):
     if not delete:
         data = request.get_json()
         xform.validate(data)
-        main_id = data.get(main_id_name)
+        main_id = main_id or data.get(main_id_name)
     # xform.check_params(card_id, main_id, data)
     service_name = sys._getframe().f_code.co_name
     parents_params = {

@@ -146,7 +146,7 @@ def mr_to_mis_sch_ticket(testapp, org_id, doctor_id, client_id, ticket_id):
 
 
 def mr_to_mis_card(testapp, client_id, card_id):
-    is_create = True
+    is_create = False
     request_local(testapp, risar_session, get_send_to_mis_card_data(client_id, card_id, is_create))
 
 

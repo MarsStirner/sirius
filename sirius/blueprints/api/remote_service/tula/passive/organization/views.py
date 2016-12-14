@@ -31,7 +31,7 @@ def api_organization_change(api_version, **kwargs):
     if not delete:
         data = request.get_json()
         xform.validate(data)
-        main_id = data.get(main_id_name)
+        main_id = main_id or data.get(main_id_name)
     # xform.check_params(card_id, main_id, data)
     service_name = sys._getframe().f_code.co_name
     xform.send_messages(main_id, main_id_name, data, service_name, request.method)

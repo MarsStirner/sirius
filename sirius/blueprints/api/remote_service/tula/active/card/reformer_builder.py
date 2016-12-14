@@ -93,6 +93,11 @@ class CardTulaBuilder(Builder):
         )
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = card_data
+            main_item['body']['client_id'] = self.reformer.get_remote_id_by_local(
+                TulaEntityCode.CLIENT,
+                RisarEntityCode.CLIENT,
+                main_item['body']['client_id'],
+            )
 
         return entities
 

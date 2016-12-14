@@ -93,6 +93,11 @@ class ScheduleTicketTulaBuilder(Builder):
         )
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = schedule_ticket_data
+            main_item['body']['schedule_id'] = self.reformer.get_remote_id_by_local(
+                TulaEntityCode.SCHEDULE,
+                RisarEntityCode.SCHEDULE,
+                main_item['body']['schedule_id'],
+            )
 
         return entities
 

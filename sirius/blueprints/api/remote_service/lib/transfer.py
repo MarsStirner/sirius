@@ -32,7 +32,7 @@ class Transfer(object):
             req_result = self.rest_protocol(req, req_meta)
         else:
             raise InternalError('Unexpected protocol (%s)' % req_meta['dst_protocol_code'])
-        res = self.answer.process(req_result, req_meta)
+        res = self.answer.process(req_result, req_meta, req.data)
         return res
 
     def soap_protocol(self, req, req_meta):
