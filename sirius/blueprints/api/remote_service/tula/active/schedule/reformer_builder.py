@@ -38,7 +38,7 @@ class ScheduleTulaBuilder(Builder):
         src_entity_code = header_meta['local_entity_code']
         params_map = {
             RisarEntityCode.ORGANIZATION: {
-                'entity': TulaEntityCode.ORGANIZATION, 'param': 'DCODE'
+                'entity': TulaEntityCode.ORGANIZATION, 'param': 'DEP'
             },
             RisarEntityCode.DOCTOR: {
                 'entity': TulaEntityCode.DOCTOR, 'param': 'DCODE'
@@ -67,7 +67,7 @@ class ScheduleTulaBuilder(Builder):
         for param_name, param_data in reformed_req.meta['dst_parents_params'].items():
             reformed_req.data_update({param_name: param_data['id']})
 
-        doct_code = reformed_req.meta['dst_parents_params'][TulaEntityCode.DOCTOR]['id']
+        doct_code = reformed_req.meta['dst_parents_params']['DCODE']['id']
         today = datetime.today().date()
 
         # todo: TEST

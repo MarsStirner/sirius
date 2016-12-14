@@ -41,11 +41,12 @@ class HospitalizationTulaBuilder(Builder):
         )
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = data
-            local_measure_id = self.reformer.get_local_id_by_remote(
-                RisarEntityCode.MEASURE,
-                TulaEntityCode.MEASURE,
-                data['measure_id'],
-            )
-            main_item['body']['measure_id'] = local_measure_id
+            if data['measure_id']:
+                local_measure_id = self.reformer.get_local_id_by_remote(
+                    RisarEntityCode.MEASURE,
+                    TulaEntityCode.MEASURE,
+                    data['measure_id'],
+                )
+                main_item['body']['measure_id'] = local_measure_id
 
         return entities

@@ -76,18 +76,18 @@ class LocalAnswerParser(object):
     def get_params(self, entity_code, response, param_name):
         # разбирает ответ локальной системы и достает полезные данные
         result = self.get_data(response)
-        if entity_code == RisarEntityCode.CLIENT:
-
+        if entity_code == RisarEntityCode.CLIENT and response.status_code == 409:
             # для Тулы первичная посадка пациентов, которые есть в МР, но нет в шине
             # если придет реальный дубль, то он сядет в matching_id и следующие PUT будут падать
-            if response.status_code == 409:
-                j = response.json()
-                client_id = j['meta']['client_id']
-                res = {
-                    'main_id': client_id,
-                    'param_name': param_name,
-                }
-                return res
+            j = response.json()
+            client_id = j['meta']['client_id']
+            res = {
+                'main_id': client_id,
+                'param_name': param_name,
+            }
+            return res
+
+        elif entity_code == RisarEntityCode.CLIENT:
 
             param_name = 'client_id'
             res = {
@@ -113,7 +113,7 @@ class LocalAnswerParser(object):
         if response.status_code != 200:
 
             # для Тулы первичная посадка пациентов, которые есть в МР, но нет в шине
-            if response.status_code == 409 and app.config('REGION_CODE') == 'tula':
+            if response.status_code == 409 and app.config.get('REGION_CODE') == 'tula':
                 return
 
             try:

@@ -66,10 +66,14 @@ class MatchingId(Model):
             RemoteEntity.code == remote_entity_code,
             RemoteSystem.code == remote_sys_code,
             cls.remote_id == str(remote_id),
-            cls.remote_id_prefix == (remote_id_prefix or ''),
             LocalEntity.code == local_entity_code,
             LocalSystem.code == SystemCode.LOCAL,
-        ).first()
+        )
+        if remote_id_prefix:
+            res = res.filter(
+                cls.remote_id_prefix == (remote_id_prefix or ''),
+            )
+        res = res.first()
         if res:
             dst_id = res.local_id
             dst_param_name = res.local_param_name
@@ -100,10 +104,14 @@ class MatchingId(Model):
             LocalEntity.code == src_entity_code,
             LocalSystem.code == SystemCode.LOCAL,
             cls.local_id == str(src_id),
-            cls.local_id_prefix == (src_id_prefix or ''),
             RemoteEntity.code == dst_entity_code,
             RemoteSystem.code == remote_sys_code,
-        ).first()
+        )
+        if src_id_prefix:
+            res = res.filter(
+                cls.local_id_prefix == (src_id_prefix or ''),
+            )
+        res = res.first()
         if res:
             dst_id = res.remote_id
             dst_param_name = res.remote_param_name
@@ -133,9 +141,13 @@ class MatchingId(Model):
             LocalEntity.code == src_entity_code,
             LocalSystem.code == SystemCode.LOCAL,
             cls.local_id == str(src_id),
-            cls.local_id_prefix == (src_id_prefix or ''),
             RemoteSystem.code == remote_sys_code,
-        ).first()
+        )
+        if src_id_prefix:
+            res = res.filter(
+                cls.local_id_prefix == (src_id_prefix or ''),
+            )
+        res = res.first()
         if res:
             dst_id = res.remote_id
             dst_param_name = res.remote_param_name
@@ -156,10 +168,14 @@ class MatchingId(Model):
             RemoteSystem, RemoteSystem.id == RemoteEntity.system_id
         ).filter(
             cls.remote_id == str(remote_id),
-            cls.remote_id_prefix == (remote_id_prefix or ''),
             RemoteEntity.code == remote_entity_code,
             RemoteSystem.code == remote_sys_code,
-        ).first()
+        )
+        if remote_id_prefix:
+            res = res.filter(
+                cls.remote_id_prefix == (remote_id_prefix or ''),
+            )
+        res = res.first()
         if res:
             dst_param_name = res.remote_param_name
         res = {
@@ -185,10 +201,14 @@ class MatchingId(Model):
             LocalEntity.code == local_entity_code,
             LocalSystem.code == SystemCode.LOCAL,
             cls.remote_id == str(remote_id),
-            cls.remote_id_prefix == (remote_id_prefix or ''),
             RemoteEntity.code == remote_entity_code,
             RemoteSystem.code == remote_sys_code,
-        ).one()
+        )
+        if remote_id_prefix:
+            res = res.filter(
+                cls.remote_id_prefix == (remote_id_prefix or ''),
+            )
+        res = res.one()
         return res.local_id
 
     @classmethod
@@ -209,10 +229,14 @@ class MatchingId(Model):
             LocalEntity.code == local_entity_code,
             LocalSystem.code == SystemCode.LOCAL,
             cls.local_id == str(local_id),
-            cls.local_id_prefix == (local_id_prefix or ''),
             RemoteEntity.code == remote_entity_code,
             RemoteSystem.code == remote_sys_code,
-        ).one()
+        )
+        if local_id_prefix:
+            res = res.filter(
+                cls.local_id_prefix == (local_id_prefix or ''),
+            )
+        res = res.one()
         return res.remote_id
 
     @classmethod

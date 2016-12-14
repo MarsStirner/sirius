@@ -459,15 +459,18 @@ class Scheduler(object):
                 if not doctor_data['regional_code']:
                     # мусор
                     continue
-                msg = self.create_message(
-                    system_code, entity_code, OperationCode.ADD
-                )  # WebSchedule
-                meta = msg.get_header().meta
-                meta['local_parents_params'] = {
-                    'LPU_id': {'entity': RisarEntityCode.ORGANIZATION,
-                                   'id': org_data['LPU_id']},
-                    'regional_code': {'entity': RisarEntityCode.DOCTOR,
-                                   'id': doctor_data['regional_code']},
-                }
-                producer = LocalProducer()
-                producer.send(msg)
+                try:
+                    msg = self.create_message(
+                        system_code, entity_code, OperationCode.ADD
+                    )  # WebSchedule
+                    meta = msg.get_header().meta
+                    meta['local_parents_params'] = {
+                        'LPU_id': {'entity': RisarEntityCode.ORGANIZATION,
+                                       'id': org_data['LPU_id']},
+                        'regional_code': {'entity': RisarEntityCode.DOCTOR,
+                                       'id': doctor_data['regional_code']},
+                    }
+                    producer = LocalProducer()
+                    producer.send(msg)
+                except LoggedException:
+                    pass

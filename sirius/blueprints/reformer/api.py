@@ -1013,7 +1013,7 @@ class EntitiesPackage(IStreamMeta):
         assert (
             isinstance(key_range, tuple) and
             len(key_range) == 2 and
-            all(isinstance(x, str) and len(x) < 80 for x in key_range)
+            all(isinstance(x, basestring) and len(x) < 80 for x in key_range)
         )
         self._diff_key_range = key_range
 
