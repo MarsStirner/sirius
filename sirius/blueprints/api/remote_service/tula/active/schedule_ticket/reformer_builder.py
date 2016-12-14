@@ -114,12 +114,12 @@ class ScheduleTicketTulaBuilder(Builder):
         filial_code = self.reformer.get_prefix_by_remote_id(
             RisarEntityCode.DOCTOR,
             TulaEntityCode.DOCTOR,
-            remote_pp[TulaEntityCode.DOCTOR]['id'],
+            remote_pp['doctor']['id'],
         )
         sched_reserve_req_data = self.get_sch_reserve_req_data(
             filial_code,
-            remote_pp[TulaEntityCode.CLIENT]['id'],
-            remote_pp[TulaEntityCode.DOCTOR]['id'],
+            remote_pp['patient']['id'],
+            remote_pp['doctor']['id'],
             schedule_ticket_data['date'],
             schedule_id,
             schedule_ticket_data['schedule_ticket_id'],

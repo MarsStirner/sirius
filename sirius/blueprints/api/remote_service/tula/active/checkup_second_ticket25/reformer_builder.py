@@ -94,6 +94,7 @@ class CheckupSecondTicket25TulaBuilder(Builder):
         )
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = ticket_data
+            main_item['body']['external_id'] = header_meta['local_main_id']
 
         return entities
 

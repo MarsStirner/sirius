@@ -227,8 +227,8 @@ class ScheduleTulaBuilder(Builder):
                 'date': self.date_misf_mrf(doct_sch_data, find_prefix + 'WDATE'),
                 'time_begin': self.time_misf_mrf(doct_sch_data, find_prefix + 'BEGHOUR', find_prefix + 'BEGMIN'),
                 'time_end': self.time_misf_mrf(doct_sch_data, find_prefix + 'ENDHOUR', find_prefix + 'ENDMIN'),
-                'doctor': header_meta['local_parents_params'][RisarEntityCode.DOCTOR]['id'],
-                'hospital': header_meta['local_parents_params'][RisarEntityCode.ORGANIZATION]['id'],
+                'doctor': header_meta['local_parents_params']['doctor']['id'],
+                'hospital': header_meta['local_parents_params']['organisation']['id'],
             }
             build_schedule_tickets = []
             for INTERVAL in SCHEDINT.findall(find_prefix + 'INTERVAL'):
