@@ -109,7 +109,7 @@ class Reformer(object):
 
         rec_meta = record['meta']
         if rec_meta['dst_operation_code'] == OperationCode.ADD:
-            # почему жертвуем своим ИДшником?
+            # почему жертвуем своим ИДшником? потому что не во всех схемах есть ИД
             # if rec_meta['dst_id_url_param_name'] in (rec_meta['dst_parents_params'] or ()):
             #     rec_meta['dst_id'] = rec_meta['dst_parents_params'][rec_meta['dst_id_url_param_name']]['id']
             # else:
@@ -124,7 +124,13 @@ class Reformer(object):
                 answer,
                 rec_meta['dst_id_url_param_name'],
             )
-            rec_meta['dst_id'] = answer_res['main_id']
+            if answer_res:
+                # результат в теле
+                rec_meta['dst_id'] = answer_res['main_id']
+            else:
+                # результат родительский
+                if rec_meta['dst_id_url_param_name'] in (rec_meta['dst_parents_params'] or ()):
+                    rec_meta['dst_id'] = rec_meta['dst_parents_params'][rec_meta['dst_id_url_param_name']]['id']
             MatchingId.add(
                 local_entity_id=rec_meta['dst_entity_id'],
                 local_id_prefix=rec_meta['dst_id_prefix'],

@@ -75,6 +75,7 @@ class RequestLocalData(object):
 class LocalAnswerParser(object):
     def get_params(self, entity_code, response, param_name):
         # разбирает ответ локальной системы и достает полезные данные
+        res = None
         result = self.get_data(response)
         if entity_code == RisarEntityCode.CLIENT and response.status_code == 409:
             # для Тулы первичная посадка пациентов, которые есть в МР, но нет в шине
@@ -95,10 +96,11 @@ class LocalAnswerParser(object):
                 'param_name': param_name,
             }
         else:
-            res = {
-                'main_id': result[param_name],
-                'param_name': param_name,
-            }
+            if param_name in result:
+                res = {
+                    'main_id': result[param_name],
+                    'param_name': param_name,
+                }
         return res
 
     def get_data(self, response):
