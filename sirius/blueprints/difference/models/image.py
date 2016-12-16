@@ -256,7 +256,8 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
           root_external_id,
           external_id,
           content,
-          level
+          level,
+          key
         )
         (
           select
@@ -264,7 +265,8 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             tmp.root_external_id,
             tmp.external_id,
             tmp.content,
-            tmp.level
+            tmp.level,
+            tmp.key
           from %(temp_table_name)s tmp
           where
             tmp.operation_code = '%(operation_code)s'

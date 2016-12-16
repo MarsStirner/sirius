@@ -51,6 +51,10 @@ class Difference(object):
     is_diff_check = True
     is_delete_check = True
     key_range = None
+    json_dumper = None
+
+    # def __init__(self, json_dumper):
+    #     self.json_dumper = json_dumper
 
     @module_entry
     def mark_diffs(self, entity_package):
@@ -102,6 +106,7 @@ class Difference(object):
                     # 'content': dumps(self.serialize_object(package_record['data']), cls=WebMisJsonEncoder),
                     # 'content': dumps(self.recursive_asdict(package_record['data']), cls=WebMisJsonEncoder),
                     'content': dumps(xmltodict.parse(ET.tostring(package_record['data'], encoding='utf-8', method='xml')), encoding=WebMisJsonEncoder),
+                    # 'content': self.json_dumper(package_record['data']),
                     'operation_code': OperationCode.READ_MANY,
                     'level': level,
                 }

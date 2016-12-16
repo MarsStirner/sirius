@@ -27,7 +27,7 @@ session = None
 def request_by_url(method, url, data):
     global session, login_dt
     parser = LocalAnswerParser()
-    if not session or (datetime.today() - login_dt > timedelta(hours=2)):
+    if not session or (datetime.today() - login_dt > timedelta(minutes=20)):
         session = make_login()
         login_dt = datetime.today()
     response = make_api_request(method, url, session, data)

@@ -274,7 +274,7 @@ def connect_entry(function=None, login=None):
     Ловит ошибку на входе в модуль активных запросов
     """
     sleep_timeout = 6  # sec
-    session_timeout = 1  # min
+    session_timeout = 20  # min
 
     def decorator(func):
         @functools.wraps(func)

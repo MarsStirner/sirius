@@ -237,13 +237,11 @@ class PatientTambovBuilder(Builder):
                 elif entry['level'] == '5':
                     local_addr['KLADR_locality'] = entry['kladrCode'][:11] + '00'
                 elif entry['level'] == '6':
-                    local_addr['KLADR_street'] = entry['kladrCode']
+                    local_addr['KLADR_street'] = entry['kladrCode'] or ''
                 elif entry['level'] == '7':
-                    # local_addr['house'] = entry['name']
-                    local_addr['house'] = '0'
+                    local_addr['house'] = entry['name'] or '0'
                 elif entry['level'] == '8':
-                    # local_addr['flat'] = entry['name']
-                    local_addr['flat'] = '0'
+                    local_addr['flat'] = entry['name'] or '0'
             # в схеме рисар пока не массив, а объект
             break
 

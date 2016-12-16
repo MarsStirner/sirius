@@ -26,6 +26,9 @@ from sirius.models.operation import OperationCode
 from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 
+import logging
+logger = logging.getLogger('simple')
+
 
 class ScheduleTulaBuilder(Builder):
     remote_sys_code = SystemCode.TULA
@@ -235,11 +238,15 @@ class ScheduleTulaBuilder(Builder):
                 client_id = None
                 pcode = INTERVAL.findtext(find_prefix + 'PCODE')
                 if pcode:
-                    client_id = self.reformer.get_local_id_by_remote(
+                    client_id = self.reformer.find_local_id_by_remote(
                         RisarEntityCode.CLIENT,
                         TulaEntityCode.CLIENT,
                         pcode,
                     )
+                    # если пациент еще не передавался в МР, но занял слот
+                    if not client_id:
+                        logger.debug('INTERVAL PCODE: (' + pcode + ')')
+
                 build_schedule_tickets.append({
                     'time_begin': self.time_misf_mrf(INTERVAL, find_prefix + 'BHOUR', find_prefix + 'BMIN'),
                     'time_end': self.time_misf_mrf(INTERVAL, find_prefix + 'FHOUR', find_prefix + 'FMIN'),
