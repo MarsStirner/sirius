@@ -30,7 +30,7 @@ import logging
 logger = logging.getLogger('simple')
 
 
-class ScheduleTulaBuilder(Builder):
+class ScheduleTulaBuilder(Builder):  # by Scheduler
     remote_sys_code = SystemCode.TULA
 
     ##################################################################

@@ -19,10 +19,8 @@ from sirius.blueprints.api.remote_service.tula.active.epicrisis.reformer_builder
     EpicrisisTulaBuilder
 from sirius.blueprints.api.remote_service.tula.active.measures.reformer_builder import \
     MeasureTulaBuilder
-from sirius.blueprints.api.remote_service.tula.active.schedule.reformer_builder import \
-    ScheduleTulaBuilder
 from sirius.blueprints.api.remote_service.tula.active.schedule_ticket.reformer_builder import \
-    ScheduleTicketTulaBuilder
+    ScheduleTicketTulaBuilder as ActiveScheduleTicketTulaBuilder
 from sirius.blueprints.api.remote_service.tula.entities import TulaEntityCode
 from sirius.blueprints.api.remote_service.tula.passive.checkup_first_ticket25.reformer_builder import \
     CheckupFirstTicket25TulaBuilder as PassCheckupFirstTicket25TulaBuilder
@@ -44,6 +42,10 @@ from sirius.blueprints.api.remote_service.tula.passive.refbook.reformer_builder 
     RefbookTulaBuilder
 from sirius.blueprints.api.remote_service.tula.passive.research.reformer_builder import \
     ResearchTulaBuilder
+from sirius.blueprints.api.remote_service.tula.passive.schedule.reformer_builder import \
+    ScheduleTulaBuilder
+from sirius.blueprints.api.remote_service.tula.passive.schedule_ticket.reformer_builder import \
+    ScheduleTicketTulaBuilder as PassiveScheduleTicketTulaBuilder
 from sirius.blueprints.api.remote_service.tula.passive.specialists_checkup.reformer_builder import \
     SpecialistsCheckupTulaBuilder
 from sirius.blueprints.monitor.exception import InternalError, module_entry
@@ -87,6 +89,8 @@ class TulaReformer(Reformer):
             res = PassCheckupPCTicket25TulaBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TulaEntityCode.SCHEDULE:
             res = ScheduleTulaBuilder(self).build_local_entities(header_meta, data)
+        elif remote_entity_code == TulaEntityCode.SCHEDULE_TICKET:
+            res = PassiveScheduleTicketTulaBuilder(self).build_local_entities(header_meta, data)
         else:
             raise InternalError('Unexpected remote_entity_code')
         return res
@@ -94,7 +98,7 @@ class TulaReformer(Reformer):
     def get_remote_entities(self, header_meta, data):
         local_entity_code = header_meta['local_entity_code']
         if local_entity_code == RisarEntityCode.SCHEDULE_TICKET:
-            res = ScheduleTicketTulaBuilder(self).build_remote_entities(header_meta, data)
+            res = ActiveScheduleTicketTulaBuilder(self).build_remote_entities(header_meta, data)
         elif local_entity_code == RisarEntityCode.CARD:
             res = CardTulaBuilder(self).build_remote_entities(header_meta, data)
         elif local_entity_code == RisarEntityCode.CHECKUP_OBS_FIRST_TICKET:
@@ -117,10 +121,11 @@ class TulaReformer(Reformer):
     def get_remote_request(self, header_meta):
         remote_entity_code = header_meta.get('remote_entity_code')
         local_entity_code = header_meta.get('local_entity_code')
-        if local_entity_code == RisarEntityCode.SCHEDULE or remote_entity_code == TulaEntityCode.SCHEDULE:
-            data_req = ScheduleTulaBuilder(self).build_remote_request(header_meta, TulaEntityCode.SCHEDULE)
-        else:
-            raise InternalError('Unexpected local_entity_code (%s)' % local_entity_code)
+        # if local_entity_code == RisarEntityCode.SCHEDULE or remote_entity_code == TulaEntityCode.SCHEDULE:
+        #     data_req = ScheduleTulaBuilder(self).build_remote_request(header_meta, TulaEntityCode.SCHEDULE)
+        # else:
+        #     raise InternalError('Unexpected local_entity_code (%s)' % local_entity_code)
+        raise InternalError('Unexpected local_entity_code (%s)' % local_entity_code)
         self.set_remote_request_params(data_req)
         self.set_request_service(data_req)
         return data_req
@@ -140,7 +145,7 @@ class TulaReformer(Reformer):
             src_entity = serv_method['entity_code']
             meta['local_entity_code'] = src_entity
         if src_entity == RisarEntityCode.SCHEDULE_TICKET:
-            res = ScheduleTicketTulaBuilder(self).build_local_entity_packages(msg)
+            res = ActiveScheduleTicketTulaBuilder(self).build_local_entity_packages(msg)
         elif src_entity == RisarEntityCode.CARD:
             res = CardTulaBuilder(self).build_local_entity_packages(msg)
         elif src_entity == RisarEntityCode.CHECKUP_OBS_FIRST_TICKET:
@@ -170,8 +175,9 @@ class TulaReformer(Reformer):
         # todo: рассмотреть возможность использования MatchingEntity для автосборки пакетов
         meta = req.meta
         dst_entity = meta['dst_entity_code']
-        if dst_entity == TulaEntityCode.SCHEDULE:
-            res = ScheduleTulaBuilder(self).build_remote_entity_packages(req)
-        else:
-            raise InternalError('Unexpected dst_entity (%s)' % dst_entity)
+        # if dst_entity == TulaEntityCode.SCHEDULE:
+        #     res = ScheduleTulaBuilder(self).build_remote_entity_packages(req)
+        # else:
+        #     raise InternalError('Unexpected dst_entity (%s)' % dst_entity)
+        raise InternalError('Unexpected dst_entity (%s)' % dst_entity)
         return res
