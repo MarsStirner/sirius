@@ -15,7 +15,7 @@ from sirius.blueprints.api.remote_service.tula.entities import \
     TulaEntityCode
 from sirius.blueprints.monitor.exception import InternalError
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
-    RequestEntities
+    RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.lib.apiutils import ApiException
 from sirius.lib.xform import Undefined
@@ -52,6 +52,27 @@ class MeasureTulaBuilder(Builder):
                 data=measure,
             )
 
+            data_req = DataRequest()
+            data_req.set_meta(
+                dst_system_code=SystemCode.LOCAL,
+                dst_entity_code=RisarEntityCode.APPOINTMENT,
+                dst_operation_code=OperationCode.READ_ONE,
+                dst_id=measure['appointment_id'],
+                dst_parents_params=msg_meta['src_parents_params'],
+            )
+            data_req.req_data['meta']['dst_id_url_param_name'] = 'appointment_id'
+
+            # self.reformer.set_local_id(data_req)
+            self.reformer.set_request_service(data_req)
+            appointment_data = self.reformer.local_request_by_req(data_req)
+            item = package.add_addition_pack_entity(
+                root_item=item,
+                parent_item=item,
+                entity_code=RisarEntityCode.APPOINTMENT,
+                main_id=measure['appointment_id'],
+                data=appointment_data,
+            )
+
     ##################################################################
     ##  reform entities to remote
 
@@ -69,6 +90,8 @@ class MeasureTulaBuilder(Builder):
         dst_main_param_name
         """
         measure_data = pack_entity['data']
+        appointment_node = pack_entity['addition'][RisarEntityCode.APPOINTMENT][0]
+        appoint_data = appointment_node['data']
         src_operation_code = header_meta['local_operation_code']
         src_entity_code = header_meta['local_entity_code']
 
@@ -92,7 +115,33 @@ class MeasureTulaBuilder(Builder):
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
-            main_item['body'] = measure_data
+            main_item['body'] = {
+                "measure_id": measure_data.get('measure_id'),
+                "measure_type_code": measure_data.get('measure_type_code'),
+                "begin_date": measure_data.get('begin_datetime'),
+                "end_date": measure_data.get('end_datetime'),
+                "status": measure_data.get('status'),
+                # ---
+                "appointment": {
+                    "appointment_id": measure_data.get('appointment_id'),
+                    "appointment_code": appoint_data.get('appointment_code'),
+                    "appointed_date": appoint_data.get('date'),
+                    "appointed_lpu": appoint_data.get('appointed_lpu'),
+                    "appointed_doctor": appoint_data.get('appointed_doctor'),
+                    "referral_lpu": appoint_data.get('referral_lpu'),
+                    "referral_date": appoint_data.get('referral_date'),
+                    "execution_time": appoint_data.get('execution_time'),
+                    "diagnosis": appoint_data.get('diagnosis'),
+                    "indications": measure_data.get('indications'),
+                    "parameters": appoint_data.get('parameters'),
+                    "comment": appoint_data.get('comment'),
+                    "hospitalization_form": appoint_data.get('hospitalization_form'),
+                    "operation": appoint_data.get('operation'),
+                    "profile": appoint_data.get('profile'),
+                    # "bed_profile": appoint_data.get(''),
+                },
+                "result_action_id": measure_data.get('result_action_id'),
+            }
 
         return entities
 
