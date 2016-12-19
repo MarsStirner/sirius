@@ -7,7 +7,7 @@ def get_organization_data_required(main_id):
         "short_name": "test_org",
         "address": "test_address",
         "area": "64000000000",
-        "LPU_id": str(main_id),
+        "regionalCode": str(main_id),
         "is_LPU": 1,
     }
 

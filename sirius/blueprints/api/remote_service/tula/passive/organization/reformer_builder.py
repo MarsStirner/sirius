@@ -21,7 +21,7 @@ class OrganizationTulaBuilder(Builder):
         main_item = entities.set_main_entity(
             dst_entity_code=RisarEntityCode.ORGANIZATION,
             dst_parents_params=header_meta['local_parents_params'],
-            dst_main_id_name='LPU_id',
+            dst_main_id_name='regionalCode',
             src_operation_code=src_operation_code,
             src_entity_code=header_meta['remote_entity_code'],
             src_main_id_name=header_meta['remote_main_param_name'],
