@@ -18,3 +18,5 @@ from .checkup_first_ticket25 import *
 from .checkup_second_ticket25 import *
 from .checkup_pc_ticket25 import *
 from .refbook import *
+from .schedule import *
+from .schedule_ticket import *
