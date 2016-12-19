@@ -40,6 +40,19 @@ class DoctorTulaBuilder(Builder):
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
-            main_item['body'] = data
+            main_item['body'] = data.copy()
+            if 'department' in data:
+                self.save_doct_filial(data['regional_code'], data['department'])
+                del main_item['body']['department']
 
         return entities
+
+    def save_doct_filial(self, doct_code, filial_code):
+        if not filial_code:
+            return
+        self.reformer.update_remote_match_prefix(
+            TulaEntityCode.DOCTOR,
+            RisarEntityCode.DOCTOR,
+            doct_code,
+            filial_code,
+        )
