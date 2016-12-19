@@ -22,6 +22,7 @@ class TulaEntityCode(Enum):
     MEASURE_SPECIALISTS_CHECKUP = 'measure_specialists_checkup'
     EPICRISIS = 'epicrisis'
     ORGANIZATION = 'organization'
+    ORG_DEPARTMENT = 'org_department'
     DOCTOR = 'doctor'
     SCHEDULE_TICKET = 'schedule_ticket'
     CHILDBIRTH = 'childbirth'

@@ -20,3 +20,4 @@ from .checkup_pc_ticket25 import *
 from .refbook import *
 from .schedule import *
 from .schedule_ticket import *
+from .org_department import *

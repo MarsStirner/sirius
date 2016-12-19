@@ -22,6 +22,7 @@ class RisarEntityCode(Enum):
     MEASURE_SPECIALISTS_CHECKUP = 'measure_specialists_checkup'
     EPICRISIS = 'epicrisis'
     ORGANIZATION = 'organization'
+    ORG_DEPARTMENT = 'org_department'
     DOCTOR = 'doctor'
     SCHEDULE = 'schedule'
     SCHEDULE_TICKET = 'schedule_ticket'
