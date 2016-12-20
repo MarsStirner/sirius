@@ -111,10 +111,14 @@ class ScheduleTicketTulaBuilder(Builder):
             schedule_ticket_data['schedule_id'],
         )
         remote_pp = header_meta['remote_parents_params']
-        filial_code = self.reformer.get_prefix_by_remote_id(
-            RisarEntityCode.DOCTOR,
-            TulaEntityCode.DOCTOR,
+        # filial_code = self.reformer.get_prefix_by_remote_id(
+        #     RisarEntityCode.DOCTOR,
+        #     TulaEntityCode.DOCTOR,
+        #     remote_pp['doctor']['id'],
+        # )
+        filial_code = self.get_filial_code(
             remote_pp['doctor']['id'],
+            schedule_ticket_data['date'],
         )
         sched_reserve_req_data = self.get_sch_reserve_req_data(
             filial_code,
@@ -179,6 +183,7 @@ class ScheduleTicketTulaBuilder(Builder):
         <BMIN>{BMIN}</BMIN>
         <FHOUR>{FHOUR}</FHOUR>
         <FMIN>{FMIN}</FMIN>
+        <AUTHMODE>4</AUTHMODE>
         <EXTSCHEDID>{EXTSCHEDID}</EXTSCHEDID>
     </SCHEDULE_REC_RESERVE_IN>
 </WEB_SCHEDULE_REC_RESERVE>
@@ -194,4 +199,62 @@ class ScheduleTicketTulaBuilder(Builder):
             FMIN=int(f_min),
             EXTSCHEDID=ext_schedident,
         )
+        return res
+
+    def get_doctor_req_data(
+        self, d_code, bdate, fdate
+    ):
+        # todo: переделать на сборку на xsd
+        res = """
+<WEB_GET_DOCTOR_LIST xmlns="http://sdsys.ru/">
+    <MSH>
+        <MSH.7>
+            <TS.1>20110302184008</TS.1>
+        </MSH.7>
+        <MSH.9>
+            <MSG.1>WEB</MSG.1>
+            <MSG.2>GET_DOCTOR_LIST</MSG.2>
+        </MSH.9>
+        <MSH.10>74C0ACA47AFE4CED2B838996B0DF5821</MSH.10>
+        <MSH.18>UTF-8</MSH.18>
+    </MSH>
+    <GET_DOCTOR_LIST_IN>
+        <BDATE>{BDATE}</BDATE>
+        <FDATE>{FDATE}</FDATE>
+        <DCODEIN>{DCODEIN}</DCODEIN>
+    </GET_DOCTOR_LIST_IN>
+</WEB_GET_DOCTOR_LIST>
+        """.format(
+            BDATE=bdate.replace('-', ''),
+            FDATE=fdate.replace('-', ''),
+            DCODEIN=d_code,
+        )
+        return res
+
+    def get_filial_code(self, doc_code, workdate):
+        sched_reserve_req_data = self.get_doctor_req_data(
+            doc_code,
+            workdate,
+            workdate,
+        )
+
+        sched_reserve_req = DataRequest()
+        sched_reserve_req.set_meta(
+            dst_system_code=self.remote_sys_code,
+            dst_entity_code=TulaEntityCode.SCHEDULE_TICKET,
+            dst_operation_code=OperationCode.ADD,
+            dst_id=None,
+            dst_parents_params={},
+        )
+        sched_reserve_req.set_req_mode(RequestModeCode.XML_DATA)
+        self.reformer.set_request_service(sched_reserve_req)
+        sched_reserve_req.req_data['body'] = sched_reserve_req_data
+        req_result = self.transfer__send_request(sched_reserve_req)
+        find_prefix = './/{http://sdsys.ru/}'
+        doct_list_frst = req_result.find(find_prefix + 'GETDOCTORLIST')
+        if doct_list_frst:
+            res = doct_list_frst.findtext(find_prefix + 'FILIAL')
+        else:
+            raise InternalError('Not found filial for doctor with code = (%s); workdate = (%s)' %
+                                (doc_code, workdate))
         return res

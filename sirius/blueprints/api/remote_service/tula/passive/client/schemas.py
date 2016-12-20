@@ -244,7 +244,6 @@ class ClientSchema(Schema):
         "required": [
             "FIO",
             "birthday_date",
-            "gender",
-            "document"
+            "gender"
         ]
     }]

@@ -42,6 +42,8 @@ class MeasureTulaBuilder(Builder):
         self.set_src_parents_entity(msg_meta, params_meta)
 
         for measure in measures:
+            if not measure['appointment_id']:
+                continue
             item = package.add_main_pack_entity(
                 entity_code=msg_meta['src_entity_code'],
                 operation_code=msg_meta['src_operation_code'],

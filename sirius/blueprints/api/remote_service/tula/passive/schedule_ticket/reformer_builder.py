@@ -47,8 +47,8 @@ class ScheduleTicketTulaBuilder(Builder):
                 main_item['body']['doctor'] = doctor_code
             if 'patient' in data:
                 patient_code = self.reformer.get_local_id_by_remote(
-                    RisarEntityCode.DOCTOR,
-                    TulaEntityCode.DOCTOR,
+                    RisarEntityCode.CLIENT,
+                    TulaEntityCode.CLIENT,
                     data['patient'],
                 )
                 main_item['body']['patient'] = patient_code

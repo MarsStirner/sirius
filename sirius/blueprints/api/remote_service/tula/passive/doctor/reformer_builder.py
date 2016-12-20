@@ -42,7 +42,9 @@ class DoctorTulaBuilder(Builder):
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = data.copy()
             if 'department' in data:
-                self.save_doct_filial(data['regional_code'], data['department'])
+                # при ПОСТ сопоставления еще нет и писать филиал некуда
+                # сейчас филиал дозапрашивается при записи на прием
+                # self.save_doct_filial(data['regional_code'], data['department'])
                 del main_item['body']['department']
 
         return entities
