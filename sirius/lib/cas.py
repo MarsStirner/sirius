@@ -15,6 +15,7 @@ from itsdangerous import json
 # from nemesis.forms import LoginForm, RoleForm
 # from nemesis.app import app
 from sirius.app import app
+from sirius.lib.apiutils import json_dumps
 
 __author__ = 'viruzzz-kun'
 
@@ -92,7 +93,7 @@ def process_public_api_login(auth_token):
     # только аутентификация в cas, CurrentUser is Anonymous
     cas_response = check_cas_token(auth_token)
     if cas_response is None or cas_response.status_code != 200:
-        raise ApiLoginException(401, u'Пользователь не аутентифицирован')
+        raise ApiLoginException(401, u'Пользователь не аутентифицирован. token=(%s)' % auth_token)
 
 
 def process_api_login(auth_token):
@@ -340,20 +341,20 @@ class ApiLoginException(Exception):
         return u'<ApiException(%s, u\'%s\')>' % (self.code, self.message)
 
 
-# @app.errorhandler(ApiLoginException)
-# def api_login_error(e):
-#     # TODO: format like all api exceptions
-#     j = json_dumps({
-#         'code': e.code,
-#         'message': e.message
-#     })
-#     code = e.code
-#     headers = {
-#         'content-type': 'application/json; charset=utf-8'
-#     }
-#     return make_response(j, code, headers)
-#
-#
+@app.errorhandler(ApiLoginException)
+def api_login_error(e):
+    # TODO: format like all api exceptions
+    j = json_dumps({
+        'code': e.code,
+        'message': e.message
+    })
+    code = e.code
+    headers = {
+        'content-type': 'application/json; charset=utf-8'
+    }
+    return make_response(j, code, headers)
+
+
 # @login_manager.user_loader
 # def load_user(user_id):
 #     # Return an instance of the User model

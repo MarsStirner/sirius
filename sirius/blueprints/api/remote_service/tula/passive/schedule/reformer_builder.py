@@ -47,11 +47,11 @@ class ScheduleTulaBuilder(Builder):
                 main_item['body']['doctor'] = doctor_code
             for schedule_ticket in main_item['body'].get('schedule_tickets') or ():
                 if 'patient' in schedule_ticket:
-                    patient_code = self.reformer.get_local_id_by_remote(
+                    patient_code = self.reformer.find_local_id_by_remote(
                         RisarEntityCode.CLIENT,
                         TulaEntityCode.CLIENT,
                         schedule_ticket['patient'],
                     )
-                    schedule_ticket['patient'] = patient_code
+                    schedule_ticket['patient'] = patient_code or '1'
 
         return entities

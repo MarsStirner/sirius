@@ -55,6 +55,7 @@ def register_extensions(app, is_lazy_db):
     migrate.init_app(app, db)
     if app.config['CELERY_ENABLED']:
         celery.init_app(app)
+    # cas.init_app(app)
     return None
 
 
