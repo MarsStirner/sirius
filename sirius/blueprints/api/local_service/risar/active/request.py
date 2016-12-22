@@ -14,25 +14,25 @@ from sirius.blueprints.monitor.exception import connect_entry
 from .connect import make_api_request, make_login
 
 
-# @connect_entry(login=make_login)
-# def request_by_url(method, url, data, session=None):
-#     parser = LocalAnswerParser()
-#     response = make_api_request(method, url, session, data)
-#     parser.check(response)
-#     return parser, response
-
-login_dt = None
-session = None
-@connect_entry
-def request_by_url(method, url, data):
-    global session, login_dt
+@connect_entry(login=make_login)
+def request_by_url(method, url, data, session=None):
     parser = LocalAnswerParser()
-    if not session or (datetime.today() - login_dt > timedelta(minutes=20)):
-        session = make_login()
-        login_dt = datetime.today()
     response = make_api_request(method, url, session, data)
     parser.check(response)
     return parser, response
+
+# login_dt = None
+# session = None
+# @connect_entry
+# def request_by_url(method, url, data):
+#     global session, login_dt
+#     parser = LocalAnswerParser()
+#     if not session or (datetime.today() - login_dt > timedelta(minutes=20)):
+#         session = make_login()
+#         login_dt = datetime.today()
+#     response = make_api_request(method, url, session, data)
+#     parser.check(response)
+#     return parser, response
 
 
 def request_by_req(req):

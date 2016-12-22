@@ -15,6 +15,7 @@ import logging
 
 import flask
 from requests import ConnectionError
+from sirius.app import app
 from sirius.extensions import db
 from six import reraise
 
@@ -273,8 +274,9 @@ def connect_entry(function=None, login=None):
     """
     Ловит ошибку на входе в модуль активных запросов
     """
-    sleep_timeout = 6  # sec
-    session_timeout = 20  # min
+    begin_sleep_timeout = app.config['CONNECT_SLEEP_TIMEOUT']  # sec
+    max_retry = app.config['CONNECT_MAX_RETRY']
+    session_timeout = app.config['CONNECT_SESSION_TIMEOUT']  # min
 
     def decorator(func):
         @functools.wraps(func)
@@ -282,7 +284,7 @@ def connect_entry(function=None, login=None):
             res = None
             retry = True
             retry_count = 0
-            max_retry = 5
+            sleep_timeout = begin_sleep_timeout
             while retry:
                 retry = False
                 retry_count += 1
@@ -310,7 +312,10 @@ def connect_entry(function=None, login=None):
                         # todo: stop celery workers (back rabbit msg)
                         pass
                     retry = True
+                    logger.info('Retry count = %s. Wait for %s seconds and then try again' % (retry_count, sleep_timeout))
                     sleep(sleep_timeout)
+                    if sleep_timeout < 10 * 60:  # min
+                        sleep_timeout *= 2
                 except (ZeepTransportError, SudsTransportError) as exc:
                     if retry_count == 1 and callable(login):  #and res.status_code == 403:
                         func._session = None

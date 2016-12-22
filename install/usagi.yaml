@@ -122,6 +122,9 @@ subsystems:
         session.data_dir: /tmp/session/data
         session.lock_dir: /tmp/session/lock
         session.key: sirius.session.id
+      CONNECT_SLEEP_TIMEOUT: 10  # sec
+      CONNECT_MAX_RETRY: 400
+      CONNECT_SESSION_TIMEOUT: 20 # min
 
       main_queues:
         risar_main: &CELERY_QUEUE_RISAR_MAIN risar_main_queue
