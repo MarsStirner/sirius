@@ -98,6 +98,15 @@ class ReferralTambovBuilder(Builder):
     ##################################################################
     ##  reform entities to remote
 
+    measure_type__type_id__map = {
+        'checkup': 8,
+        'healthcare': 21,
+        'social_preventiv': 3,
+        'lab_test': 25,
+        'func_test': 26,
+        'hospitalization': 2,
+    }
+
     def build_remote_entities(self, header_meta, pack_entity):
         """
         Вход в header_meta
@@ -145,11 +154,11 @@ class ReferralTambovBuilder(Builder):
             OperationCode.READ_MANY,
         )
 
-        typeId = srv_data = None
-        if measure_data.get('measure_type_code') == '0065':
-            typeId = 2
-        else:
-            prototype_id = SrvPrototypeMatch.get_prototype_id_by_mes_code(measure_data.get('measure_type_code'))
+        srv_data = None
+        prototype_id = SrvPrototypeMatch.get_prototype_id_by_mes_code(measure_data.get('measure_type_code'))
+        measure_type = SrvPrototypeMatch.get_measure_type(prototype_id)
+        typeId = self.measure_type__type_id__map[measure_type]
+        if measure_type != 'hospitalization':
             req = DataRequest()
             req.set_req_params(
                 url=srv_api_method['template_url'],
