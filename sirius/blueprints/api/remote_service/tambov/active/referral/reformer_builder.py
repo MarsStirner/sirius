@@ -280,6 +280,7 @@ class ReferralTambovBuilder(Builder):
                 'lpu_code': safe_traverse_attrs(rend_serv_data, 'orgId') or '',
                 'doctor_code': safe_traverse_attrs(rend_serv_data, 'resourceGroupId') or '',
                 'results': self.make_refs(srv_attachment_data),
+                'status': 'performed' if safe_traverse_attrs(rend_serv_data, 'isRendered') else 'assigned',
             }
 
         return entities
@@ -336,6 +337,7 @@ class ReferralTambovBuilder(Builder):
                 'checkup_date': encode(rend_serv_data['dateTo']),
                 'lpu_code': safe_traverse_attrs(rend_serv_data, 'orgId') or '',
                 'doctor_code': safe_traverse_attrs(rend_serv_data, 'resourceGroupId') or '',
+                'status': 'performed' if safe_traverse_attrs(rend_serv_data, 'isRendered') else 'assigned',
             }
 
         return entities
