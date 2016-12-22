@@ -126,6 +126,6 @@ class HospitalTambovBuilder(Builder):
                 'external_id': header_meta['remote_main_id'],
                 'date_in': encode(hospital_rec_data['admissionDate']) or Undefined,
                 'date_out': encode(hospital_rec_data['outcomeDate']) or Undefined,
-                # 'status': 'performed' if safe_traverse_attrs(rend_serv_data, 'isRendered') else 'assigned',
+                'status': 'performed',
             }
         return entities
