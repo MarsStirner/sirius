@@ -270,7 +270,7 @@ def beat_entry(function=None, self_pos=1):
     return decorator
 
 
-def connect_entry(function=None, login=None):
+def connect_entry(function=None, login=None, nowait=False):
     """
     Ловит ошибку на входе в модуль активных запросов
     """
@@ -290,14 +290,16 @@ def connect_entry(function=None, login=None):
                 retry_count += 1
                 try:
                     if callable(login):
-                        session, dtime = getattr(func, '_session', (None, None))
+                        # todo: переделать на явное хранение и передачу session
+                        im_func = getattr(func, 'im_func', func)
+                        session, dtime = getattr(im_func, '_session', (None, None))
                         if not session or (
                             (datetime.today() - dtime) > timedelta(minutes=session_timeout)
                         ):
                             session = login()
                         dtime = datetime.today()
                         # считаем, что сессия стареет с последнего доступа
-                        func._session = session, dtime
+                        im_func._session = session, dtime
                         kwargs['session'] = session
                     res = func(*args, **kwargs)
                 except (ConnectError, ConnectionError) as exc:
@@ -311,14 +313,17 @@ def connect_entry(function=None, login=None):
                     if retry_count > max_retry:
                         # todo: stop celery workers (back rabbit msg)
                         pass
-                    retry = True
-                    logger.info('Retry count = %s. Wait for %s seconds and then try again' % (retry_count, sleep_timeout))
-                    sleep(sleep_timeout)
-                    if sleep_timeout < 10 * 60:  # min
-                        sleep_timeout *= 2
+                    if nowait:
+                        reraise(Exception, exc, sys.exc_info()[2])
+                    else:
+                        retry = True
+                        logger.info('Retry count = %s. Wait for %s seconds and then try again' % (retry_count, sleep_timeout))
+                        sleep(sleep_timeout)
+                        if sleep_timeout < 10 * 60:  # min
+                            sleep_timeout *= 2
                 except (ZeepTransportError, SudsTransportError) as exc:
                     if retry_count == 1 and callable(login):  #and res.status_code == 403:
-                        func._session = None
+                        im_func._session = None
                         retry = True
             return res
         return wrapper

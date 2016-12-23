@@ -26,7 +26,7 @@ class TulaRESTClient(object):
 
     def make_api_request(self, method, url, session,
                          any_data=None, url_args=None, req_mode=None):
-        authent_token, authoriz_token = session
+        # authent_token, authoriz_token = session
         data_type = 'json'
         if req_mode == RequestModeCode.MULTIPART_FILE:
             data_type = 'files'

@@ -46,15 +46,17 @@ class Transfer(object):
 
     def rest_protocol(self, req, req_meta):
         client = self.get_rest_client()
-        # req_result = connect_entry(
-        #     function=client.make_api_request,
-        #     login=client.make_login
-        # )(req.method, req.url, req.data)
-        session = None, None
-        req_result = client.make_api_request(
-            req.method, req.url, session,
-            req.data, req_mode=req.req_mode,
-        )
+        req_result = connect_entry(
+            function=client.make_api_request,
+            # login=client.make_login,
+            # nowait=req_meta['immediate'],
+            # nowait=req_meta['header'].is_send_event,
+        )(req.method, req.url, req.data, req_mode=req.req_mode)
+        # session = None, None
+        # req_result = client.make_api_request(
+        #     req.method, req.url, session,
+        #     req.data, req_mode=req.req_mode,
+        # )
         return req_result
 
     @connect_entry
