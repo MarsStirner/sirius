@@ -108,7 +108,7 @@ class LocalAnswerParser(object):
             data = response.json()
             res = data['result']
         except ValueError:
-            res = response.content
+            res = response.text
         return res
 
     def check(self, response):

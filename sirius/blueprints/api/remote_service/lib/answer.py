@@ -19,7 +19,7 @@ class RemoteAnswer(object):
 
     def process(self, result, req_meta=None, req_data=None):
         # meta['dst_entity_code']
-        logger.debug('request: %s\n response: %s' % (str(req_data), ': '.join((str(result), result.text[:300]))))
+        logger.debug('request: %s\n response: %s' % (str(req_data), ': '.join((str(result), result.text[:600]))))
         if req_meta['dst_request_mode'] == RequestModeCode.JSON_DATA:
             self.check_json(result)
             if req_meta['dst_operation_code'] in (OperationCode.READ_MANY, OperationCode.READ_ONE):
@@ -31,7 +31,7 @@ class RemoteAnswer(object):
         elif req_meta['dst_request_mode'] == RequestModeCode.XML_DATA:
             res = self.xml_to_dict(result)
         else:
-            res = result.content
+            res = result.text
         return res
 
     def xml_to_dict(self, data):

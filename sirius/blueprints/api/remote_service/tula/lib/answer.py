@@ -23,7 +23,7 @@ class TulaAnswer(RemoteAnswer):
         return super(TulaAnswer, self).process(result, req_meta, req_data)
 
     def xml_to_dict(self, result):
-        e = ET.XML(result.content)
+        e = ET.XML(result.text)
         return e
 
     def get_params(self, entity_code, response, param_name):
@@ -47,7 +47,7 @@ class TulaAnswer(RemoteAnswer):
             data = response.json()
             res = data['result']
         except ValueError:
-            res = response.content
+            res = response.text
         return res
 
     def check_json(self, response):
