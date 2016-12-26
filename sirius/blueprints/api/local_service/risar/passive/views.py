@@ -113,6 +113,7 @@ def api_events_binded():
             RisarEvents.MAKE_APPOINTMENT,
             RisarEvents.SAVE_CHECKUP,
             RisarEvents.CLOSE_CARD,
+            RisarEvents.CREATE_REFERRAL,
         ],
         RegionCode.TAMBOV: [
             RisarEvents.SAVE_CHECKUP,

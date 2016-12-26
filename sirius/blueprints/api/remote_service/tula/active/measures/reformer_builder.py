@@ -32,8 +32,12 @@ class MeasureTulaBuilder(Builder):
     def build_local_entity_packages(self, msg):
         package = EntitiesPackage(self, SystemCode.LOCAL)
         msg_meta = msg.get_relative_meta()
-        msg_meta['src_operation_code'] = self.get_operation_code_by_method(msg_meta['src_method'])
-        self.set_measures(msg.get_data(), package, msg_meta)
+        if not msg_meta['src_operation_code']:
+            msg_meta['src_operation_code'] = self.get_operation_code_by_method(msg_meta['src_method'])
+        if msg_meta['src_operation_code'] == OperationCode.READ_MANY:
+            self.set_measures(msg.get_data(), package, msg_meta)
+        elif msg_meta['src_operation_code'] == OperationCode.READ_ONE:
+            self.set_measures([msg.get_data()], package, msg_meta)
         return package
 
     def set_measures(self, measures, package, msg_meta):
