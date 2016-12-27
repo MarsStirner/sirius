@@ -53,6 +53,9 @@ class HospitalTambovBuilder(Builder):
         package = EntitiesPackage(self, self.remote_sys_code)
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
+            # пока без удаления
+            # package.enable_diff_check()
+            # package.set_diff_key_range()
             hospital_rec_ids = self.get_hospital_rec_ids(reformed_req)
             self.set_hospitals(hospital_rec_ids, package, req_meta)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:

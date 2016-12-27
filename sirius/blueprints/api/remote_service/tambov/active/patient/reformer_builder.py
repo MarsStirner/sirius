@@ -41,13 +41,16 @@ class PatientTambovBuilder(Builder):
         package = EntitiesPackage(self, self.remote_sys_code)
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
+            # проблема с определением ключа выборки
+            # package.enable_diff_check()
+            # package.set_diff_key_range()
             api_method = self.reformer.get_api_method(
                 self.remote_sys_code,
                 TambovEntityCode.SMART_PATIENT,
                 OperationCode.READ_ONE,
             )
             all_patients = self.get_all_patients(reformed_req)
-            changed_patients = self.get_changed_patients(reformed_req)
+            changed_patients = self.get_changed_patients(reformed_req, package)
             # changed_patients = ['1054287']  # for test
             self.set_patient_cards(changed_patients, package, req_meta)
             self.inject_all_patients(package, all_patients, api_method)
@@ -70,13 +73,15 @@ class PatientTambovBuilder(Builder):
                 break
         return patients_uids
 
-    def get_changed_patients(self, reformed_req):
+    def get_changed_patients(self, reformed_req, package):
         req = reformed_req.copy()
         patient_uids = []
         res = None
         page = 1
         # todo: брать из даты начала работы планировщика по сущности
         modified_since = date(2016, 11, 1)
+        # package.set_diff_key_range((modified_since.isoformat(),
+        #                             date.today().isoformat()))
         while res or page == 1:
             req.data_update({
                 'page': page,
@@ -117,6 +122,7 @@ class PatientTambovBuilder(Builder):
                 main_id_name='patientUid',
                 main_id=patient_uid,
                 parents_params=req_meta['dst_parents_params'],
+                # diff_key=,
             )
             package.add_addition(
                 parent_item=main_item,

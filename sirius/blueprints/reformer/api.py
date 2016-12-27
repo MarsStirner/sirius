@@ -840,7 +840,7 @@ class EntitiesPackage(IStreamMeta):
     builder = None
     root_item = None
     _is_diff_check = False
-    _is_delete_check = False
+    _is_delete_check = True
     _diff_key_range = None
 
     def __init__(self, builder, system_code):
@@ -909,7 +909,7 @@ class EntitiesPackage(IStreamMeta):
     def get_entities(self, entity_code):
         return self.pack_entities[entity_code]
 
-    def add_main(self, entity_code, main_id_name, main_id, parents_params):
+    def add_main(self, entity_code, main_id_name, main_id, parents_params, diff_key=None):
         # реализовано только на сбор пакета в remote soap
         api_method = self.builder.reformer.get_api_method(
             self.system_code,
@@ -942,10 +942,11 @@ class EntitiesPackage(IStreamMeta):
             main_id=main_id,
             parents_params=parents_params,
             data=data,
+            diff_key=diff_key,
         )
         return item, data
 
-    def add_child(self, parent_item, entity_code, main_id_name, main_id):
+    def add_child(self, parent_item, entity_code, main_id_name, main_id, diff_key=None):
         # реализовано только на сбор пакета в remote soap
         api_method = self.builder.reformer.get_api_method(
             self.system_code,
@@ -978,10 +979,11 @@ class EntitiesPackage(IStreamMeta):
             method=req.method,
             main_id=main_id,
             data=data,
+            diff_key=diff_key,
         )
         return item, data
 
-    def add_addition(self, parent_item, entity_code, main_id_name, main_id):
+    def add_addition(self, parent_item, entity_code, main_id_name, main_id, diff_key=None):
         # реализовано только на сбор пакета в remote soap
         if not main_id:
             return None
@@ -1015,6 +1017,7 @@ class EntitiesPackage(IStreamMeta):
             entity_code=entity_code,
             main_id=main_id,
             data=data,
+            diff_key=diff_key,
         )
         return data
 

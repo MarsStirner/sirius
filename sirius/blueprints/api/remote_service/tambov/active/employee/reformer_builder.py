@@ -49,11 +49,13 @@ class EmployeePositionTambovBuilder(Builder):
 
     def build_remote_entity_packages(self, reformed_req):
         package = EntitiesPackage(self, self.remote_sys_code)
-        package.enable_diff_check()
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
             employees_ids = self.get_employees_ids(reformed_req)
-            self.set_employees_positions(employees_ids, package, req_meta)
+            package.enable_diff_check()
+            diff_key = req_meta['dst_parents_params']['clinic']['id']
+            package.set_diff_key_range((diff_key, diff_key))
+            self.set_employees_positions(employees_ids, package, req_meta, diff_key)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
             self.set_employees_positions([req_meta['dst_id']], package, req_meta)
         else:
@@ -67,7 +69,7 @@ class EmployeePositionTambovBuilder(Builder):
         res = self.transfer__send_request(req)
         return res
 
-    def set_employees_positions(self, employees_ids, package, req_meta):
+    def set_employees_positions(self, employees_ids, package, req_meta, diff_key=None):
         """
         getEmployees(clinic=getPlaces.clinic)  # лпу из мр
         getEmployeePositions(employee=getEmployees.employee)
@@ -165,6 +167,7 @@ class EmployeePositionTambovBuilder(Builder):
                     main_id=empl_position_id,
                     parents_params=req_meta['dst_parents_params'],
                     data=individual_data,  # в эмплой позишн кладем индивид, т.к. первый не нужен в диффах
+                    diff_key=diff_key,
                 )
 
                 package.add_addition_pack_entity(
@@ -173,6 +176,7 @@ class EmployeePositionTambovBuilder(Builder):
                     entity_code=TambovEntityCode.POSITION,
                     main_id=employeePosition_data['position'],
                     data=position_data,
+                    diff_key=diff_key,
                 )
 
     def valid_employee_position(self, employeePosition_data):

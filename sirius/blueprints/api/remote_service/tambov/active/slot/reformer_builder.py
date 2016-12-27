@@ -53,7 +53,8 @@ class SlotTambovBuilder(Builder):
         package = EntitiesPackage(self, self.remote_sys_code)
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
-            times = self.get_times(reformed_req)
+            package.enable_diff_check()
+            times = self.get_times(reformed_req, package)
             for time_data in times:
                 self.set_times(time_data, package, req_meta)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
@@ -62,16 +63,19 @@ class SlotTambovBuilder(Builder):
             raise InternalError('Unexpected dst_operation_code')
         return package
 
-    def get_times(self, reformed_req):
+    def get_times(self, reformed_req, package):
         res = []
         today = date.today()
-        for inc in range(1):
-            time_data = today + timedelta(inc)
+        range_val = 1
+        max_date = today + timedelta(range_val)
+        package.set_diff_key_range((today.isoformat(), max_date.isoformat()))
+        for inc in range(range_val):
+            time_data_date = today + timedelta(inc)
             req = reformed_req.copy()
             for param_name, param_data in req.meta['dst_parents_params'].items():
                 req.data_update({
                     param_name: param_data['id'],
-                    'date': time_data,
+                    'date': time_data_date,
                 })
             res.append(self.transfer__send_request(req))
         return res
@@ -84,9 +88,10 @@ class SlotTambovBuilder(Builder):
             entity_code=TambovEntityCode.TIME,
             method=req_meta.method,
             main_param_name='location',
-            main_id=req_meta['dst_parents_params']['id'],
+            main_id=req_meta['dst_parents_params']['location']['id'],
             parents_params=req_meta['dst_parents_params'],
             data=time_data,
+            diff_key=time_data['date'].isoformat(),
         )
 
     ##################################################################

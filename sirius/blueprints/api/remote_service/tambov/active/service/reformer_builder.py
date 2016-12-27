@@ -61,6 +61,9 @@ class ServiceTambovBuilder(Builder):
         package = EntitiesPackage(self, self.remote_sys_code)
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
+            # пока без удаления
+            # package.enable_diff_check()
+            # package.set_diff_key_range()
             services_ids = self.get_services_ids(reformed_req)
             self.set_services(services_ids, package, req_meta)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:

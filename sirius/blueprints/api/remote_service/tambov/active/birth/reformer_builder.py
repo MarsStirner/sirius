@@ -52,11 +52,15 @@ class BirthTambovBuilder(Builder):
 
     def build_remote_entity_packages(self, reformed_req):
         package = EntitiesPackage(self, self.remote_sys_code)
+        # пока без удаления
+        # package.enable_diff_check()
         req_meta = reformed_req.meta
 
         for param_name, param_data in reformed_req.meta['dst_parents_params'].items():
             reformed_req.data_update({param_name: param_data['id']})
         birth_data = self.transfer__send_request(reformed_req)
+        diff_key = str(birth_data['PatientId'])
+        package.set_diff_key_range((diff_key, diff_key))
         main_item = package.add_main_pack_entity(
             entity_code=TambovEntityCode.BIRTH,
             method=reformed_req.method,
@@ -64,6 +68,7 @@ class BirthTambovBuilder(Builder):
             main_id=birth_data['PatientId'],
             parents_params=req_meta['dst_parents_params'],
             data=birth_data,
+            diff_key=diff_key,
         )
         return package
 
