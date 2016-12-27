@@ -25,7 +25,7 @@ from sirius.models.operation import OperationCode
 encode = lambda x: x and WebMisJsonEncoder().default(x)
 
 
-class LocationTambovBuilder(Builder):
+class EmployeePositionTambovBuilder(Builder):
     remote_sys_code = SystemCode.TAMBOV
 
     ##################################################################
@@ -49,60 +49,52 @@ class LocationTambovBuilder(Builder):
 
     def build_remote_entity_packages(self, reformed_req):
         package = EntitiesPackage(self, self.remote_sys_code)
+        package.enable_diff_check()
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
-            locations_ids = self.get_locations_ids(reformed_req)
-            self.set_locations(locations_ids, package, req_meta)
+            employees_ids = self.get_employees_ids(reformed_req)
+            self.set_employees_positions(employees_ids, package, req_meta)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
-            self.set_locations([req_meta['dst_id']], package, req_meta)
+            self.set_employees_positions([req_meta['dst_id']], package, req_meta)
         else:
             raise InternalError('Unexpected dst_operation_code')
         return package
 
-    def get_locations_ids(self, reformed_req):
+    def get_employees_ids(self, reformed_req):
         req = reformed_req
         for param_name, param_data in req.meta['dst_parents_params'].items():
             req.data_update({param_name: param_data['id']})
         res = self.transfer__send_request(req)
         return res
 
-    def set_locations(self, locations_ids, package, req_meta):
+    def set_employees_positions(self, employees_ids, package, req_meta):
         """
-        getLocations(clinic=getPlaces.clinic)
-        getLocation(location=getLocations.location)
-        getEmployeePosition(id=getLocation.employeePosition)
+        getEmployees(clinic=getPlaces.clinic)  # лпу из мр
+        getEmployeePositions(employee=getEmployees.employee)
+        getEmployeePosition(id=getEmployeePositions.employeePosition)
         getPosition(id=getEmployeePosition.position)
         getEmployee(id=getEmployeePosition.employee)
         getIndividual(getIndividualRequest=getEmployee.individual)
         """
-        employee_pos_ids = set()
 
-        for location_id in locations_ids:
+        for employee_id in employees_ids:
             api_method = self.reformer.get_api_method(
                 self.remote_sys_code,
-                TambovEntityCode.LOCATION,
-                OperationCode.READ_ONE,
+                TambovEntityCode.EMPLOYEE_POSITION,
+                OperationCode.READ_MANY,
             )
-            loc_req = DataRequest()
-            loc_req.set_req_params(
+            empl_pos_req = DataRequest()
+            empl_pos_req.set_req_params(
                 url=api_method['template_url'],
                 method=api_method['method'],
                 protocol=ProtocolCode.SOAP,
-                data={'location': location_id},
+                data={'employee': employee_id},
             )
-            try:
-                location_data = self.transfer__send_request(loc_req)
-            except LoggedException:
-                continue
+            empl_positions_data = self.transfer__send_request(empl_pos_req)
 
-            if not self.valid_location(location_data):
-                continue
-
-            for employeePosition_item in safe_traverse_attrs(
-                location_data, 'employeePositionList', 'EmployeePosition'
+            for empl_position_id in safe_traverse_attrs(
+                empl_positions_data, 'EmployeePosition'
             ) or []:
-                if not self.valid_employee_position(employeePosition_item):
-                    continue
 
                 api_method = self.reformer.get_api_method(
                     self.remote_sys_code,
@@ -114,9 +106,11 @@ class LocationTambovBuilder(Builder):
                     url=api_method['template_url'],
                     method=api_method['method'],
                     protocol=ProtocolCode.SOAP,
-                    data={'id': employeePosition_item['employeePosition']},
+                    data={'id': empl_position_id},
                 )
                 employeePosition_data = self.transfer__send_request(emp_pos_req)
+                if not self.valid_employee_position(employeePosition_data):
+                    continue
 
                 api_method = self.reformer.get_api_method(
                     self.remote_sys_code,
@@ -133,11 +127,6 @@ class LocationTambovBuilder(Builder):
                 position_data = self.transfer__send_request(emp_spec_req)
                 if not self.valid_position(position_data):
                     continue
-
-                if employeePosition_item['employeePosition'] in employee_pos_ids:
-                    # врача-должность уже добавляли
-                    continue
-                employee_pos_ids.add(employeePosition_item['employeePosition'])
 
                 api_method = self.reformer.get_api_method(
                     self.remote_sys_code,
@@ -156,40 +145,6 @@ class LocationTambovBuilder(Builder):
                 #####################################
                 # add
 
-                # location_item = package.add_main_pack_entity(
-                #     entity_code=TambovEntityCode.LOCATION,
-                #     method=loc_req.method,
-                #     main_param_name='location',
-                #     main_id=location_id,
-                #     parents_params=req_meta['dst_parents_params'],
-                #     data=location_data,
-                # )
-                # package.root_item = location_item
-                #
-                # # empl_pos_item = package.add_main_pack_entity(
-                # #     entity_code=TambovEntityCode.EMPLOYEE_POSITION,
-                # #     method=loc_req.method,
-                # #     main_param_name='employeePosition',
-                # #     main_id=employeePosition_item['employeePosition'],
-                # #     parents_params=req_meta['dst_parents_params'],
-                # #     data=employeePosition_data,
-                # # )
-                # # package.root_item = empl_pos_item
-                # empl_pos_item = package.add_addition_pack_entity(
-                #     root_item=package.root_item,
-                #     parent_item=location_item,
-                #     entity_code=TambovEntityCode.EMPLOYEE_POSITION,
-                #     main_id=employeePosition_item['employeePosition'],
-                #     data=employeePosition_data,
-                # )
-                #
-                # individual_data = package.add_addition(
-                #     parent_item=location_item,
-                #     entity_code=TambovEntityCode.INDIVIDUAL,
-                #     main_id_name=None,
-                #     main_id=employee_data['individual'],
-                # )
-
                 api_method = self.reformer.get_api_method(
                     self.remote_sys_code,
                     TambovEntityCode.INDIVIDUAL,
@@ -204,12 +159,12 @@ class LocationTambovBuilder(Builder):
                 )
                 individual_data = self.transfer__send_request(individual_req)
                 location_item = package.add_main_pack_entity(
-                    entity_code=TambovEntityCode.LOCATION,
-                    method=loc_req.method,
-                    main_param_name='location_employeePosition',
-                    main_id='_'.join((employeePosition_item['employeePosition'], location_id)),
+                    entity_code=TambovEntityCode.EMPLOYEE_POSITION,
+                    method=empl_pos_req.method,
+                    main_param_name='employeePosition',
+                    main_id=empl_position_id,
                     parents_params=req_meta['dst_parents_params'],
-                    data=individual_data,  # в локейшн кладем индивид, т.к. первый не нужен в диффах
+                    data=individual_data,  # в эмплой позишн кладем индивид, т.к. первый не нужен в диффах
                 )
 
                 package.add_addition_pack_entity(
@@ -220,20 +175,10 @@ class LocationTambovBuilder(Builder):
                     data=position_data,
                 )
 
-    def valid_location(self, location_data):
+    def valid_employee_position(self, employeePosition_data):
         today = datetime.today().date()
-        if not location_data['source']:
-            return False
-        # if not ('42' in [x['profile'] for x in safe_traverse_attrs(location_data, 'specializationList', 'Specialization') or ()]):
-        #     return False
-        if not (not location_data['endDate'] or location_data['endDate'] > today):
-            return False
-        return True
-
-    def valid_employee_position(self, employeePosition_item):
-        today = datetime.today().date()
-        if not (not employeePosition_item['endDate'] or
-                employeePosition_item['endDate'] > today):
+        if not (not employeePosition_data['endDate'] or
+                employeePosition_data['endDate'] > today):
             return False
         return True
 
@@ -260,9 +205,7 @@ class LocationTambovBuilder(Builder):
         }
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
 
-        location_addition = pack_entity['addition']  # в локейшн клали индивид, т.к. первый не нужен в диффах
-        # empl_position = location_addition[TambovEntityCode.EMPLOYEE_POSITION][0]
-        src_id_prefix, src_id = pack_entity['main_id'].split('_')
+        empl_pos_addition = pack_entity['addition']  # в эмплой позишн клали индивид, т.к. первый не нужен в диффах
 
         entities = RequestEntities()
         doctor_item = entities.set_main_entity(
@@ -272,20 +215,19 @@ class LocationTambovBuilder(Builder):
             src_operation_code=src_operation_code,
             src_entity_code=src_entity_code,
             src_main_id_name=header_meta['remote_main_param_name'],
-            src_id_prefix=src_id_prefix,
-            src_id=src_id,
+            src_id=pack_entity['main_id'],
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
             self.build_local_doctor_body(doctor_item, pack_entity,
-                                         location_addition, header_meta, src_id)
+                                         empl_pos_addition, header_meta, pack_entity['main_id'])
 
         return entities
 
     def build_local_doctor_body(self, doctor_item, pack_entity,
-                                location_addition, header_meta, src_id):
+                                empl_pos_addition, header_meta, src_id):
         # individual = location_addition[TambovEntityCode.INDIVIDUAL][0]
-        position = location_addition[TambovEntityCode.POSITION][0]
+        position = empl_pos_addition[TambovEntityCode.POSITION][0]
         position_data = position['data']
         individual_data = pack_entity['data']
         doctor_item['body'] = {

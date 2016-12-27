@@ -13,8 +13,8 @@ from sirius.blueprints.api.remote_service.tambov.active.clinic.reformer_builder 
     ClinicTambovBuilder
 from sirius.blueprints.api.remote_service.tambov.active.hospital.reformer_builder import \
     HospitalTambovBuilder
-from sirius.blueprints.api.remote_service.tambov.active.location.reformer_builder import \
-    LocationTambovBuilder
+from sirius.blueprints.api.remote_service.tambov.active.employee.reformer_builder import \
+    EmployeePositionTambovBuilder
 from sirius.blueprints.reformer.models.method import ServiceMethod
 from ..active.case.reformer_builder import CaseTambovBuilder
 from ..active.patient.reformer_builder import PatientTambovBuilder
@@ -43,8 +43,8 @@ class TambovReformer(Reformer):
             res = ReferralTambovBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TambovEntityCode.CLINIC:
             res = ClinicTambovBuilder(self).build_local_entities(header_meta, data)
-        elif remote_entity_code == TambovEntityCode.LOCATION:
-            res = LocationTambovBuilder(self).build_local_entities(header_meta, data)
+        elif remote_entity_code == TambovEntityCode.EMPLOYEE_POSITION:
+            res = EmployeePositionTambovBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TambovEntityCode.HOSPITAL_REC:
             res = HospitalTambovBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TambovEntityCode.BIRTH:
@@ -84,8 +84,8 @@ class TambovReformer(Reformer):
             data_req = ClinicTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.CLINIC)
         elif local_entity_code == RisarEntityCode.MEASURE_HOSPITALIZATION or remote_entity_code == TambovEntityCode.HOSPITAL_REC:
             data_req = HospitalTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.HOSPITAL_REC)
-        elif local_entity_code == RisarEntityCode.DOCTOR or remote_entity_code == TambovEntityCode.LOCATION:
-            data_req = LocationTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.LOCATION)
+        elif local_entity_code == RisarEntityCode.DOCTOR or remote_entity_code == TambovEntityCode.EMPLOYEE_POSITION:
+            data_req = EmployeePositionTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.EMPLOYEE_POSITION)
         elif local_entity_code == RisarEntityCode.CHILDBIRTH or remote_entity_code == TambovEntityCode.BIRTH:
             data_req = BirthTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.BIRTH)
         else:
@@ -142,8 +142,8 @@ class TambovReformer(Reformer):
             res = ClinicTambovBuilder(self).build_remote_entity_packages(req)
         elif dst_entity == TambovEntityCode.HOSPITAL_REC:
             res = HospitalTambovBuilder(self).build_remote_entity_packages(req)
-        elif dst_entity == TambovEntityCode.LOCATION:
-            res = LocationTambovBuilder(self).build_remote_entity_packages(req)
+        elif dst_entity == TambovEntityCode.EMPLOYEE_POSITION:
+            res = EmployeePositionTambovBuilder(self).build_remote_entity_packages(req)
         elif dst_entity == TambovEntityCode.BIRTH:
             res = BirthTambovBuilder(self).build_remote_entity_packages(req)
         else:

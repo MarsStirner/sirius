@@ -366,7 +366,7 @@ class ReferralTambovBuilder(Builder):
     #     if location_id:
     #         res = self.reformer.get_local_id_by_remote(
     #             RisarEntityCode.DOCTOR,
-    #             TambovEntityCode.LOCATION,
+    #             TambovEntityCode.EMPLOYEE_POSITION,
     #             location_id,
     #         )
     #     return res
