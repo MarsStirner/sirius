@@ -103,10 +103,10 @@ class Difference(object):
                     'root_external_id': (package_record.get('root_parent') or {}).get('main_id', main_id),
                     'external_id': main_id,
                     'key': package_record.get('diff_key'),
-                    # 'content': dumps(self.serialize_object(package_record['data']), cls=WebMisJsonEncoder),
-                    # 'content': dumps(self.recursive_asdict(package_record['data']), cls=WebMisJsonEncoder),
-                    'content': dumps(xmltodict.parse(ET.tostring(package_record['data'], encoding='utf-8', method='xml')), encoding=WebMisJsonEncoder),
-                    # 'content': self.json_dumper(package_record['data']),
+                    'content': dumps(self.serialize_object(package_record['data']), cls=WebMisJsonEncoder),  # zeep
+                    # 'content': dumps(self.recursive_asdict(package_record['data']), cls=WebMisJsonEncoder),  # suds
+                    # 'content': dumps(xmltodict.parse(ET.tostring(package_record['data'], encoding='utf-8', method='xml')), encoding=WebMisJsonEncoder),  # ET
+                    # 'content': self.json_dumper(package_record['data']),  # json
                     'operation_code': OperationCode.READ_MANY,
                     'level': level,
                 }
