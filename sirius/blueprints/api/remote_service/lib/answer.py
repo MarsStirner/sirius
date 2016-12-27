@@ -19,7 +19,7 @@ class RemoteAnswer(object):
 
     def process(self, result, req_meta=None, req_data=None):
         # meta['dst_entity_code']
-        logger.debug('request: %s\n response: %s' % (str(req_data), ': '.join((str(result), result.text[:600]))))
+        logger.debug('request: %s\n response: %s' % (str(req_data), ': '.join((str(result), result.text))))
         if req_meta['dst_request_mode'] == RequestModeCode.JSON_DATA:
             self.check_json(result)
             if req_meta['dst_operation_code'] in (OperationCode.READ_MANY, OperationCode.READ_ONE):
@@ -30,6 +30,8 @@ class RemoteAnswer(object):
                 res = True
         elif req_meta['dst_request_mode'] == RequestModeCode.XML_DATA:
             res = self.xml_to_dict(result)
+            if req_meta['dst_operation_code'] in (OperationCode.ADD, OperationCode.CHANGE, OperationCode.DELETE):
+                res = self.get_params_ext(req_meta, res)
         else:
             res = result.text
         return res
@@ -47,3 +49,6 @@ class RemoteAnswer(object):
 
     def get_params(self, entity_code, res, id_url_param_name):
         return {'main_id': res}
+
+    def get_params_ext(self, req_meta, result):
+        return result

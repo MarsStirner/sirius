@@ -93,63 +93,79 @@ class ScheduleTicketTulaBuilder(Builder):
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
 
         entities = RequestEntities()
-        # main_item = entities.set_main_entity(
-        #     dst_entity_code=TulaEntityCode.SCHEDULE_TICKET,
-        #     dst_parents_params=header_meta['remote_parents_params'],
-        #     dst_main_id_name='schedule_ticket_id',
-        #     src_operation_code=src_operation_code,
-        #     src_entity_code=src_entity_code,
-        #     src_main_id_name=header_meta['local_main_param_name'],
-        #     src_id=header_meta['local_main_id'],
-        #     level_count=1,
-        #     dst_request_mode=RequestModeCode.XML_DATA,
-        # )
-        # if src_operation_code != OperationCode.DELETE:
-        schedule_id = self.reformer.get_remote_id_by_local(
-            TulaEntityCode.SCHEDULE,
-            RisarEntityCode.SCHEDULE,
-            schedule_ticket_data['schedule_id'],
+        main_item = entities.set_main_entity(
+            dst_entity_code=TulaEntityCode.SCHEDULE_TICKET,
+            dst_parents_params=header_meta['remote_parents_params'],
+            dst_main_id_name='schedule_ticket_id',
+            src_operation_code=src_operation_code,
+            src_entity_code=src_entity_code,
+            src_main_id_name=header_meta['local_main_param_name'],
+            src_id=header_meta['local_main_id'],
+            level_count=1,
+            dst_request_mode=RequestModeCode.XML_DATA,
         )
         remote_pp = header_meta['remote_parents_params']
-        # filial_code = self.reformer.get_prefix_by_remote_id(
-        #     RisarEntityCode.DOCTOR,
-        #     TulaEntityCode.DOCTOR,
-        #     remote_pp['doctor']['id'],
-        # )
         filial_code = self.get_filial_code(
             remote_pp['doctor']['id'],
             schedule_ticket_data['date'],
         )
-        sched_reserve_req_data = self.get_sch_reserve_req_data(
-            filial_code,
-            remote_pp['patient']['id'],
-            remote_pp['doctor']['id'],
-            schedule_ticket_data['date'],
-            schedule_id,
-            schedule_ticket_data['schedule_ticket_id'],
-            schedule_ticket_data['time_begin'],
-            schedule_ticket_data['time_end'],
-        )
-
-        sched_reserve_req = DataRequest()
-        sched_reserve_req.set_meta(
-            dst_system_code=self.remote_sys_code,
-            dst_entity_code=TulaEntityCode.SCHEDULE_TICKET,
-            dst_operation_code=OperationCode.ADD,
-            dst_id=None,
-            dst_parents_params={},
-        )
-        sched_reserve_req.set_req_mode(RequestModeCode.XML_DATA)
-        self.reformer.set_request_service(sched_reserve_req)
-        sched_reserve_req.req_data['body'] = sched_reserve_req_data
-        req_result = self.transfer__send_request(sched_reserve_req)
-        find_prefix = './/{http://sdsys.ru/}'
-        res = req_result.findtext(find_prefix + 'SPRESULT')
-        if res != '1':
-            raise ApiException(
-                200, 'Reject reserve ticket %s' % schedule_ticket_data['schedule_ticket_id'],
-                reject=1,
+        if src_operation_code != OperationCode.DELETE:
+            schedule_id = self.reformer.get_remote_id_by_local(
+                TulaEntityCode.SCHEDULE,
+                RisarEntityCode.SCHEDULE,
+                schedule_ticket_data['schedule_id'],
             )
+            sched_reserve_req_data = self.get_sch_reserve_req_data(
+                filial_code,
+                remote_pp['patient']['id'],
+                remote_pp['doctor']['id'],
+                schedule_ticket_data['date'],
+                schedule_id,
+                schedule_ticket_data['schedule_ticket_id'],
+                schedule_ticket_data['time_begin'],
+                schedule_ticket_data['time_end'],
+            )
+            main_item['body'] = sched_reserve_req_data
+        else:
+            schedule_ticket_id = self.reformer.get_remote_id_by_local(
+                TulaEntityCode.SCHEDULE_TICKET,
+                RisarEntityCode.SCHEDULE_TICKET,
+                schedule_ticket_data['schedule_ticket_id'],
+            )
+            sched_remove_req_data = self.get_sch_remove_req_data(
+                filial_code,
+                remote_pp['patient']['id'],
+                schedule_ticket_id,
+            )
+            main_item['body'] = sched_remove_req_data
+
+        # sched_reserve_req = DataRequest()
+        # sched_reserve_req.set_meta(
+        #     dst_system_code=self.remote_sys_code,
+        #     dst_entity_code=TulaEntityCode.SCHEDULE_TICKET,
+        #     dst_operation_code=OperationCode.ADD,
+        #     dst_id=None,
+        #     dst_parents_params={},
+        # )
+        # sched_reserve_req.set_req_mode(RequestModeCode.XML_DATA)
+        # self.reformer.set_request_service(sched_reserve_req)
+        # sched_reserve_req.req_data['body'] = sched_req_data
+        # req_result = self.transfer__send_request(sched_reserve_req)
+        # find_prefix = './/{http://sdsys.ru/}'
+        # res = req_result.findtext(find_prefix + 'SPRESULT')
+        # if res != '1':
+        #     res_comment = req_result.findtext(find_prefix + 'SPCOMMENT') or ''
+        #     if src_operation_code != OperationCode.DELETE:
+        #         op_name = 'reserve'
+        #     else:
+        #         op_name = 'remove'
+        #     raise ApiException(
+        #         200, 'Reject %s ticket %s. Result code = %s comment: %s' % (
+        #             op_name, schedule_ticket_data['schedule_ticket_id'],
+        #             res, res_comment
+        #         ),
+        #         reject=1,
+        #     )
 
         return entities
 
@@ -201,6 +217,36 @@ class ScheduleTicketTulaBuilder(Builder):
         )
         return res
 
+    def get_sch_remove_req_data(
+        self, filial_code, p_code, schedident
+    ):
+        # todo: переделать на сборку на xsd
+        res = """
+<WEB_SCHEDULE_REC_REMOVE xmlns="http://sdsys.ru/">
+    <MSH>
+        <MSH.7>
+            <TS.1>20110302184008</TS.1>
+        </MSH.7>
+        <MSH.9>
+            <MSG.1>WEB</MSG.1>
+            <MSG.2>SCHEDULE_REC_REMOVE</MSG.2>
+        </MSH.9>
+        <MSH.10>74C0ACA47AFE4CED2B838996B0DF5821</MSH.10>
+        <MSH.18>UTF-8</MSH.18>
+        <MSH.99>{FILIAL_CODE}</MSH.99>
+    </MSH>
+    <SCHEDULE_REC_REMOVE_IN>
+        <SCHEDID>{SCHEDID}</SCHEDID>
+        <PCODE>{PCODE}</PCODE>
+    </SCHEDULE_REC_REMOVE_IN>
+</WEB_SCHEDULE_REC_REMOVE>
+        """.format(
+            FILIAL_CODE=filial_code,
+            PCODE=p_code,
+            SCHEDID=schedident,
+        )
+        return res
+
     def get_doctor_req_data(
         self, d_code, bdate, fdate
     ):
@@ -241,7 +287,7 @@ class ScheduleTicketTulaBuilder(Builder):
         sched_reserve_req = DataRequest()
         sched_reserve_req.set_meta(
             dst_system_code=self.remote_sys_code,
-            dst_entity_code=TulaEntityCode.SCHEDULE_TICKET,
+            dst_entity_code=TulaEntityCode.SCHEDULE,
             dst_operation_code=OperationCode.ADD,
             dst_id=None,
             dst_parents_params={},

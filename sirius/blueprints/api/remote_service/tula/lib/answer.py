@@ -13,6 +13,8 @@ from sirius.blueprints.api.remote_service.tambov.active.connect import \
     RequestModeCode
 from sirius.blueprints.api.remote_service.tula.entities import TulaEntityCode
 from sirius.blueprints.monitor.exception import ExternalError
+from sirius.lib.apiutils import ApiException
+from sirius.models.operation import OperationCode
 
 
 class TulaAnswer(RemoteAnswer):
@@ -25,6 +27,38 @@ class TulaAnswer(RemoteAnswer):
     def xml_to_dict(self, result):
         e = ET.XML(result.text)
         return e
+
+    def get_params_ext(self, req_meta, req_result):
+        entity_code = req_meta['dst_entity_code']
+        dst_operation_code = req_meta['dst_operation_code']
+        param_name = req_meta['dst_id_url_param_name']
+        if entity_code == TulaEntityCode.SCHEDULE_TICKET:
+            find_prefix = './/{http://sdsys.ru/}'
+            res = req_result.findtext(find_prefix + 'SPRESULT')
+            if res != '1':
+                res_comment = req_result.findtext(find_prefix + 'SPCOMMENT') or ''
+                if dst_operation_code != OperationCode.DELETE:
+                    op_name = 'reserve'
+                else:
+                    op_name = 'remove'
+                raise ApiException(
+                    200, 'Reject %s ticket %s. Result code = %s comment: %s' % (
+                        op_name, req_meta['dst_main_id'],
+                        res, res_comment
+                    ),
+                    reject=1,
+                )
+            if dst_operation_code != OperationCode.DELETE:
+                schedid = req_result.findtext(find_prefix + 'RSCHEDID')
+                res = {
+                    'main_id': schedid,
+                    'param_name': param_name,
+                }
+            else:
+                res = True
+        else:
+            res = req_result
+        return res
 
     def get_params(self, entity_code, response, param_name):
         # разбирает ответ локальной системы и достает полезные данные
