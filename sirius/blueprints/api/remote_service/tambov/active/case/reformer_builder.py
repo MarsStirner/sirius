@@ -155,6 +155,7 @@ class CaseTambovBuilder(Builder):
                 # неотложная или плановая
                 'careProvidingFormId': 2 if safe_traverse(ticket_data, 'medical_care_emergency') else 3,
                 'initGoalId': safe_traverse(ticket_data, 'visit_type') or '7',
+                'stateId': '1',
             }
             diagnosis = safe_traverse(ticket_data, 'diagnosis')
             if diagnosis:
