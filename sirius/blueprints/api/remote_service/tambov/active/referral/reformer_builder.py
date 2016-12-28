@@ -127,6 +127,9 @@ class ReferralTambovBuilder(Builder):
         src_entity_code = header_meta['local_entity_code']
 
         entities = RequestEntities()
+        # todo: стоит напрямую найти measure_type, а в неГоспитализациях дозапрашивать
+        # prototype_id, так как в госпитализации нет прототипа (в файле
+        # фейковый проставлен)
         prototype_id = SrvPrototypeMatch.get_prototype_id_by_mes_code(measure_data.get('measure_type_code'))
         measure_type = SrvPrototypeMatch.get_measure_type(prototype_id)
         if measure_type in ('healthcare', 'social_preventiv'):

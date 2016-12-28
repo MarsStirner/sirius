@@ -77,7 +77,7 @@ measure_id#rbMeasureType.code#servPrototypeId#servPrototypeCode#Mesure.code
 62#lab_test#10042#A12.06.030#62
 63#lab_test#9897#A12.05.008#63
 64#func_test#468#A04.20.001.001#64
-65#hospitalization###65
+65#hospitalization#-65##65
 66#healthcare#235#A02.20.001#66
 67#healthcare#235#A02.20.001#67
 68#healthcare#235#A02.20.001#68
