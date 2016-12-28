@@ -180,13 +180,14 @@ class CaseTambovBuilder(Builder):
             src_id=header_meta['local_main_id'],
         )
         if src_operation_code != OperationCode.DELETE:
+            resource_group_id = self.get_resource_group_id(ticket_data['hospital'], ticket_data['doctor'])
             visit_item['body'] = {
                 # 'id': None,  # проставляется в set_current_id_func
                 'admissionDate': to_date(safe_traverse(checkup_data[gen_info], 'date')),
                 'goalId': safe_traverse(ticket_data, 'visit_type') or '7',
                 'placeId': '1',
                 'profileId': safe_traverse(ticket_data, 'medical_care_profile'),
-                'resourceGroupId': ticket_data['doctor'],
+                'resourceGroupId': resource_group_id,
             }
             diagnosis_osn = safe_traverse(ticket_data, 'medical_report', 'diagnosis_osn')
             if diagnosis_osn:
@@ -239,6 +240,7 @@ class CaseTambovBuilder(Builder):
                 ))
             srv_data = srvs_data[0]  # считаем, что будет одна
             if src_operation_code != OperationCode.DELETE:
+                assert resource_group_id
                 serv_item['body'] = {
                     # 'id': None,  # проставляется в set_current_id_func
                     'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
@@ -250,7 +252,34 @@ class CaseTambovBuilder(Builder):
                     'quantity': safe_traverse(serv_code, 'medical_service_quantity'),
                     'fundingSourceTypeId': 1,
                     'diagnosisId': dm.diag_id(safe_traverse(ticket_data, 'diagnosis')),
-                    'resourceGroupId': ticket_data['doctor'],
+                    'resourceGroupId': resource_group_id,
                 }
 
         return entities
+
+    def get_resource_group_id(self, clinic_id, empl_position_id):
+        location_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.LOCATION,
+            OperationCode.ADD,
+        )
+        req = DataRequest()
+        req.set_req_params(
+            url=location_api_method['template_url'],
+            method=location_api_method['method'],
+            protocol=ProtocolCode.SOAP,
+            data={
+                'location': {
+                    'organization': clinic_id,
+                    'system': True,
+                    'employeePositionList': {
+                        'EmployeePosition': [{
+                            'resourceRole': 1,
+                            'employeePosition': empl_position_id,
+                        }]
+                    }
+                },
+            },
+        )
+        location_data = self.transfer__send_request(req)
+        return location_data['location']
