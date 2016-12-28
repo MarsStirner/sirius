@@ -190,7 +190,7 @@ class CaseTambovBuilder(Builder):
                 'profileId': safe_traverse(ticket_data, 'medical_care_profile'),
                 'resourceGroupId': resource_group_id,
             }
-            diagnosis_osn = safe_traverse(ticket_data, 'medical_report', 'diagnosis_osn')
+            diagnosis_osn = safe_traverse(checkup_data, 'medical_report', 'diagnosis_osn', 'MKB')
             if diagnosis_osn:
                 visit_item['body']['diagnoses'] = [{
                     'stageId': 3,
