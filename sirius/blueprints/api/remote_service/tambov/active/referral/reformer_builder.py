@@ -126,6 +126,12 @@ class ReferralTambovBuilder(Builder):
         src_operation_code = header_meta['local_operation_code']
         src_entity_code = header_meta['local_entity_code']
 
+        entities = RequestEntities()
+        prototype_id = SrvPrototypeMatch.get_prototype_id_by_mes_code(measure_data.get('measure_type_code'))
+        measure_type = SrvPrototypeMatch.get_measure_type(prototype_id)
+        if measure_type in ('healthcare', 'social_preventiv'):
+            return entities
+
         # сопоставление параметров родительских сущностей
         params_map = {
             RisarEntityCode.CARD: {
@@ -134,7 +140,6 @@ class ReferralTambovBuilder(Builder):
         }
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
 
-        entities = RequestEntities()
         main_item = entities.set_main_entity(
             dst_entity_code=TambovEntityCode.REFERRAL,
             dst_parents_params=header_meta['remote_parents_params'],
@@ -155,8 +160,6 @@ class ReferralTambovBuilder(Builder):
         )
 
         srv_data = None
-        prototype_id = SrvPrototypeMatch.get_prototype_id_by_mes_code(measure_data.get('measure_type_code'))
-        measure_type = SrvPrototypeMatch.get_measure_type(prototype_id)
         typeId = self.measure_type__type_id__map[measure_type]
         if measure_type != 'hospitalization':
             req = DataRequest()
