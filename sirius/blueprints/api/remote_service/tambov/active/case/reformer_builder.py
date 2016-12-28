@@ -151,6 +151,7 @@ class CaseTambovBuilder(Builder):
                 'caseTypeId': '1',
                 'fundingSourceTypeId': '1',
                 'careRegimenId': '1',
+                'paymentMethodId': '22',
                 'careLevelId': safe_traverse(ticket_data, 'medical_care'),
                 # неотложная или плановая
                 'careProvidingFormId': 2 if safe_traverse(ticket_data, 'medical_care_emergency') else 3,
@@ -184,6 +185,8 @@ class CaseTambovBuilder(Builder):
             resource_group_id = self.get_resource_group_id(ticket_data['hospital'], ticket_data['doctor'])
             visit_item['body'] = {
                 # 'id': None,  # проставляется в set_current_id_func
+                'visitResultId': safe_traverse(ticket_data, 'treatment_result'),
+                'deseaseResultId': safe_traverse(ticket_data, 'disease_outcome'),
                 'admissionDate': to_date(safe_traverse(checkup_data[gen_info], 'date')),
                 'goalId': safe_traverse(ticket_data, 'visit_type') or '7',
                 'placeId': '1',
@@ -193,7 +196,7 @@ class CaseTambovBuilder(Builder):
             diagnosis_osn = safe_traverse(checkup_data, 'medical_report', 'diagnosis_osn', 'MKB')
             if diagnosis_osn:
                 visit_item['body']['diagnoses'] = [{
-                    'stageId': 3,
+                    'stageId': 4,
                     'main': True,
                     'diagnosId': dm.safe_diag_id(diagnosis_osn),
                     'establishmentDate': to_date(safe_traverse(checkup_data[gen_info], 'date')),
