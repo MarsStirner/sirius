@@ -280,6 +280,8 @@ class ReferralTambovBuilder(Builder):
                 level_count=1,
             )
         if src_operation_code != OperationCode.DELETE:
+            resourceGroupId = safe_traverse_attrs(rend_serv_data, 'resourceGroupId')
+            employee_position_id = self.get_employee_position(resourceGroupId)
             research_item['body'] = {
                 # 'result_action_id': None,  # заполняется в set_current_id_func
                 # 'measure_id':  # заполняется в set_parent_id_common_func
@@ -287,7 +289,7 @@ class ReferralTambovBuilder(Builder):
                 'measure_type_code': measure_code,
                 'realization_date': encode(rend_serv_data['dateFrom']),
                 'lpu_code': safe_traverse_attrs(rend_serv_data, 'orgId') or '',
-                'doctor_code': safe_traverse_attrs(rend_serv_data, 'resourceGroupId') or '',
+                'doctor_code': employee_position_id or '',
                 'results': self.make_refs(srv_attachment_data),
                 'status': 'performed' if safe_traverse_attrs(rend_serv_data, 'isRendered') else 'assigned',
             }
@@ -338,6 +340,8 @@ class ReferralTambovBuilder(Builder):
                 level_count=1,
             )
         if src_operation_code != OperationCode.DELETE:
+            resourceGroupId = safe_traverse_attrs(rend_serv_data, 'resourceGroupId')
+            employee_position_id = self.get_employee_position(resourceGroupId)
             sp_ckeckup_item['body'] = {
                 # 'result_action_id': None,  # заполняется в set_current_id_func
                 # 'measure_id': None,  # заполняется в set_parent_id_common_func
@@ -345,11 +349,51 @@ class ReferralTambovBuilder(Builder):
                 'measure_type_code': measure_code,
                 'checkup_date': encode(rend_serv_data['dateTo']),
                 'lpu_code': safe_traverse_attrs(rend_serv_data, 'orgId') or '',
-                'doctor_code': safe_traverse_attrs(rend_serv_data, 'resourceGroupId') or '',
+                'doctor_code': employee_position_id or '',
                 'status': 'performed' if safe_traverse_attrs(rend_serv_data, 'isRendered') else 'assigned',
             }
 
         return entities
+
+    def get_employee_position(self, location_id):
+        if not location_id:
+            return None
+        location_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.LOCATION,
+            OperationCode.READ_ONE,
+        )
+        req = DataRequest()
+        req.set_req_params(
+            url=location_api_method['template_url'],
+            method=location_api_method['method'],
+            protocol=ProtocolCode.SOAP,
+            data={'location': location_id},
+        )
+        location_data = self.transfer__send_request(req)
+
+        res = None
+        for employeePosition_item in safe_traverse_attrs(
+                location_data, 'employeePositionList', 'EmployeePosition'
+        ) or []:
+            if not self.valid_employee_position(employeePosition_item):
+                continue
+            res = employeePosition_item['employeePosition']
+            # валидный врач должен быть в ресурсе только один
+            break
+        return res
+
+    def valid_employee_position(self, employeePosition_item):
+        if not employeePosition_item['resourceRole'] == '1':
+            return False
+        doctor_id = self.reformer.find_local_id_by_remote(
+            RisarEntityCode.DOCTOR,
+            TambovEntityCode.EMPLOYEE_POSITION,
+            employeePosition_item['employeePosition'],
+        )
+        if not doctor_id:
+            return False
+        return True
 
     # def get_org_code(self, clinic_id):
     #     res = None
@@ -358,15 +402,5 @@ class ReferralTambovBuilder(Builder):
     #             RisarEntityCode.ORGANIZATION,
     #             TambovEntityCode.CLINIC,
     #             clinic_id,
-    #         )
-    #     return res
-    #
-    # def get_doctor_code(self, location_id):
-    #     res = None
-    #     if location_id:
-    #         res = self.reformer.get_local_id_by_remote(
-    #             RisarEntityCode.DOCTOR,
-    #             TambovEntityCode.EMPLOYEE_POSITION,
-    #             location_id,
     #         )
     #     return res

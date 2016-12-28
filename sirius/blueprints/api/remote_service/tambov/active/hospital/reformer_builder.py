@@ -8,7 +8,7 @@
 """
 from datetime import date, datetime
 
-from hitsl_utils.safe import safe_traverse, safe_int
+from hitsl_utils.safe import safe_traverse, safe_int, safe_traverse_attrs
 from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
@@ -19,6 +19,7 @@ from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.blueprints.reformer.models.method import ApiMethod
+from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 from sirius.lib.xform import Undefined
 from sirius.models.operation import OperationCode
@@ -118,11 +119,12 @@ class HospitalTambovBuilder(Builder):
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
+            employee_position_id = self.get_employee_position(hospital_rec_data['resourceGroupId'])
             hosp_entity['body'] = {
                 # 'result_action_id': None,  # заполняется в set_current_id_func
                 # 'measure_id': None,  # мис сама не отдаёт направление госп.
                 'hospital': case_data['medicalOrganizationId'],
-                'doctor': hospital_rec_data['resourceGroupId'],
+                'doctor': employee_position_id,
                 'diagnosis_in': 'A01.1',  # нет поля в сервисе, они будут доделывать
                 'diagnosis_out': 'A01.1',  # нет поля в сервисе, они будут доделывать
                 # --
@@ -132,3 +134,41 @@ class HospitalTambovBuilder(Builder):
                 'status': 'performed',
             }
         return entities
+
+    def get_employee_position(self, location_id):
+        location_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.LOCATION,
+            OperationCode.READ_ONE,
+        )
+        req = DataRequest()
+        req.set_req_params(
+            url=location_api_method['template_url'],
+            method=location_api_method['method'],
+            protocol=ProtocolCode.SOAP,
+            data={'location': location_id},
+        )
+        location_data = self.transfer__send_request(req)
+
+        res = None
+        for employeePosition_item in safe_traverse_attrs(
+                location_data, 'employeePositionList', 'EmployeePosition'
+        ) or []:
+            if not self.valid_employee_position(employeePosition_item):
+                continue
+            res = employeePosition_item['employeePosition']
+            # валидный врач должен быть в ресурсе только один
+            break
+        return res
+
+    def valid_employee_position(self, employeePosition_item):
+        if not employeePosition_item['resourceRole'] == '1':
+            return False
+        doctor_id = self.reformer.find_local_id_by_remote(
+            RisarEntityCode.DOCTOR,
+            TambovEntityCode.EMPLOYEE_POSITION,
+            employeePosition_item['employeePosition'],
+        )
+        if not doctor_id:
+            return False
+        return True
