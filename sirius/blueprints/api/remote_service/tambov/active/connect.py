@@ -7,8 +7,8 @@
 
 """
 import requests
-from hitsl_utils.enum import Enum
 from requests.auth import HTTPBasicAuth
+from sirius.blueprints.api.remote_service.lib.transfer import RequestModeCode
 from sirius.blueprints.monitor.exception import ExternalError
 from sirius.lib.apiutils import ApiException
 from sirius.models.protocol import ProtocolCode
@@ -66,12 +66,6 @@ class TambovSOAPClient(object):
         """
         self.check_error(result)
         return getattr(result, 'patientCard', {})
-
-
-class RequestModeCode(Enum):
-    MULTIPART_FILE = 'multipart_file'
-    JSON_DATA = 'json_data'
-    XML_DATA = 'xml_data'
 
 
 class TambovRESTClient(object):

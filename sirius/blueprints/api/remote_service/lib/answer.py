@@ -8,7 +8,7 @@
 """
 import logging
 
-from sirius.blueprints.api.remote_service.tambov.active.connect import \
+from sirius.blueprints.api.remote_service.lib.transfer import \
     RequestModeCode
 from sirius.models.operation import OperationCode
 

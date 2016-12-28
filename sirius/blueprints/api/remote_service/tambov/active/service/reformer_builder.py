@@ -12,10 +12,11 @@ from datetime import date, datetime
 from hitsl_utils.safe import safe_traverse, safe_int
 from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
-from sirius.blueprints.api.remote_service.tambov.active.connect import \
+from sirius.blueprints.api.remote_service.lib.transfer import \
     RequestModeCode
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
+from sirius.blueprints.monitor.exception import ExternalError
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
@@ -349,6 +350,15 @@ class ServiceTambovBuilder(Builder):
         params_meta = {'card_id': RisarEntityCode.CARD}
         self.set_src_parents_entity(msg_meta, params_meta)
 
+        rend_service_id = self.reformer.find_remote_id_by_local(
+            TambovEntityCode.REND_SERVICE,
+            RisarEntityCode.EXCHANGE_CARD,
+            msg_meta['src_main_id'],
+        )
+        # карту уже передавали
+        if rend_service_id:
+            return package
+
         main_item = package.add_main_pack_entity(
             entity_code=RisarEntityCode.EXCHANGE_CARD,
             operation_code=msg_meta['src_operation_code'],
@@ -393,13 +403,37 @@ class ServiceTambovBuilder(Builder):
             level_count=2,
         )
         if src_operation_code != OperationCode.DELETE:
+            clinic_id = header_meta['remote_parents_params']['orgId']['id']
+            srv_api_method = self.reformer.get_api_method(
+                self.remote_sys_code,
+                TambovEntityCode.SERVICE,
+                OperationCode.READ_MANY,
+            )
+            req = DataRequest()
+            req.set_req_params(
+                url=srv_api_method['template_url'],
+                method=srv_api_method['method'],
+                protocol=ProtocolCode.SOAP,
+                data={
+                    'clinic': clinic_id,
+                    'prototype': '11245',
+                    'code': '99999',
+                },
+            )
+            srvs_data = self.transfer__send_request(req)
+            if not srvs_data:
+                raise ExternalError('%s not found for clinic="%s" prototype="%s" code="%s"' % (
+                    TambovEntityCode.SERVICE,
+                    clinic_id, '11245', '99999'
+                ))
+            srv_data = srvs_data[0]  # считаем, что будет одна
+
             main_item['body'] = {
                 # 'id': None,  # проставляется в set_current_id_func
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
-                'serviceId': '99999',
-                # 'prototypeId': '11245',  # prototypeId не нужен, если заполнена услуга
+                'serviceId': srv_data['id'],
                 'isRendered': True,
-                'orgId': header_meta['remote_parents_params']['orgId']['id'],
+                'orgId': clinic_id,
             }
 
         child_item = entities.set_child_entity(

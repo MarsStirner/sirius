@@ -6,6 +6,7 @@
 @date: 23.09.2016
 
 """
+from hitsl_utils.enum import Enum
 from sirius.blueprints.monitor.exception import module_entry, connect_entry, \
     InternalError
 from sirius.blueprints.reformer.api import DataRequest, ReqEntity
@@ -74,3 +75,9 @@ class Transfer(object):
 
     def get_rest_client(self):
         raise NotImplementedError
+
+
+class RequestModeCode(Enum):
+    MULTIPART_FILE = 'multipart_file'
+    JSON_DATA = 'json_data'
+    XML_DATA = 'xml_data'

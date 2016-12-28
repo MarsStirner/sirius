@@ -7,7 +7,7 @@
 
 """
 from sirius.blueprints.api.remote_service.lib.answer import RemoteAnswer
-from sirius.blueprints.api.remote_service.tambov.active.connect import \
+from sirius.blueprints.api.remote_service.lib.transfer import \
     RequestModeCode
 
 

@@ -11,7 +11,7 @@ from datetime import date, datetime
 from hitsl_utils.safe import safe_traverse, safe_int
 from hitsl_utils.wm_api import WebMisJsonEncoder
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
-from sirius.blueprints.api.remote_service.tambov.active.connect import \
+from sirius.blueprints.api.remote_service.lib.transfer import \
     RequestModeCode
 from sirius.blueprints.api.remote_service.tula.entities import \
     TulaEntityCode

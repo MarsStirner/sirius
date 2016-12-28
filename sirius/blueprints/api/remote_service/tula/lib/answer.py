@@ -9,7 +9,7 @@
 from sirius.blueprints.api.remote_service.lib.answer import RemoteAnswer
 import xml.etree.ElementTree as ET
 
-from sirius.blueprints.api.remote_service.tambov.active.connect import \
+from sirius.blueprints.api.remote_service.lib.transfer import \
     RequestModeCode
 from sirius.blueprints.api.remote_service.tula.entities import TulaEntityCode
 from sirius.blueprints.monitor.exception import ExternalError

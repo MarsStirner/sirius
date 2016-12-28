@@ -605,6 +605,15 @@ class Reformer(object):
         )
         return res
 
+    def find_remote_id_by_local(self, remote_entity_code, local_entity_code, local_id):
+        res = MatchingId.find_remote_id(
+            local_entity_code,
+            local_id,
+            remote_entity_code,
+            self.remote_sys_code,
+        )
+        return res
+
     def get_register_entity_match(
         self,
         local_entity_code, local_main_id,
