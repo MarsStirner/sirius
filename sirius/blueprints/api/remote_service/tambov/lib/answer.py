@@ -7,10 +7,15 @@
 
 """
 from sirius.blueprints.api.remote_service.lib.answer import RemoteAnswer
+from sirius.blueprints.api.remote_service.tambov.active.connect import \
+    RequestModeCode
 
 
 class TambovAnswer(RemoteAnswer):
-    pass
+    def process(self, result, req_meta=None, req_data=None):
+        if not req_meta['dst_request_mode']:
+            req_meta['dst_request_mode'] = RequestModeCode.XML_DATA
+        return super(TambovAnswer, self).process(result, req_meta, req_data)
 
 # class SafeGet(object):
 #     # опасно, т.к. в имени атрибута м/б опечатка

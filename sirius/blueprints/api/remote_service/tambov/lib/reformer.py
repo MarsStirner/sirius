@@ -84,8 +84,8 @@ class TambovReformer(Reformer):
             data_req = ClinicTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.CLINIC)
         elif local_entity_code == RisarEntityCode.MEASURE_HOSPITALIZATION or remote_entity_code == TambovEntityCode.HOSPITAL_REC:
             data_req = HospitalTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.HOSPITAL_REC)
-        elif local_entity_code == RisarEntityCode.DOCTOR or remote_entity_code == TambovEntityCode.EMPLOYEE_POSITION:
-            data_req = EmployeePositionTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.EMPLOYEE_POSITION)
+        elif local_entity_code == RisarEntityCode.DOCTOR or remote_entity_code == TambovEntityCode.EMPLOYEE:
+            data_req = EmployeePositionTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.EMPLOYEE)
         elif local_entity_code == RisarEntityCode.CHILDBIRTH or remote_entity_code == TambovEntityCode.BIRTH:
             data_req = BirthTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.BIRTH)
         else:
@@ -142,7 +142,7 @@ class TambovReformer(Reformer):
             res = ClinicTambovBuilder(self).build_remote_entity_packages(req)
         elif dst_entity == TambovEntityCode.HOSPITAL_REC:
             res = HospitalTambovBuilder(self).build_remote_entity_packages(req)
-        elif dst_entity == TambovEntityCode.EMPLOYEE_POSITION:
+        elif dst_entity == TambovEntityCode.EMPLOYEE:
             res = EmployeePositionTambovBuilder(self).build_remote_entity_packages(req)
         elif dst_entity == TambovEntityCode.BIRTH:
             res = BirthTambovBuilder(self).build_remote_entity_packages(req)

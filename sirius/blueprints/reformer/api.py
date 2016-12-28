@@ -1247,6 +1247,7 @@ class DataRequest(IStreamMeta):
             'dst_id': dst_id,
             'dst_parents_params': dst_parents_params,
             'dst_id_url_param_name': dst_id_url_param_name,
+            'dst_request_mode': None,
         }
 
     def set_req_params(self, url, method, protocol, data=None, options=None):
@@ -1258,6 +1259,8 @@ class DataRequest(IStreamMeta):
             'dst_url': url,
             'dst_method': method,
             'dst_protocol_code': protocol,
+            'dst_request_mode': None,
+            'dst_operation_code': None,
         })
         self.req_data['options'] = options
 
@@ -1305,4 +1308,4 @@ class DataRequest(IStreamMeta):
 
     @property
     def req_mode(self):
-        return self.req_data['meta'].get('dst_request_mode')
+        return self.req_data['meta']['dst_request_mode']

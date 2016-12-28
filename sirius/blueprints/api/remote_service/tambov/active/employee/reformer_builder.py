@@ -36,7 +36,7 @@ class EmployeePositionTambovBuilder(Builder):
         src_entity_code = header_meta['local_entity_code']
         params_map = {
             RisarEntityCode.ORGANIZATION: {
-                'entity': TambovEntityCode.CLINIC, 'param': 'clinic'
+                'entity': TambovEntityCode.CLINIC, 'param': 'organization'
             },
         }
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
@@ -53,7 +53,7 @@ class EmployeePositionTambovBuilder(Builder):
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
             employees_ids = self.get_employees_ids(reformed_req)
             package.enable_diff_check()
-            diff_key = req_meta['dst_parents_params']['clinic']['id']
+            diff_key = req_meta['dst_parents_params']['organization']['id']
             package.set_diff_key_range((diff_key, diff_key))
             self.set_employees_positions(employees_ids, package, req_meta, diff_key)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
@@ -71,7 +71,7 @@ class EmployeePositionTambovBuilder(Builder):
 
     def set_employees_positions(self, employees_ids, package, req_meta, diff_key=None):
         """
-        getEmployees(clinic=getPlaces.clinic)  # лпу из мр
+        getEmployees(organization=getPlaces.clinic)  # лпу из мр
         getEmployeePositions(employee=getEmployees.employee)
         getEmployeePosition(id=getEmployeePositions.employeePosition)
         getPosition(id=getEmployeePosition.position)
@@ -92,11 +92,9 @@ class EmployeePositionTambovBuilder(Builder):
                 protocol=ProtocolCode.SOAP,
                 data={'employee': employee_id},
             )
-            empl_positions_data = self.transfer__send_request(empl_pos_req)
+            empl_positions_ids = self.transfer__send_request(empl_pos_req)
 
-            for empl_position_id in safe_traverse_attrs(
-                empl_positions_data, 'EmployeePosition'
-            ) or []:
+            for empl_position_id in empl_positions_ids:
 
                 api_method = self.reformer.get_api_method(
                     self.remote_sys_code,
@@ -181,8 +179,8 @@ class EmployeePositionTambovBuilder(Builder):
 
     def valid_employee_position(self, employeePosition_data):
         today = datetime.today().date()
-        if not (not employeePosition_data['endDate'] or
-                employeePosition_data['endDate'] > today):
+        if not (not employeePosition_data['toDate'] or
+                employeePosition_data['toDate'] > today):
             return False
         return True
 
