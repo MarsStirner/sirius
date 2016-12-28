@@ -94,7 +94,7 @@ class ClinicTambovBuilder(Builder):
         org_item = entities.set_main_entity(
             dst_entity_code=RisarEntityCode.ORGANIZATION,
             dst_parents_params=header_meta['local_parents_params'],
-            dst_main_id_name='TFOMSCode',
+            dst_main_id_name='regionalCode',
             src_operation_code=src_operation_code,
             src_entity_code=src_entity_code,
             src_main_id_name=header_meta['remote_main_param_name'],
@@ -111,7 +111,7 @@ class ClinicTambovBuilder(Builder):
         if AddressAllInfos:
             town_kladr = self.get_town_kladr(AddressAllInfos[0])
         org_item['body'] = {
-            'TFOMSCode': str(header_meta['remote_main_id']),  # id/code двух систем будут совпадать
+            'regionalCode': str(header_meta['remote_main_id']),  # id/code двух систем будут совпадать
             'full_name': clinic_data['name'],
             'short_name': clinic_data['name'],
             'address': safe_traverse_attrs(clinic_data, 'actualAddress', 'addressText') or '',

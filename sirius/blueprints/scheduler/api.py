@@ -201,14 +201,14 @@ class Scheduler(object):
         org_msg = producer.send(msg, async=False)
         for org_data in org_msg.get_data():
             try:
-                if not org_data['TFOMSCode']:
+                if not org_data['regionalCode']:
                     continue
-                # if not org_data['TFOMSCode'] in ('1434663', '41'):  # в Тамбове права выданы только на эти лпу
+                # if not org_data['regionalCode'] in ('1434663',):  # в Тамбове права выданы только на эти лпу
                 #     continue
-                msg = self.create_message(system_code, entity_code)  # getLocations
+                msg = self.create_message(system_code, entity_code)  # getEmployees
                 meta = msg.get_header().meta
                 meta['local_parents_params'] = {
-                    'TFOMSCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': org_data['TFOMSCode']},
+                    'regionalCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': org_data['regionalCode']},
                 }
                 producer = LocalProducer()
                 producer.send(msg)
@@ -302,7 +302,7 @@ class Scheduler(object):
         data = {
             'filters': {
                 'pregnancyWeek': 32,  # в рисар нет таких пока
-                # 'id': 3,
+                # 'id': 22,
             }
         }
         # data = {
@@ -363,7 +363,7 @@ class Scheduler(object):
 
                 meta['local_parents_params'] = {
                     'card_id': {'entity': RisarEntityCode.CARD, 'id': card_data['card_id']},
-                    'TFOMSCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': card_data['card_LPU']},
+                    'regionalCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': card_data['card_LPU']},
                 }
                 LocalProducer().send(msg)
             except LoggedException:

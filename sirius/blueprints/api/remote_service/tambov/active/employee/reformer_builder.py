@@ -202,7 +202,7 @@ class EmployeePositionTambovBuilder(Builder):
         # сопоставление параметров родительских сущностей
         params_map = {
             TambovEntityCode.CLINIC: {
-                'entity': RisarEntityCode.ORGANIZATION, 'param': 'TFOMSCode'
+                'entity': RisarEntityCode.ORGANIZATION, 'param': 'regionalCode'
             }
         }
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
@@ -234,7 +234,7 @@ class EmployeePositionTambovBuilder(Builder):
         individual_data = pack_entity['data']
         doctor_item['body'] = {
             'regional_code': src_id,  # id/code двух систем будут совпадать
-            'organization': header_meta['local_parents_params']['TFOMSCode']['id'],  # id/code двух систем будут совпадать
+            'organization': header_meta['local_parents_params']['regionalCode']['id'],  # id/code двух систем будут совпадать
             'last_name': individual_data['surname'],
             'first_name': individual_data['name'],
             'patr_name': individual_data['patrName'] or '',
