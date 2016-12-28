@@ -282,5 +282,5 @@ class CaseTambovBuilder(Builder):
                 },
             },
         )
-        location_data = self.transfer__send_request(req)
-        return location_data['location']
+        location_id = self.transfer__send_request(req)
+        return location_id

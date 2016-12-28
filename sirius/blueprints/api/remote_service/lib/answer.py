@@ -53,4 +53,4 @@ class RemoteAnswer(object):
         return {'main_id': res}
 
     def get_params_ext(self, req_meta, result):
-        return result
+        return {'main_id': result}
