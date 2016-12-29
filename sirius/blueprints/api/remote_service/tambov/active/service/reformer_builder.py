@@ -350,14 +350,15 @@ class ServiceTambovBuilder(Builder):
         params_meta = {'card_id': RisarEntityCode.CARD}
         self.set_src_parents_entity(msg_meta, params_meta)
 
-        rend_service_id = self.reformer.find_remote_id_by_local(
-            TambovEntityCode.REND_SERVICE,
-            RisarEntityCode.EXCHANGE_CARD,
-            msg_meta['src_main_id'],
-        )
+        # отфильтруется из-за второго поста
+        # protocol_id = self.reformer.find_remote_id_by_local(
+        #     TambovEntityCode.SRV_PROTOCOL,
+        #     RisarEntityCode.EXCHANGE_CARD,
+        #     msg_meta['src_main_id'],
+        # )
         # карту уже передавали
-        if rend_service_id:
-            return package
+        # if protocol_id:
+        #     return package
 
         main_item = package.add_main_pack_entity(
             entity_code=RisarEntityCode.EXCHANGE_CARD,
@@ -440,7 +441,7 @@ class ServiceTambovBuilder(Builder):
             parent_item=main_item,
             dst_entity_code=TambovEntityCode.SRV_PROTOCOL,
             dst_parents_params=header_meta['remote_parents_params'],
-            dst_main_id_name=None,
+            dst_main_id_name='id',
             dst_parent_id_name='id',
             dst_request_mode=RequestModeCode.MULTIPART_FILE,
             src_operation_code=src_operation_code,

@@ -9,6 +9,8 @@
 from sirius.blueprints.api.remote_service.lib.answer import RemoteAnswer
 from sirius.blueprints.api.remote_service.lib.transfer import \
     RequestModeCode
+from sirius.blueprints.api.remote_service.tambov.entities import \
+    TambovEntityCode
 
 
 class TambovAnswer(RemoteAnswer):
@@ -16,6 +18,29 @@ class TambovAnswer(RemoteAnswer):
         if not req_meta['dst_request_mode']:
             req_meta['dst_request_mode'] = RequestModeCode.XML_DATA
         return super(TambovAnswer, self).process(result, req_meta, req_data)
+
+    def get_params(self, entity_code, response, param_name):
+        # разбирает ответ локальной системы и достает полезные данные
+        result = self.get_data(response)
+        if entity_code == TambovEntityCode.SRV_PROTOCOL:
+            res = {
+                'main_id': result[param_name],
+                'param_name': param_name,
+            }
+        else:
+            res = {
+                'main_id': result[param_name],
+                'param_name': param_name,
+            }
+        return res
+
+    def get_data(self, response):
+        try:
+            res = response.json()
+        except ValueError:
+            res = response.text
+        return res
+
 
 # class SafeGet(object):
 #     # опасно, т.к. в имени атрибута м/б опечатка

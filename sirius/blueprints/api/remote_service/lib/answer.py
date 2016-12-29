@@ -19,8 +19,8 @@ class RemoteAnswer(object):
 
     def process(self, result, req_meta=None, req_data=None):
         # meta['dst_entity_code']
-        if req_meta['dst_request_mode'] == RequestModeCode.JSON_DATA:
-            logger.debug('request: %s\n response: %s' % (str(req_data), ': '.join((str(result), result.text))))
+        if req_meta['dst_request_mode'] in (RequestModeCode.JSON_DATA, RequestModeCode.MULTIPART_FILE):
+            logger.debug('%s url: %s request: %s\n response: %s' % (result.request.method, result.url, str(req_data), ': '.join((str(result), result.text))))
             self.check_json(result)
             if req_meta['dst_operation_code'] in (OperationCode.READ_MANY, OperationCode.READ_ONE):
                 res = self.get_data(result)
