@@ -120,13 +120,17 @@ class HospitalTambovBuilder(Builder):
         )
         if src_operation_code != OperationCode.DELETE:
             employee_position_id = self.get_employee_position(hospital_rec_data['resourceGroupId'])
+            diag_main_code = None
+            for diag_data in hospital_rec_data['diagnoses']:
+                if diag_data['main']:
+                    diag_main_code = dm.diag_code(diag_data['diagnosId'])
             hosp_entity['body'] = {
                 # 'result_action_id': None,  # заполняется в set_current_id_func
                 # 'measure_id': None,  # мис сама не отдаёт направление госп.
                 'hospital': case_data['medicalOrganizationId'],
                 'doctor': employee_position_id,
                 'diagnosis_in': 'A01.1',  # нет поля в сервисе, они будут доделывать
-                'diagnosis_out': 'A01.1',  # нет поля в сервисе, они будут доделывать
+                'diagnosis_out': diag_main_code or 'A01.1',  # нет поля в сервисе, они будут доделывать
                 # --
                 'external_id': header_meta['remote_main_id'],
                 'date_in': encode(hospital_rec_data['admissionDate']) or Undefined,
