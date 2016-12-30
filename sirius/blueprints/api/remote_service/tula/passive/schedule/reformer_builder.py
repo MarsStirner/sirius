@@ -52,6 +52,8 @@ class ScheduleTulaBuilder(Builder):
                         TulaEntityCode.CLIENT,
                         schedule_ticket['patient'],
                     )
+                    # 1 - ИД псевдо пациента "Занято". Бывает нужен,
+                    # если занято мужчиной, либо пациент еще не приходил
                     schedule_ticket['patient'] = patient_code or '1'
 
         return entities

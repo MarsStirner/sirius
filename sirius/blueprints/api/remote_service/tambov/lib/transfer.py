@@ -23,9 +23,9 @@ class TambovTransfer(Transfer):
 
     def soap_protocol(self, req, req_meta):
         self.wsdl_lib_code = 'zeep'
-        # todo: wsdl на этот метод не читается zeep (библиотека на метод)
-        if req_meta.get('dst_entity_code') == TambovEntityCode.BIRTH:
-            self.wsdl_lib_code = 'suds'
+        # # todo: wsdl на этот метод не читается zeep (библиотека на метод)
+        # if req_meta.get('dst_entity_code') == TambovEntityCode.BIRTH:
+        #     self.wsdl_lib_code = 'suds'
         req_result = super(TambovTransfer, self).soap_protocol(req, req_meta)
         return req_result
 
