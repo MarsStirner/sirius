@@ -31,6 +31,7 @@ class TambovEntityCode(Enum):
     BIRTH = 'birth'
     SRV_PROTOCOL = 'srv_protocol'
     HOSPITAL_REC = 'hospital_rec'
+    RESERVE_FILTERED = 'reserve_filtered'
 
     # IND_ADDRESS = 'individual_address'
     # IND_DOCUMENTS = 'individual_document'

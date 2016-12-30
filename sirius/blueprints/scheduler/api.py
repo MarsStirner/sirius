@@ -224,23 +224,26 @@ class Scheduler(object):
         implement = Implementation()
         reformer = implement.get_reformer(system_code)
 
-        doc_list_method = reformer.get_api_method(
-            SystemCode.LOCAL, RisarEntityCode.DOCTOR, OperationCode.READ_MANY
+        org_list_method = reformer.get_api_method(
+            SystemCode.LOCAL, RisarEntityCode.ORGANIZATION, OperationCode.READ_MANY
         )
         msg = Message(None)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
-        msg.set_method(doc_list_method['method'], doc_list_method['template_url'])
+        msg.set_method(org_list_method['method'], org_list_method['template_url'])
         producer = RemoteProducer()
-        doc_msg = producer.send(msg, async=False)
-        for doc_data in doc_msg.get_data():
+        org_msg = producer.send(msg, async=False)
+        for org_data in org_msg.get_data():
             try:
+                if not org_data['regionalCode']:
+                    continue
+                # if not org_data['regionalCode'] in ('1434663',):  # в Тамбове права выданы только на эти лпу
+                #     continue
                 msg = self.create_message(system_code, entity_code)  # getTimes
                 meta = msg.get_header().meta
                 meta['local_parents_params'] = {
-                    'regional_code': {'entity': RisarEntityCode.DOCTOR, 'id': doc_data['regional_code']},
-                    'organization': {'entity': RisarEntityCode.ORGANIZATION, 'id': doc_data['organization']},
+                    'regionalCode': {'entity': RisarEntityCode.ORGANIZATION, 'id': org_data['regionalCode']},
                 }
                 producer = LocalProducer()
                 producer.send(msg)
@@ -407,7 +410,10 @@ class Scheduler(object):
             except LoggedException:
                 pass
 
-    def get_tula_schedules(self, system_code, entity_code):
+    ########################################
+    ## Тула
+
+    def get_tula_schedules_notused(self, system_code, entity_code):
         from sirius.blueprints.api.local_service.producer import LocalProducer
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \

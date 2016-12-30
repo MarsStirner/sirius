@@ -18,6 +18,7 @@ from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.method import ApiMethod
 from sirius.lib.xform import Undefined
+from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 from sirius.models.operation import OperationCode
 
@@ -34,9 +35,6 @@ class TimeTambovBuilder(Builder):
         # сопоставление параметров родительских сущностей
         src_entity_code = header_meta['local_entity_code']
         params_map = {
-            RisarEntityCode.DOCTOR: {
-                'entity': TambovEntityCode.LOCATION, 'param': 'location'
-            },
             RisarEntityCode.ORGANIZATION: {
                 'entity': TambovEntityCode.CLINIC, 'param': 'clinic'
             },
@@ -54,45 +52,187 @@ class TimeTambovBuilder(Builder):
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
             package.enable_diff_check()
-            times = self.get_times(reformed_req, package)
-            for time_data in times:
-                self.set_times(time_data, package, req_meta)
-        elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
-            self.set_times([req_meta['dst_id']], package, req_meta)
+            clinic_id = req_meta['dst_parents_params']['clinic']['id']
+            clinic_sched = []
+            today = date.today()
+            range_val = 1
+            max_date = today + timedelta(range_val)
+            package.set_diff_key_range((
+                '_'.join((str(clinic_id), today.isoformat())),
+                '_'.join((str(clinic_id), max_date.isoformat()))
+            ))
+            for prototype_id in (5202, 5203):  # первичный и повторный осмотр
+                services = self.get_services(clinic_id, prototype_id)
+                for service_id in services:
+                    locations = self.get_locations(clinic_id, service_id)
+                    for location_id in locations:
+                        employee_position_id = self.get_employee_position(location_id)
+                        if employee_position_id:
+                            for inc in range(range_val):
+                                sched_date = today + timedelta(inc)
+                                sched_date_iso = sched_date.isoformat()
+                                times = self.get_times(reformed_req, sched_date, location_id)
+                                for time_data in times:
+                                    self.set_times(clinic_sched, time_data, sched_date_iso, employee_position_id)
+                                slots = self.get_reserved(sched_date, location_id)
+                                for slot_data in slots:
+                                    if slot_data['status'] == 4:
+                                        # отмененная запись
+                                        continue
+                                    self.set_reserved(clinic_sched, slot_data, sched_date_iso, employee_position_id)
+            self.set_package_data(package, req_meta, clinic_sched, clinic_id)
+        # elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
+        #     self.set_times([req_meta['dst_id']], package, req_meta)
         else:
             raise InternalError('Unexpected dst_operation_code')
         return package
 
-    def get_times(self, reformed_req, package):
-        res = []
-        today = date.today()
-        range_val = 1
-        max_date = today + timedelta(range_val)
-        package.set_diff_key_range((today.isoformat(), max_date.isoformat()))
-        for inc in range(range_val):
-            time_data_date = today + timedelta(inc)
-            req = reformed_req.copy()
-            for param_name, param_data in req.meta['dst_parents_params'].items():
-                req.data_update({
-                    param_name: param_data['id'],
-                    'date': time_data_date,
-                })
-            res.append(self.transfer__send_request(req))
+    def get_services(self, clinic_id, prototype_id):
+        service_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.SERVICE,
+            OperationCode.READ_MANY,
+        )
+        req = DataRequest()
+        req.set_req_params(
+            url=service_api_method['template_url'],
+            method=service_api_method['method'],
+            protocol=ProtocolCode.SOAP,
+            data={'clinic': clinic_id, 'prototype': prototype_id},
+        )
+        res = self.transfer__send_request(req)
         return res
 
-    def set_times(self, time_data, package, req_meta):
-        """
-        getTime(location=<parent>, date=today+n)
-        """
-        time_item = package.add_main_pack_entity(
-            entity_code=TambovEntityCode.TIME,
-            method=req_meta.method,
-            main_param_name='location',
-            main_id=req_meta['dst_parents_params']['location']['id'],
-            parents_params=req_meta['dst_parents_params'],
-            data=time_data,
-            diff_key=time_data['date'].isoformat(),
+    def get_locations(self, clinic_id, service_id):
+        location_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.LOCATION,
+            OperationCode.READ_MANY,
         )
+        req = DataRequest()
+        req.set_req_params(
+            url=location_api_method['template_url'],
+            method=location_api_method['method'],
+            protocol=ProtocolCode.SOAP,
+            data={'clinic': clinic_id, 'service': service_id},
+        )
+        res = self.transfer__send_request(req)
+        return res
+
+    def get_employee_position(self, location_id):
+        location_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.LOCATION,
+            OperationCode.READ_ONE,
+        )
+        req = DataRequest()
+        req.set_req_params(
+            url=location_api_method['template_url'],
+            method=location_api_method['method'],
+            protocol=ProtocolCode.SOAP,
+            data={'location': location_id},
+        )
+        location_data = self.transfer__send_request(req)
+
+        res = None
+        for employeePosition_item in safe_traverse_attrs(
+                location_data, 'employeePositionList', 'EmployeePosition'
+        ) or []:
+            if not self.valid_employee_position(employeePosition_item):
+                continue
+            res = employeePosition_item['employeePosition']
+            # валидный врач должен быть в ресурсе только один
+            break
+        return res
+
+    def valid_employee_position(self, employeePosition_item):
+        if not employeePosition_item['resourceRole'] == '1':
+            return False
+        doctor_id = self.reformer.find_local_id_by_remote(
+            RisarEntityCode.DOCTOR,
+            TambovEntityCode.EMPLOYEE_POSITION,
+            employeePosition_item['employeePosition'],
+        )
+        if not doctor_id:
+            return False
+        return True
+
+    def get_times(self, reformed_req, sched_date, location_id):
+        req = reformed_req.copy()
+        req.req_data['body'] = {
+            'location': location_id,
+            'date': sched_date,
+        }
+        res = self.transfer__send_request(req)
+        return res
+
+    def set_times(self, clinic_sched, time_data, sched_date_iso, employee_position_id):
+        clinic_sched.append({
+            'date': sched_date_iso,
+            'empl_pos': employee_position_id,
+            'beg': time_data['from'],
+            'end': time_data['to'],
+        })
+
+    def get_reserved(self, sched_date, location_id):
+        reserv_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.RESERVE_FILTERED,
+            OperationCode.READ_MANY,
+        )
+        req = DataRequest()
+        req.set_req_params(
+            url=reserv_api_method['template_url'],
+            method=reserv_api_method['method'],
+            protocol=ProtocolCode.SOAP,
+            data={'location': location_id, 'date': sched_date},
+        )
+        res = self.transfer__send_request(req)
+        return res
+
+    def set_reserved(self, clinic_sched, slot_data, times_date_iso, employee_position_id):
+        clinic_sched.append({
+            'date': times_date_iso,
+            'employee_pos': employee_position_id,
+            'beg': slot_data['timePeriod']['from'],
+            'end': slot_data['timePeriod']['to'],
+            'patient': slot_data['patient']['patientId'],
+        })
+
+    def set_package_data(self, package, req_meta, clinic_sched, clinic_id):
+        grouped_schedule = {}
+        for clinic_sched_data in clinic_sched:
+            key = (clinic_id, clinic_sched_data['date'], clinic_sched_data['employee_pos'])
+            if key in grouped_schedule:
+                work_interval = grouped_schedule[key]['work_interval']
+                if clinic_sched_data['beg'] < work_interval['work_beg']:
+                    work_interval['work_beg'] = clinic_sched_data['beg']
+                if clinic_sched_data['end'] > work_interval['work_end']:
+                    work_interval['work_end'] = clinic_sched_data['end']
+            else:
+                grouped_schedule[key] = {
+                    'employee_pos': clinic_sched_data['employee_pos'],
+                    'date': clinic_sched_data['date'],
+                    'work_interval': {
+                        'work_beg': clinic_sched_data['beg'],
+                        'work_end': clinic_sched_data['end'],
+                    },
+                }
+            grouped_schedule[key].setdefault('slots', []).append({
+                'slot_beg': clinic_sched_data['beg'],
+                'slot_end': clinic_sched_data['end'],
+                'patient': clinic_sched_data.get('patient'),
+            })
+        for key, data in grouped_schedule.iteritems():
+            time_item = package.add_main_pack_entity(
+                entity_code=TambovEntityCode.TIME,
+                method=req_meta.method,
+                main_param_name='clinic_date_emplPosition',
+                main_id='_'.join(key),
+                parents_params=req_meta['dst_parents_params'],
+                data=data,
+                diff_key='_'.join((str(clinic_id), data['date'])),
+            )
 
     ##################################################################
     ##  reform entities
@@ -107,17 +247,22 @@ class TimeTambovBuilder(Builder):
             TambovEntityCode.CLINIC: {
                 'entity': RisarEntityCode.ORGANIZATION, 'param': 'lpu_code'
             },
-            TambovEntityCode.LOCATION: {
-                'entity': RisarEntityCode.DOCTOR, 'param': 'doctor_code'
-            },
         }
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
 
         entities = RequestEntities()
+        doctor_code = self.reformer.find_local_id_by_remote(
+            RisarEntityCode.DOCTOR,
+            TambovEntityCode.EMPLOYEE_POSITION,
+            time_data['employee_pos'],
+        )
+        if not doctor_code:
+            return entities
+
         time_item = entities.set_main_entity(
-            dst_entity_code=RisarEntityCode.SCHEDULE_TICKET,
+            dst_entity_code=RisarEntityCode.SCHEDULE,
             dst_parents_params=header_meta['local_parents_params'],
-            dst_main_id_name='date',
+            dst_main_id_name='schedule_id',
             src_operation_code=src_operation_code,
             src_entity_code=src_entity_code,
             src_main_id_name=header_meta['remote_main_param_name'],
@@ -125,20 +270,30 @@ class TimeTambovBuilder(Builder):
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
-            self.build_local_time_body(time_item, time_data, header_meta)
+            time_item['body'] = {
+                'schedule_id': None,  # заполняется в set_current_id_func
+                'hospital': header_meta['local_parents_params']['lpu_code']['id'],
+                'doctor': doctor_code,
+                'date': time_data['date'],
+                'time_begin': time_data['work_interval']['work_beg'],
+                'time_end': time_data['work_interval']['work_end'],
+            }
+            for slot_data in time_data['slots']:
+                patient = None
+                if slot_data['patient']:
+                    patient_code = self.reformer.find_local_id_by_remote(
+                        RisarEntityCode.CLIENT,
+                        TambovEntityCode.SMART_PATIENT,
+                        slot_data['patient'],
+                    )
+                    # 2 - ИД псевдо пациента "Занято". Бывает нужен,
+                    # если занято мужчиной, либо пациент еще не приходил
+                    patient = patient_code or '2'
+
+                time_item['body'].setdefault('schedule_tickets', []).append({
+                    'time_begin': slot_data['slot_beg'],
+                    'time_end': slot_data['slot_end'],
+                    'patient': patient or Undefined,
+                })
 
         return entities
-
-    def build_local_time_body(self, time_item, time_data, header_meta):
-        sch_intervals = []
-        for time_interval in time_data['interval']:
-            sch_interval = {
-                'begin_time': time_interval['from'],
-                'end_time': time_interval['to'],
-                'quantity': 1,  # todo:
-            }
-            sch_intervals.append(sch_interval)
-        time_item['body'] = {
-            'date': time_data['date'],  # id/code двух систем будут совпадать
-            'intervals': sch_intervals,
-        }

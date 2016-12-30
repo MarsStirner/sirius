@@ -107,10 +107,7 @@ class Difference(object):
                     'root_external_id': (package_record.get('root_parent') or {}).get('main_id', main_id),
                     'external_id': main_id,
                     'key': package_record.get('diff_key'),
-                    'content': dumps(self.serialize_object(package_record['data']), cls=WebMisJsonEncoder),  # zeep
-                    # 'content': dumps(self.recursive_asdict(package_record['data']), cls=WebMisJsonEncoder),  # suds
-                    # 'content': dumps(xmltodict.parse(ET.tostring(package_record['data'], encoding='utf-8', method='xml')), encoding=WebMisJsonEncoder),  # ET
-                    # 'content': self.json_dumper(package_record['data']),  # json
+                    'content': self._dump_content(package_record['data']),
                     'operation_code': OperationCode.READ_MANY,
                     'level': level,
                 }
@@ -200,6 +197,19 @@ class Difference(object):
         # размещает в хранилище данные
         # todo:
         pass
+
+    def _dump_content(self, data):
+        if isinstance(data, ''):
+            res = dumps(self.serialize_object(data), cls=WebMisJsonEncoder)  # zeep
+        elif type(data) == 'instance':
+            res = dumps(self.recursive_asdict(data), cls=WebMisJsonEncoder)  # suds
+        elif isinstance(data, dict):
+            res = self.json_dumper(data)  # json
+        elif isinstance(data, basestring):  # если убрать сериализаторы в transfer, то неоднозначности не будет
+            res = dumps(xmltodict.parse(ET.tostring(data, encoding='utf-8', method='xml')), encoding=WebMisJsonEncoder)  # ET
+        else:
+            res = unicode(data)
+        return res
 
     @classmethod
     def serialize_object(cls, obj):

@@ -50,6 +50,7 @@ jsonschema>=2.5.1
 
 # SOAP
 zeep==0.23.0
+#suds
 
 # xml
 xmltodict

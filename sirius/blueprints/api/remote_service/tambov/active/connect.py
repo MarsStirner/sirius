@@ -13,7 +13,7 @@ from sirius.blueprints.monitor.exception import ExternalError
 from sirius.lib.apiutils import ApiException
 from sirius.models.protocol import ProtocolCode
 from zeep.exceptions import Fault as ZeepWebFault
-from suds import WebFault as sudsWebFault
+# from suds import WebFault as sudsWebFault
 
 tambov_api_login = 'ekonyaev'
 tambov_api_password = 'P9QP6V43'
