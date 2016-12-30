@@ -224,7 +224,7 @@ class PatientTambovBuilder(Builder):
                 'KLADR_locality': None,  # заполняется в entry
                 'KLADR_street': '',  # todo: посмотреть в МР что будет если ''  # заполняется в entry
                 'house': address_data['house'] or '0',  # заполняется в entry
-                'locality_type': None,  # заполняется в entry
+                'locality_type': 1,  # заполняется в entry
                 # todo:
                 # 'building': 'not-implemented' or Undefined,
                 'flat': address_data['apartment'] or '0',
@@ -232,7 +232,6 @@ class PatientTambovBuilder(Builder):
             # в схеме рисар пока не массив, а объект
             # main_item['body'].setdefault('residential_address', []).append(local_addr)
             main_item['body']['residential_address'] = local_addr
-            local_addr['locality_type'] = 1
             for entry in address_data['entries']:
                 if entry['level'] == '4':
                     if not local_addr['KLADR_locality']:
