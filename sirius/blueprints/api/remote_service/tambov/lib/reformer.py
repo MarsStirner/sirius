@@ -15,6 +15,8 @@ from sirius.blueprints.api.remote_service.tambov.active.hospital.reformer_builde
     HospitalTambovBuilder
 from sirius.blueprints.api.remote_service.tambov.active.employee.reformer_builder import \
     EmployeePositionTambovBuilder
+from sirius.blueprints.api.remote_service.tambov.active.time.reformer_builder import \
+    TimeTambovBuilder
 from sirius.blueprints.reformer.models.method import ServiceMethod
 from ..active.case.reformer_builder import CaseTambovBuilder
 from ..active.patient.reformer_builder import PatientTambovBuilder
@@ -49,6 +51,8 @@ class TambovReformer(Reformer):
             res = HospitalTambovBuilder(self).build_local_entities(header_meta, data)
         elif remote_entity_code == TambovEntityCode.BIRTH:
             res = BirthTambovBuilder(self).build_local_entities(header_meta, data)
+        elif remote_entity_code == TambovEntityCode.TIME:
+            res = TimeTambovBuilder(self).build_local_entities(header_meta, data)
         else:
             raise InternalError('Unexpected remote_entity_code (%s)' % remote_entity_code)
         return res
@@ -88,6 +92,8 @@ class TambovReformer(Reformer):
             data_req = EmployeePositionTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.EMPLOYEE)
         elif local_entity_code == RisarEntityCode.CHILDBIRTH or remote_entity_code == TambovEntityCode.BIRTH:
             data_req = BirthTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.BIRTH)
+        elif local_entity_code == RisarEntityCode.SCHEDULE or remote_entity_code == TambovEntityCode.TIME:
+            data_req = TimeTambovBuilder(self).build_remote_request(header_meta, TambovEntityCode.TIME)
         else:
             raise InternalError('Unexpected local_entity_code (%s)' % local_entity_code)
         self.set_remote_request_params(data_req)
@@ -146,6 +152,8 @@ class TambovReformer(Reformer):
             res = EmployeePositionTambovBuilder(self).build_remote_entity_packages(req)
         elif dst_entity == TambovEntityCode.BIRTH:
             res = BirthTambovBuilder(self).build_remote_entity_packages(req)
+        elif dst_entity == TambovEntityCode.TIME:
+            res = TimeTambovBuilder(self).build_remote_entity_packages(req)
         else:
             raise InternalError('Unexpected dst_entity (%s)' % dst_entity)
         return res

@@ -238,7 +238,7 @@ class Scheduler(object):
             try:
                 if not org_data['regionalCode']:
                     continue
-                # if not org_data['regionalCode'] in ('1434663',):  # в Тамбове права выданы только на эти лпу
+                # if not org_data['regionalCode'] in ('87',):  # todo: для тестов
                 #     continue
                 msg = self.create_message(system_code, entity_code)  # getTimes
                 meta = msg.get_header().meta

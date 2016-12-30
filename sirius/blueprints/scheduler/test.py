@@ -30,7 +30,7 @@ class _TestSchedule:
 
             req_data = ScheduleGroupRequest.query.filter(
                 # ScheduleGroupRequest.schedule_group_id == 1,
-                # ScheduleGroupRequest.order == 1,  # getPatiients
+                # ScheduleGroupRequest.order == 1,  # getPatients
                 # ScheduleGroupRequest.order == 3,  # get_doctors
                 # ScheduleGroupRequest.order == 4,  # get_measures_results
                 # ScheduleGroupRequest.order == 5,  # get_hospital_rec
@@ -39,5 +39,8 @@ class _TestSchedule:
 
                 # ScheduleGroupRequest.schedule_group_id == 2,
                 # ScheduleGroupRequest.order == 1,  # schedules
+
+                # ScheduleGroupRequest.schedule_group_id == 3,
+                # ScheduleGroupRequest.order == 1,  # get_times
             ).one()
             sch.execute(req_data)

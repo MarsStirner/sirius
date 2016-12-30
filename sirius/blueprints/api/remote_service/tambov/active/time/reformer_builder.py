@@ -55,32 +55,37 @@ class TimeTambovBuilder(Builder):
             clinic_id = req_meta['dst_parents_params']['clinic']['id']
             clinic_sched = []
             today = date.today()
-            range_val = 1
+            # today = date(2016, 12, 29)  # todo для тестов
+            # range_val = 14
+            range_val = 2  # todo для тестов
             max_date = today + timedelta(range_val)
             package.set_diff_key_range((
                 '_'.join((str(clinic_id), today.isoformat())),
                 '_'.join((str(clinic_id), max_date.isoformat()))
             ))
+            # for prototype_id in (5201,):  # todo для тестов Прием врача-акушера-гинеколога
             for prototype_id in (5202, 5203):  # первичный и повторный осмотр
                 services = self.get_services(clinic_id, prototype_id)
-                for service_id in services:
-                    locations = self.get_locations(clinic_id, service_id)
+                for service_data in services:
+                    locations = self.get_locations(clinic_id, service_data['id'])
                     for location_id in locations:
+                        # if location_id not in ('14813',):  # todo для тестов
+                        #     continue
                         employee_position_id = self.get_employee_position(location_id)
                         if employee_position_id:
                             for inc in range(range_val):
                                 sched_date = today + timedelta(inc)
                                 sched_date_iso = sched_date.isoformat()
                                 times = self.get_times(reformed_req, sched_date, location_id)
-                                for time_data in times:
+                                for time_data in times['timePeriod']:
                                     self.set_times(clinic_sched, time_data, sched_date_iso, employee_position_id)
                                 slots = self.get_reserved(sched_date, location_id)
                                 for slot_data in slots:
-                                    if slot_data['status'] == 4:
+                                    if slot_data['status'] == '4':
                                         # отмененная запись
                                         continue
                                     self.set_reserved(clinic_sched, slot_data, sched_date_iso, employee_position_id)
-            self.set_package_data(package, req_meta, clinic_sched, clinic_id)
+            self.set_package_data(package, reformed_req, req_meta, clinic_sched, clinic_id)
         # elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
         #     self.set_times([req_meta['dst_id']], package, req_meta)
         else:
@@ -167,9 +172,11 @@ class TimeTambovBuilder(Builder):
         return res
 
     def set_times(self, clinic_sched, time_data, sched_date_iso, employee_position_id):
+        if not (time_data['from'] and time_data['to']):
+            return
         clinic_sched.append({
             'date': sched_date_iso,
-            'empl_pos': employee_position_id,
+            'employee_pos': employee_position_id,
             'beg': time_data['from'],
             'end': time_data['to'],
         })
@@ -191,6 +198,9 @@ class TimeTambovBuilder(Builder):
         return res
 
     def set_reserved(self, clinic_sched, slot_data, times_date_iso, employee_position_id):
+        # могут быть экстренные пациенты без времени
+        if not (slot_data['timePeriod']['from'] and slot_data['timePeriod']['to']):
+            return
         clinic_sched.append({
             'date': times_date_iso,
             'employee_pos': employee_position_id,
@@ -199,7 +209,7 @@ class TimeTambovBuilder(Builder):
             'patient': slot_data['patient']['patientId'],
         })
 
-    def set_package_data(self, package, req_meta, clinic_sched, clinic_id):
+    def set_package_data(self, package, reformed_req, req_meta, clinic_sched, clinic_id):
         grouped_schedule = {}
         for clinic_sched_data in clinic_sched:
             key = (clinic_id, clinic_sched_data['date'], clinic_sched_data['employee_pos'])
@@ -226,7 +236,7 @@ class TimeTambovBuilder(Builder):
         for key, data in grouped_schedule.iteritems():
             time_item = package.add_main_pack_entity(
                 entity_code=TambovEntityCode.TIME,
-                method=req_meta.method,
+                method=reformed_req.method,
                 main_param_name='clinic_date_emplPosition',
                 main_id='_'.join(key),
                 parents_params=req_meta['dst_parents_params'],
@@ -271,12 +281,12 @@ class TimeTambovBuilder(Builder):
         )
         if src_operation_code != OperationCode.DELETE:
             time_item['body'] = {
-                'schedule_id': None,  # заполняется в set_current_id_func
+                # 'schedule_id': None,  # заполняется в set_current_id_func
                 'hospital': header_meta['local_parents_params']['lpu_code']['id'],
                 'doctor': doctor_code,
                 'date': time_data['date'],
-                'time_begin': time_data['work_interval']['work_beg'],
-                'time_end': time_data['work_interval']['work_end'],
+                'time_begin': time_data['work_interval']['work_beg'].isoformat()[:5],
+                'time_end': time_data['work_interval']['work_end'].isoformat()[:5],
             }
             for slot_data in time_data['slots']:
                 patient = None
@@ -291,8 +301,8 @@ class TimeTambovBuilder(Builder):
                     patient = patient_code or '2'
 
                 time_item['body'].setdefault('schedule_tickets', []).append({
-                    'time_begin': slot_data['slot_beg'],
-                    'time_end': slot_data['slot_end'],
+                    'time_begin': slot_data['slot_beg'].isoformat()[:5],
+                    'time_end': slot_data['slot_end'].isoformat()[:5],
                     'patient': patient or Undefined,
                 })
 
