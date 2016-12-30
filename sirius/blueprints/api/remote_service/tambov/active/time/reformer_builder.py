@@ -64,28 +64,30 @@ class TimeTambovBuilder(Builder):
                 '_'.join((str(clinic_id), today.isoformat())),
                 '_'.join((str(clinic_id), max_date.isoformat()))
             ))
+            locations_set = set()
             # for prototype_id in (5201,):  # todo для тестов Прием врача-акушера-гинеколога
             for prototype_id in (5202, 5203):  # первичный и повторный осмотр
                 services = self.get_services(clinic_id, prototype_id)
                 for service_data in services:
                     locations = self.get_locations(clinic_id, service_data['id'])
-                    for location_id in locations:
-                        # if location_id not in ('14813',):  # todo для тестов
-                        #     continue
-                        employee_position_id = self.get_employee_position(location_id)
-                        if employee_position_id:
-                            for inc in range(range_val):
-                                sched_date = today + timedelta(inc)
-                                sched_date_iso = sched_date.isoformat()
-                                times = self.get_times(reformed_req, sched_date, location_id)
-                                for time_data in times['timePeriod']:
-                                    self.set_times(clinic_sched, time_data, sched_date_iso, employee_position_id)
-                                slots = self.get_reserved(sched_date, location_id)
-                                for slot_data in slots:
-                                    if slot_data['status'] == '4':
-                                        # отмененная запись
-                                        continue
-                                    self.set_reserved(clinic_sched, slot_data, sched_date_iso, employee_position_id)
+                    locations_set.update(locations)
+            for location_id in locations_set:
+                # if location_id not in ('14813',):  # todo для тестов
+                #     continue
+                employee_position_id = self.get_employee_position(location_id)
+                if employee_position_id:
+                    for inc in range(range_val):
+                        sched_date = today + timedelta(inc)
+                        sched_date_iso = sched_date.isoformat()
+                        times = self.get_times(reformed_req, sched_date, location_id)
+                        for time_data in times['timePeriod']:
+                            self.set_times(clinic_sched, time_data, sched_date_iso, employee_position_id)
+                        slots = self.get_reserved(sched_date, location_id)
+                        for slot_data in slots:
+                            if slot_data['status'] == '4':
+                                # отмененная запись
+                                continue
+                            self.set_reserved(clinic_sched, slot_data, sched_date_iso, employee_position_id)
             self.set_package_data(package, reformed_req, req_meta, clinic_sched, clinic_id)
         # elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
         #     self.set_times([req_meta['dst_id']], package, req_meta)
