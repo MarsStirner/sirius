@@ -17,6 +17,7 @@ from sirius.blueprints.monitor.exception import InternalError, LoggedException
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.method import ApiMethod
+from sirius.lib.message import Message
 from sirius.lib.xform import Undefined
 from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
@@ -296,6 +297,13 @@ class TimeTambovBuilder(Builder):
                         TambovEntityCode.SMART_PATIENT,
                         slot_data['patient'],
                     )
+                    if not patient_code:
+                        if self.request_patient(slot_data['patient']):
+                            patient_code = self.reformer.find_local_id_by_remote(
+                                RisarEntityCode.CLIENT,
+                                TambovEntityCode.SMART_PATIENT,
+                                slot_data['patient'],
+                            )
                     # 2 - ИД псевдо пациента "Занято". Бывает нужен,
                     # если занято мужчиной, либо пациент еще не приходил
                     patient = patient_code or '2'
@@ -307,3 +315,20 @@ class TimeTambovBuilder(Builder):
                 })
 
         return entities
+
+    def request_patient(self, patient_uid):
+        from sirius.blueprints.api.local_service.producer import LocalProducer
+        msg = Message(None)
+        msg.to_remote_service()
+        msg.set_request_type()
+        meta = msg.get_header().meta
+        meta['local_operation_code'] = OperationCode.READ_ONE
+        meta['remote_system_code'] = self.remote_sys_code
+        meta['remote_entity_code'] = TambovEntityCode.SMART_PATIENT
+        meta['remote_main_id'] = patient_uid
+        prod = LocalProducer()
+        try:
+            res = prod.send(msg)
+        except LoggedException:
+            res = False
+        return res

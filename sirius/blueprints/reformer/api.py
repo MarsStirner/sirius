@@ -151,6 +151,21 @@ class Reformer(object):
                 local_id_prefix=rec_meta['dst_id_prefix'],
                 local_id=rec_meta['dst_id'],
             )
+        elif rec_meta['dst_operation_code'] == OperationCode.CHANGE:
+            answer_res = parser.get_params(
+                rec_meta['dst_entity_code'],
+                answer,
+                rec_meta['dst_id_url_param_name'],
+            )
+            if answer_res:
+                if rec_meta['dst_id'] != answer_res['main_id']:
+                    # изменился ID
+                    matching_id = self.get_by_local_id(
+                        rec_meta['src_entity_code'],
+                        rec_meta['dst_entity_code'],
+                        rec_meta['dst_id'],
+                    )
+                    matching_id.update(local_id=answer_res['main_id'])
 
     def conformity_remote(self, record, trans_res):
         # сопоставление ID в БД при добавлении данных
@@ -654,6 +669,15 @@ class Reformer(object):
 
     def get_remote_id_by_local(self, remote_entity_code, local_entity_code, local_id):
         res = MatchingId.get_remote_id(
+            local_entity_code,
+            local_id,
+            remote_entity_code,
+            self.remote_sys_code,
+        )
+        return res
+
+    def get_by_local_id(self, remote_entity_code, local_entity_code, local_id):
+        res = MatchingId.get_by_local_id(
             local_entity_code,
             local_id,
             remote_entity_code,

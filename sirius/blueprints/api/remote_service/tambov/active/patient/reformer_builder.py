@@ -221,7 +221,7 @@ class PatientTambovBuilder(Builder):
         # Женя: Берем только один адрес проживания, всё остальное пофиг. Если их несколько - берем первый
         for address_data in sm_patient_data['addresses']:
             local_addr = {
-                'KLADR_locality': None,  # заполняется в entry
+                'KLADR_locality': '',  # заполняется в entry
                 'KLADR_street': '',  # todo: посмотреть в МР что будет если ''  # заполняется в entry
                 'house': address_data['house'] or '0',  # заполняется в entry
                 'locality_type': 1,  # заполняется в entry
