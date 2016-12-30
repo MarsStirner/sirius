@@ -182,7 +182,6 @@ class CaseTambovBuilder(Builder):
             src_id=header_meta['local_main_id'],
         )
         if src_operation_code != OperationCode.DELETE:
-            resource_group_id = self.get_resource_group_id(ticket_data['hospital'], ticket_data['doctor'])
             visit_item['body'] = {
                 # 'id': None,  # проставляется в set_current_id_func
                 'visitResultId': safe_traverse(ticket_data, 'treatment_result'),
@@ -191,8 +190,10 @@ class CaseTambovBuilder(Builder):
                 'goalId': safe_traverse(ticket_data, 'visit_type') or '7',
                 'placeId': '1',
                 'profileId': safe_traverse(ticket_data, 'medical_care_profile'),
-                'resourceGroupId': resource_group_id,
             }
+            if src_operation_code == OperationCode.ADD:
+                resource_group_id = self.get_resource_group_id(ticket_data['hospital'], ticket_data['doctor'])
+                visit_item['body']['resourceGroupId'] = resource_group_id,
             diagnosis_osn = safe_traverse(checkup_data, 'medical_report', 'diagnosis_osn', 'MKB')
             if diagnosis_osn:
                 visit_item['body']['diagnoses'] = [{
@@ -244,7 +245,6 @@ class CaseTambovBuilder(Builder):
                 ))
             srv_data = srvs_data[0]  # считаем, что будет одна
             if src_operation_code != OperationCode.DELETE:
-                assert resource_group_id
                 serv_item['body'] = {
                     # 'id': None,  # проставляется в set_current_id_func
                     'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
@@ -255,9 +255,13 @@ class CaseTambovBuilder(Builder):
                     'orgId': safe_traverse(ticket_data, 'hospital') or '',
                     'quantity': safe_traverse(serv_code, 'medical_service_quantity'),
                     'fundingSourceTypeId': 1,
-                    'diagnosisId': dm.diag_id(safe_traverse(ticket_data, 'diagnosis')),
-                    'resourceGroupId': resource_group_id,
                 }
+                diagnosis = safe_traverse(ticket_data, 'diagnosis')
+                if diagnosis:
+                    serv_item['body']['diagnosisId'] = dm.diag_id(diagnosis)
+                if src_operation_code == OperationCode.ADD:
+                    assert resource_group_id
+                    serv_item['body']['resourceGroupId'] = resource_group_id,
 
         return entities
 
