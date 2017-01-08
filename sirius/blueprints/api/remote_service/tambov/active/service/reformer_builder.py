@@ -453,6 +453,8 @@ class ServiceTambovBuilder(Builder):
             src_id=header_meta['local_main_id'],
         )
         if src_operation_code != OperationCode.DELETE:
-            child_item['body'] = {'exch_card_1.xml': exch_card_data['exch_card']}
+            child_item['body'] = {
+                'exch_card_1.xml': exch_card_data['exch_card'].replace('\n', '')
+            }
 
         return entities
