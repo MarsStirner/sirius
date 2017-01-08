@@ -428,6 +428,7 @@ class ServiceTambovBuilder(Builder):
                     clinic_id, '11245', '99999'
                 ))
             srv_data = srvs_data[0]  # считаем, что будет одна
+            today = datetime.today()
 
             main_item['body'] = {
                 # 'id': None,  # проставляется в set_current_id_func
@@ -435,6 +436,8 @@ class ServiceTambovBuilder(Builder):
                 'serviceId': srv_data['id'],
                 'isRendered': True,
                 'orgId': clinic_id,
+                'dateFrom': today,
+                'dateTo': today,
             }
 
         child_item = entities.set_child_entity(
