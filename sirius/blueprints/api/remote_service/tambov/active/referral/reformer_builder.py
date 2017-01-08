@@ -17,6 +17,8 @@ from sirius.blueprints.api.remote_service.tambov.active.referral.srv_prototype_m
     SrvPrototypeMatch
 from sirius.blueprints.api.remote_service.tambov.entities import \
     TambovEntityCode
+from sirius.blueprints.api.remote_service.tambov.lib.diags_match import \
+    DiagsMatch
 from sirius.blueprints.monitor.exception import InternalError, ExternalError
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
@@ -358,6 +360,10 @@ class ReferralTambovBuilder(Builder):
                 'doctor_code': employee_position_id or '',
                 'status': 'performed' if safe_traverse_attrs(rend_serv_data, 'isRendered') else 'assigned',
             }
+            dm = DiagsMatch()
+            diagnosisId = safe_traverse_attrs(rend_serv_data, 'diagnosisId')
+            if diagnosisId:
+                sp_ckeckup_item['body']['diagnosis'] = dm.diag_code(diagnosisId) or Undefined,
 
         return entities
 
