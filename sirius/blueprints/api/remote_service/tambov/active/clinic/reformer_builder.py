@@ -120,6 +120,11 @@ class ClinicTambovBuilder(Builder):
         }
 
     def get_town_kladr(self, address):
+        res = None
         for entry in address['data']:
             if entry['level'] == 4:
-                return entry['kladrCode'][:11]
+                if not res:
+                    res = entry['kladrCode'][:11]
+            elif entry['level'] == 5:
+                res = entry['kladrCode'][:11]
+        return res
