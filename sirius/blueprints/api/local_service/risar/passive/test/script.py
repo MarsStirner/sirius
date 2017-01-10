@@ -207,3 +207,45 @@ class _TestLocalApi:
             'post', 'https://test68.r-mis.ru/medservices-ws/service-rs/renderedServiceProtocols/16424035',
             session, {'report_ex1.xml': template_text}, req_mode=req_mode)
         print req_result
+
+    def _test_create_miss_prototype_list(self):
+        from sirius.models.protocol import ProtocolCode
+        from sirius.blueprints.api.remote_service.tambov.active.referral.srv_prototype_match import \
+            SrvPrototypeMatch
+        from sirius.blueprints.api.remote_service.tambov.entities import \
+            TambovEntityCode
+        from sirius.blueprints.reformer.api import DataRequest
+        from sirius.lib.implement import Implementation
+        from sirius.models.operation import OperationCode
+        from sirius.models.system import SystemCode
+
+        SrvPrototypeMatch.init()
+        pr_code_map = SrvPrototypeMatch.prototype_code__srv_prototype__map
+
+        implement = Implementation()
+        reformer = implement.get_reformer(SystemCode.TAMBOV)
+        with app.app_context():
+            srv_api_method = reformer.get_api_method(
+                reformer.remote_sys_code,
+                TambovEntityCode.SERVICE,
+                OperationCode.READ_MANY,
+            )
+        org_code = '1434663'  # Контрольная МО Тамбова
+        with open('missing_prototype_code_for_1434663_01.csv', 'w') as pr:
+
+            for pr_code in pr_code_map:
+                prototype_id = SrvPrototypeMatch.get_prototype_id_by_prototype_code(pr_code)
+
+                req = DataRequest()
+                req.set_req_params(
+                    url=srv_api_method['template_url'],
+                    method=srv_api_method['method'],
+                    protocol=ProtocolCode.SOAP,
+                    data={
+                        'clinic': org_code,
+                        'prototype': prototype_id,
+                    },
+                )
+                srvs_data = reformer.transfer.execute(req)
+                if not srvs_data:
+                    pr.write(pr_code + '\n')
