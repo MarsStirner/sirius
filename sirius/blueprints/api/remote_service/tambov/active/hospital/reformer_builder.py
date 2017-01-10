@@ -121,7 +121,7 @@ class HospitalTambovBuilder(Builder):
         if src_operation_code != OperationCode.DELETE:
             employee_position_id = self.get_employee_position(hospital_rec_data['resourceGroupId'])
             diag_1_code = diag_4_code = None
-            for diag_data in hospital_rec_data['diagnoses']:
+            for diag_data in case_data['diagnoses']:
                 if diag_data['stageId'] == '1':
                     diag_1_code = dm.diag_code(diag_data['diagnosId'])
                 elif diag_data['stageId'] == '4':
