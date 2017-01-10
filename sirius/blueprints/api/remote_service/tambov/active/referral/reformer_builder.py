@@ -156,7 +156,7 @@ class ReferralTambovBuilder(Builder):
             level_count=1,
         )
 
-        org_code = appoint_data.get('appointed_lpu') or appoint_data.get('referral_lpu')
+        org_code = appoint_data.get('referral_lpu') or appoint_data.get('appointed_lpu')
         date = appoint_data.get('date') or appoint_data.get('referral_date') or measure_data.get('begin_datetime')
         srv_api_method = self.reformer.get_api_method(
             self.remote_sys_code,
@@ -192,7 +192,13 @@ class ReferralTambovBuilder(Builder):
                 'referralOrganizationId': org_code,
                 'refServiceId': srv_data and [srv_data['id']],  # баг какой-то. ждет список
                 'typeId': typeId,
+                'receivingOrganizationId': appoint_data.get('referral_lpu'),
+                'referralSpecialistId': appoint_data.get('appointed_doctor'),
             }
+            dm = DiagsMatch()
+            diagnosis_code = appoint_data.get('diagnosis')
+            if diagnosis_code:
+                main_item['body']['diagnosisId'] = dm.diag_id(diagnosis_code)
 
         return entities
 
@@ -363,7 +369,7 @@ class ReferralTambovBuilder(Builder):
             dm = DiagsMatch()
             diagnosisId = safe_traverse_attrs(rend_serv_data, 'diagnosisId')
             if diagnosisId:
-                sp_ckeckup_item['body']['diagnosis'] = dm.diag_code(diagnosisId) or Undefined,
+                sp_ckeckup_item['body']['diagnosis'] = dm.diag_code(diagnosisId) or Undefined
 
         return entities
 

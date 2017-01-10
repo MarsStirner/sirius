@@ -193,7 +193,7 @@ class CaseTambovBuilder(Builder):
             }
             if src_operation_code == OperationCode.ADD:
                 resource_group_id = self.get_resource_group_id(ticket_data['hospital'], ticket_data['doctor'])
-                visit_item['body']['resourceGroupId'] = resource_group_id,
+                visit_item['body']['resourceGroupId'] = resource_group_id
             diagnosis_osn = safe_traverse(checkup_data, 'medical_report', 'diagnosis_osn', 'MKB')
             if diagnosis_osn:
                 visit_item['body']['diagnoses'] = [{
@@ -261,7 +261,7 @@ class CaseTambovBuilder(Builder):
                     serv_item['body']['diagnosisId'] = dm.diag_id(diagnosis)
                 if src_operation_code == OperationCode.ADD:
                     assert resource_group_id
-                    serv_item['body']['resourceGroupId'] = resource_group_id,
+                    serv_item['body']['resourceGroupId'] = resource_group_id
 
         return entities
 
