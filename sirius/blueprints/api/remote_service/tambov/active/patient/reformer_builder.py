@@ -232,8 +232,11 @@ class PatientTambovBuilder(Builder):
             # в схеме рисар пока не массив, а объект
             # main_item['body'].setdefault('residential_address', []).append(local_addr)
             main_item['body']['residential_address'] = local_addr
-            for entry in address_data['entries']:
-                if entry['level'] == '4':
+            for entry in sorted(address_data['entries'], key=lambda x: x['level'], reverse=True):
+                if entry['level'] == '2':
+                    if not local_addr['KLADR_locality']:
+                        local_addr['KLADR_locality'] = entry['kladrCode'][:11] + '00'
+                elif entry['level'] == '4':
                     if not local_addr['KLADR_locality']:
                         local_addr['KLADR_locality'] = entry['kladrCode'][:11] + '00'
                 elif entry['level'] == '5':
