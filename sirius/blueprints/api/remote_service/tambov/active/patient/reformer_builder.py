@@ -16,6 +16,7 @@ from sirius.blueprints.api.remote_service.tambov.entities import \
 from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.method import ApiMethod
+from sirius.blueprints.scheduler.models import SchGrReqExecute
 from sirius.lib.xform import Undefined
 from sirius.models.system import SystemCode
 from sirius.models.operation import OperationCode
@@ -78,7 +79,9 @@ class PatientTambovBuilder(Builder):
         patient_uids = []
         res = None
         page = 1
-        # todo: брать из даты начала работы планировщика по сущности
+        # todo: включить после тестов
+        # last_exec_datetime = SchGrReqExecute.last_datetime(RisarEntityCode.CLIENT) or datetime.today()
+        # modified_since = last_execute_datetime.date()
         modified_since = date(2016, 11, 1)
         # package.set_diff_key_range((modified_since.isoformat(),
         #                             date.today().isoformat()))

@@ -183,3 +183,16 @@ class SchGrReqExecute(Model):
         self.update(
             end_datetime=datetime.today()
         )
+
+    @classmethod
+    def last_datetime(cls, local_entity_code):
+        res = cls.query.join(
+            ScheduleGroupRequest
+        ).join(
+            Entity
+        ).filter(
+            Entity.code == local_entity_code
+        ).order_by(
+            cls.id.desc()
+        ).limit(1).first()
+        return res and res.begin_datetime
