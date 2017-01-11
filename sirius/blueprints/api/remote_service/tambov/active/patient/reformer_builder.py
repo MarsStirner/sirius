@@ -208,7 +208,6 @@ class PatientTambovBuilder(Builder):
                     'insurance_document_issuing_authority': document_issuing_authority,    # —
                 })
             elif document_data.type == '13':  # passport
-                # todo: в схеме рисар document будет переделан на список documents. зачем?
                 main_item['body'].setdefault('document', {}).update({
                     'document_type_code': safe_int(document_data.type),
                     'document_number': document_data.number,
@@ -218,20 +217,24 @@ class PatientTambovBuilder(Builder):
                 })
             else:
                 pass
-        # Женя: Берем только один адрес проживания, всё остальное пофиг. Если их несколько - берем первый
         for address_data in sm_patient_data['addresses']:
+            if address_data['type'] == '3':
+                addr_type_name = 'residential_address'
+            elif address_data['type'] == '4':
+                addr_type_name = 'registration_address'
+            else:
+                continue
+            # дефолты. заполняется в entry
             local_addr = {
-                'KLADR_locality': '',  # заполняется в entry
-                'KLADR_street': '',  # todo: посмотреть в МР что будет если ''  # заполняется в entry
-                'house': address_data['house'] or '0',  # заполняется в entry
-                'locality_type': 1,  # заполняется в entry
-                # todo:
+                'KLADR_locality': '',
+                'KLADR_street': '',
+                'house': address_data['house'] or '0',
+                'locality_type': 1,
+                # Женя: building не передаем. они корпус пишут в номер дома
                 # 'building': 'not-implemented' or Undefined,
                 'flat': address_data['apartment'] or '0',
             }
-            # в схеме рисар пока не массив, а объект
-            # main_item['body'].setdefault('residential_address', []).append(local_addr)
-            main_item['body']['residential_address'] = local_addr
+            main_item['body'][addr_type_name] = local_addr
             for entry in sorted(address_data['entries'], key=lambda x: x['level'], reverse=True):
                 if entry['level'] == '2':
                     if not local_addr['KLADR_locality']:
@@ -247,8 +250,6 @@ class PatientTambovBuilder(Builder):
                     local_addr['house'] = entry['name']
                 elif entry['level'] == '8' and entry['name']:
                     local_addr['flat'] = entry['name']
-            # в схеме рисар пока не массив, а объект
-            break
 
         #######################
         ## RisarEntityCode.CARD
