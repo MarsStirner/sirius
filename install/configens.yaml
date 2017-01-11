@@ -76,7 +76,7 @@ supervisor:
       redirect_stderr=True
       autostart=false
       autorestart=true
-      startsecs=10
+      startsecs=3
       daemon=true
       debug={{ common.user_apps.DEBUG }}
 

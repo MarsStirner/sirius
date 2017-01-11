@@ -94,16 +94,10 @@ class Schedule(Model):
         def release_lock():
             cache.delete(lock_id)
 
-        res = None
-        sch_exec = None
         try:
             res = acquire_lock()
-            if res:
-                sch_exec = ScheduleExecute.begin(self)
             yield res
         finally:
-            if res:
-                sch_exec.end()
             release_lock()
 
 
@@ -147,20 +141,20 @@ class ScheduleGroupRequest(Model):
     )
 
 
-class ScheduleExecute(Model):
+class SchGrReqExecute(Model):
     """История выполнения расписания запросов сущностей"""
 
-    __tablename__ = 'schedule_execute'
+    __tablename__ = 'sch_gr_req_execute'
 
-    schedule_id = reference_col('schedule', unique=False, nullable=False)
-    schedule = relationship('Schedule', backref='set_schedule_execute')
+    sch_group_request_id = reference_col('sch_group_request', unique=False, nullable=False)
+    sch_group_request = relationship('ScheduleGroupRequest', backref='set_sch_gr_req_execute')
     begin_datetime = Column(db.DateTime, unique=False, nullable=False)
     end_datetime = Column(db.DateTime, unique=False, nullable=True)
 
     @classmethod
-    def begin(cls, schedule):
+    def begin(cls, sch_group_request):
         res = cls.create(
-            schedule_id=schedule.id,
+            sch_group_request_id=sch_group_request.id,
             begin_datetime=datetime.today()
         )
         return res

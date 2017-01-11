@@ -10,12 +10,11 @@ import logging
 
 import os
 from sirius.blueprints.monitor.exception import InternalError, LoggedException
-from sirius.extensions import db
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message
 from sirius.models.operation import OperationCode
 from sirius.models.system import SystemCode
-from .models import Schedule
+from .models import Schedule, SchGrReqExecute
 
 logger = logging.getLogger('simple')
 
@@ -24,32 +23,18 @@ class Scheduler(object):
     def run(self):
         schedules = Schedule.get_schedules_to_execute()
         for schedule in schedules:
-            # logger.debug('Scheduler %s' % schedule.code)
             with schedule.acquire_group_lock() as is_success:
-                # logger.debug('Scheduler locked %s %s sessionId %s' % (
-                #     schedule.code, is_success, id(db.session)
-                # ))
                 if is_success:
                     for req_data in schedule.schedule_group.get_requests():
-                        self.execute(req_data)
-                        db.session.commit()
-                        # на след. цикле ошибка DetachedInstanceError:
-                        # Parent instance <Schedule> is not bound to a Session;
-                        # lazy load operation of attribute 'schedule_group' cannot proceed
-    def run_(self):
-        schedules = Schedule.get_schedules_to_execute()
-        for schedule in schedules:
-            # logger.debug('Scheduler locked %s sessionId %s' % (
-            #     schedule.code, id(db.session)
-            # ))
-            for req_data in schedule.schedule_group.get_requests():
-                self.execute(req_data)
-                db.session.commit()
+                        sch_exec = SchGrReqExecute.begin(req_data)
+                        try:
+                            self.execute(req_data)
+                        finally:
+                            sch_exec.end()
 
     def execute(self, req_data):
         from sirius.blueprints.api.local_service.producer import LocalProducer
 
-        logger.debug('Scheduler execute sessionId %s' % id(db.session))
         entity_code = req_data.entity.code
         system_code = req_data.system.code
         sampling_method_name = req_data.sampling_method
