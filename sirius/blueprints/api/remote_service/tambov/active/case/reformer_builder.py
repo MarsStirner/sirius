@@ -191,7 +191,7 @@ class CaseTambovBuilder(Builder):
                 'placeId': '1',
                 'profileId': safe_traverse(ticket_data, 'medical_care_profile'),
             }
-            if self.reformer.find_remote_id_by_local(
+            if not self.reformer.find_remote_id_by_local(
                 TambovEntityCode.VISIT,
                 src_entity_code,
                 header_meta['local_main_id'],
@@ -289,7 +289,12 @@ class CaseTambovBuilder(Builder):
                 diagnosis = safe_traverse(ticket_data, 'diagnosis')
                 if diagnosis:
                     serv_item['body']['diagnosisId'] = dm.diag_id(diagnosis)
-                if src_operation_code == OperationCode.ADD:
+                if not self.reformer.find_remote_id_by_local(
+                        TambovEntityCode.REND_SERVICE,
+                        src_entity_code,
+                        header_meta['local_main_id'],
+                        # '_'.join((header_meta['local_main_id'], prototype_id)),
+                ):
                     assert resource_group_id
                     serv_item['body']['resourceGroupId'] = resource_group_id
 
