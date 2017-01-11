@@ -41,7 +41,10 @@ class ScheduleTime(Model):
 
 
 class Schedule(Model):
-    """Расписание запросов групп сущностей"""
+    """
+    Расписание запросов групп сущностей
+    Есть возможность планирования одной и той же группы на разное время
+    """
 
     __tablename__ = 'schedule'
 
@@ -57,27 +60,44 @@ class Schedule(Model):
 
     @classmethod
     def get_schedules_to_execute(cls):
+        """Отбор расписаний, для которых есть подходящие по времени группы"""
         cur_datetime = datetime.today()
         cur_date = cur_datetime.date()
         cur_time = cur_datetime.time()
+        old_execs_q = SchGrReqExecute.query.join(
+            ScheduleGroupRequest, ScheduleGroupRequest.id == SchGrReqExecute.sch_group_request_id
+        ).filter(
+            ScheduleGroupRequest.schedule_group_id == ScheduleGroup.id,
+            case([
+                (
+                    ScheduleTime.type == ScheduleTimeType.DELTA,
+                    cur_datetime - SchGrReqExecute.begin_datetime > ScheduleTime.time
+                ),
+                (
+                    ScheduleTime.type == ScheduleTimeType.TIME,
+                    and_(
+                        cur_time.isoformat() > ScheduleTime.time,
+                        cur_date > cast(SchGrReqExecute.begin_datetime, db.Date)
+                    )
+                ),
+            ]),
+        ).correlate(ScheduleTime).correlate(ScheduleGroup).order_by(
+            SchGrReqExecute.id.desc()
+        ).limit(1)
+        one_exec_q = SchGrReqExecute.query.join(
+            ScheduleGroupRequest, ScheduleGroupRequest.id == SchGrReqExecute.sch_group_request_id
+        ).filter(
+            ScheduleGroupRequest.schedule_group_id == ScheduleGroup.id
+        ).correlate(ScheduleGroup).limit(1)
         res = cls.query.join(
             ScheduleTime, ScheduleTime.id == cls.schedule_time_id
-        # ).join(
-        #     ScheduleExecute, ScheduleExecute.schedule_id == cls.id
+        ).join(
+            ScheduleGroup, ScheduleGroup.id == cls.schedule_group_id
         ).filter(
-            # case([
-            #     (
-            #         ScheduleTime.type == ScheduleTimeType.DELTA,
-            #         cur_datetime - ScheduleExecute.begin_datetime > ScheduleTime.time
-            #     ),
-            #     (
-            #         ScheduleTime.type == ScheduleTimeType.TIME,
-            #         and_(
-            #             cur_time.isoformat() > ScheduleTime.time,
-            #             cur_date > cast(ScheduleExecute.begin_datetime, db.Date)
-            #         )
-            #     ),
-            # ]),
+            or_(
+                old_execs_q.exists() == True,
+                one_exec_q.exists() == False,
+            )
         ).all()
         return res
 
