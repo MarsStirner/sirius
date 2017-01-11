@@ -6,6 +6,8 @@
 @date: 23.09.2016
 
 """
+import logging
+
 from abc import ABCMeta, abstractmethod
 from sirius.blueprints.monitor.api import IStreamMeta
 from sirius.blueprints.monitor.exception import module_entry, InternalError, \
@@ -19,6 +21,8 @@ from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 from .models.matching import MatchingId
 from .models.method import ApiMethod
+
+logger = logging.getLogger('simple')
 
 
 class Reformer(object):
@@ -322,6 +326,8 @@ class Reformer(object):
             if set_parent_id_func:
                 set_parent_id_func(record)
             if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
+                logger.debug("skip resend or skip trash for id='%s'" %
+                             rec_meta['dst_id'])
                 return
             self.set_rest_url_params(rec_meta)
             self.pre_conformity_remote(record)
@@ -353,6 +359,8 @@ class Reformer(object):
             if set_parent_id_func:
                 set_parent_id_func(record)
             if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
+                logger.debug("skip resend or skip trash for id='%s'" %
+                             rec_meta['dst_id'])
                 return
             self.set_rest_url_params(rec_meta)
             url = rec_meta['dst_url']
