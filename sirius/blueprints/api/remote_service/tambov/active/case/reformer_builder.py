@@ -191,25 +191,56 @@ class CaseTambovBuilder(Builder):
                 'placeId': '1',
                 'profileId': safe_traverse(ticket_data, 'medical_care_profile'),
             }
-            if src_operation_code == OperationCode.ADD:
+            if self.reformer.find_remote_id_by_local(
+                TambovEntityCode.VISIT,
+                src_entity_code,
+                header_meta['local_main_id'],
+            ):
                 resource_group_id = self.get_resource_group_id(ticket_data['hospital'], ticket_data['doctor'])
                 visit_item['body']['resourceGroupId'] = resource_group_id
             diagnosis_osn = safe_traverse(checkup_data, 'medical_report', 'diagnosis_osn', 'MKB')
             if diagnosis_osn:
-                visit_item['body']['diagnoses'] = [{
-                    'stageId': 4,
-                    'main': True,
-                    'diagnosId': dm.safe_diag_id(diagnosis_osn),
-                    'establishmentDate': to_date(safe_traverse(checkup_data[gen_info], 'date')),
-                    'diseaseTypeId': safe_traverse(ticket_data, 'disease_character'),
-                }]
+                diags_osl = safe_traverse(checkup_data, 'medical_report', 'diagnosis_osl', 'MKB')
+                diags_sop = safe_traverse(checkup_data, 'medical_report', 'diagnosis_sop', 'MKB')
+                visit_diagnoses = visit_item['body'].setdefault('diagnoses', [])
+                gen_info_date = to_date(safe_traverse(checkup_data[gen_info], 'date'))
+                disease_character = safe_traverse(ticket_data, 'disease_character')
+                self.add_visit_diagnosis(
+                    visit_diagnoses,
+                    diagnosis_osn,
+                    '1',
+                    gen_info_date,
+                    disease_character,
+                    dm
+                )
+                for diagnosis_osl in diags_osl:
+                    self.add_visit_diagnosis(
+                        visit_diagnoses,
+                        diagnosis_osl,
+                        '3',
+                        gen_info_date,
+                        disease_character,
+                        dm
+                    )
+                for diagnosis_sop in diags_sop:
+                    self.add_visit_diagnosis(
+                        visit_diagnoses,
+                        diagnosis_sop,
+                        '2',
+                        gen_info_date,
+                        disease_character,
+                        dm
+                    )
 
         srv_api_method = self.reformer.get_api_method(
             self.remote_sys_code,
             TambovEntityCode.SERVICE,
             OperationCode.READ_MANY,
         )
-        for serv_code in (safe_traverse(ticket_data, 'medical_services') or ()):
+        for medical_serv_item in (safe_traverse(ticket_data, 'medical_services') or ()):
+            prototype_code = safe_traverse(medical_serv_item, 'medical_service') or ''
+            prototype_id = SrvPrototypeMatch.get_prototype_id_by_prototype_code(prototype_code)
+
             def set_parent_id_func(parent_meta, entity_meta, entity_body):
                 case_meta = parent_meta['parent_entity']['meta']
                 entity_body['medicalCaseId'] = case_meta['dst_id']
@@ -223,10 +254,9 @@ class CaseTambovBuilder(Builder):
                 src_entity_code=src_entity_code,
                 src_main_id_name=header_meta['local_main_param_name'],
                 src_id=header_meta['local_main_id'],
+                # src_id='_'.join((header_meta['local_main_id'], prototype_id)),
                 set_parent_id_func=set_parent_id_func,
             )
-            prototype_code = safe_traverse(serv_code, 'medical_service') or ''
-            prototype_id = SrvPrototypeMatch.get_prototype_id_by_prototype_code(prototype_code)
             org_code = safe_traverse(ticket_data, 'hospital') or ''
             req = DataRequest()
             req.set_req_params(
@@ -253,7 +283,7 @@ class CaseTambovBuilder(Builder):
                     'dateTo': to_date(safe_traverse(ticket_data, 'date_open')),
                     'isRendered': True,
                     'orgId': safe_traverse(ticket_data, 'hospital') or '',
-                    'quantity': safe_traverse(serv_code, 'medical_service_quantity'),
+                    'quantity': safe_traverse(medical_serv_item, 'medical_service_quantity'),
                     'fundingSourceTypeId': 1,
                 }
                 diagnosis = safe_traverse(ticket_data, 'diagnosis')
@@ -291,3 +321,13 @@ class CaseTambovBuilder(Builder):
         )
         location_id = self.transfer__send_request(req)
         return location_id
+
+    def add_visit_diagnosis(self, diagnoses, diagnosis, typeId, gen_info_date, disease_character, dm):
+        diagnoses.append({
+            'stageId': '4',
+            'typeId': typeId,
+            'main': typeId == '1',
+            'diagnosId': dm.safe_diag_id(diagnosis),
+            'establishmentDate': gen_info_date,
+            'diseaseTypeId': disease_character,
+        })
