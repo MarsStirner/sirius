@@ -253,8 +253,7 @@ class CaseTambovBuilder(Builder):
                 src_operation_code=src_operation_code,
                 src_entity_code=src_entity_code,
                 src_main_id_name=header_meta['local_main_param_name'],
-                # src_id=header_meta['local_main_id'],
-                src_id='_'.join((header_meta['local_main_id'], prototype_id)),
+                src_id='_'.join((str(header_meta['local_main_id']), prototype_id)),
                 set_parent_id_func=set_parent_id_func,
             )
             org_code = safe_traverse(ticket_data, 'hospital') or ''
@@ -292,8 +291,7 @@ class CaseTambovBuilder(Builder):
                 if not self.reformer.find_remote_id_by_local(
                         TambovEntityCode.REND_SERVICE,
                         src_entity_code,
-                        # header_meta['local_main_id'],
-                        '_'.join((header_meta['local_main_id'], prototype_id)),
+                        '_'.join((str(header_meta['local_main_id']), prototype_id)),
                 ):
                     assert resource_group_id
                     serv_item['body']['resourceGroupId'] = resource_group_id
