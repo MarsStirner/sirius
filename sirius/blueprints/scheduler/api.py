@@ -31,6 +31,11 @@ class Scheduler(object):
                             self.execute(req_data)
                         finally:
                             sch_exec.end()
+                else:
+                    logger.info(
+                        'Scheduler acquire_group_lock denied for schedule.code=%s' %
+                        schedule.code
+                    )
 
     def execute(self, req_data):
         from sirius.blueprints.api.local_service.producer import LocalProducer

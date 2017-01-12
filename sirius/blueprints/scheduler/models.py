@@ -114,11 +114,13 @@ class Schedule(Model):
         def release_lock():
             cache.delete(lock_id)
 
+        res = None
         try:
             res = acquire_lock()
             yield res
         finally:
-            release_lock()
+            if res:
+                release_lock()
 
 
 class ScheduleGroup(Model):
