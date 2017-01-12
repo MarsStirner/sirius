@@ -132,7 +132,11 @@ class ReferralTambovBuilder(Builder):
         # todo: стоит напрямую найти measure_type, а в неГоспитализациях дозапрашивать
         # prototype_id, так как в госпитализации нет прототипа (в файле
         # фейковый проставлен)
-        prototype_id = SrvPrototypeMatch.get_prototype_id_by_mes_code(measure_data.get('measure_type_code'))
+        prototype_id = SrvPrototypeMatch.get_prototype_id_by_mes_code(
+            measure_data.get('measure_type_code'), error_ignore=True
+        )
+        if not prototype_id:
+            return entities
         measure_type = SrvPrototypeMatch.get_measure_type(prototype_id)
         if measure_type in ('healthcare', 'social_preventiv'):
             return entities
@@ -223,7 +227,12 @@ class ReferralTambovBuilder(Builder):
         childs = pack_entity['childs']
         rend_serv_item = childs[TambovEntityCode.REND_SERVICE][0]
         rend_serv_data = rend_serv_item['data']
-        measure_code = SrvPrototypeMatch.get_measure_code(rend_serv_data['prototypeId'])
+        # Евгений Коняев, [12.01.17 20:02]
+        # всё на что у нас нашлось сопоставление в файле уже есть. С остальными будем разбираться отдельно
+        # 0001 из сопоставления убираем и ошибки в этйо части решены
+        measure_code = SrvPrototypeMatch.get_measure_code(rend_serv_data['prototypeId'], error_ignore=True)
+        if not measure_code:
+            return entities
 
         if referral_data:
             measure_item = entities.set_main_entity(

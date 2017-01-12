@@ -46,28 +46,28 @@ class SrvPrototypeMatch(object):
                         )
                         if prototype_code:
                             cls.prototype_code__srv_prototype__map[prototype_code] = prototype_id
-                    if measure_id:
-                        cls.measure__srv_prototype__map[measure_id] = prototype_id
+                    # if measure_id:
+                    #     cls.measure__srv_prototype__map[measure_id] = prototype_id
                     if measure_code:
                         cls.measure_code__srv_prototype__map[measure_code] = prototype_id
             cls.inited = True
 
-    @classmethod
-    def get_prototype_id(cls, measure_id):
-        cls.init()
-        res = cls.measure__srv_prototype__map.get(measure_id)
-        if not res:
-            raise InternalError(
-                'For measure_id (%s) not found match prototype_id in "%s" file' %
-                (measure_id, cls.fname)
-            )
-        return res
+    # @classmethod
+    # def get_prototype_id(cls, measure_id):
+    #     cls.init()
+    #     res = cls.measure__srv_prototype__map.get(measure_id)
+    #     if not res:
+    #         raise InternalError(
+    #             'For measure_id (%s) not found match prototype_id in "%s" file' %
+    #             (measure_id, cls.fname)
+    #         )
+    #     return res
 
     @classmethod
-    def get_prototype_id_by_mes_code(cls, measure_code):
+    def get_prototype_id_by_mes_code(cls, measure_code, error_ignore=False):
         cls.init()
         res = cls.measure_code__srv_prototype__map.get(measure_code)
-        if not res:
+        if not res and not error_ignore:
             raise InternalError(
                 'For measure_code (%s) not found match prototype_id in "%s" file' %
                 (measure_code, cls.fname)
@@ -96,22 +96,22 @@ class SrvPrototypeMatch(object):
             )
         return res
 
-    @classmethod
-    def get_measure_id(cls, prototype_id):
-        cls.init()
-        res = cls.srv_prototype__measure__map.get(prototype_id, (None,))[0]
-        if not res:
-            raise InternalError(
-                'For prototype_id (%s) not found match measure_id in "%s" file' %
-                (prototype_id, cls.fname)
-            )
-        return res
+    # @classmethod
+    # def get_measure_id(cls, prototype_id):
+    #     cls.init()
+    #     res = cls.srv_prototype__measure__map.get(prototype_id, (None,))[0]
+    #     if not res:
+    #         raise InternalError(
+    #             'For prototype_id (%s) not found match measure_id in "%s" file' %
+    #             (prototype_id, cls.fname)
+    #         )
+    #     return res
 
     @classmethod
-    def get_measure_code(cls, prototype_id):
+    def get_measure_code(cls, prototype_id, error_ignore=False):
         cls.init()
         res = cls.srv_prototype__measure_code__map.get(prototype_id, (None,))[0]
-        if not res:
+        if not res and not error_ignore:
             raise InternalError(
                 'For prototype_id (%s) not found match measure_code in "%s" file' %
                 (prototype_id, cls.fname)
