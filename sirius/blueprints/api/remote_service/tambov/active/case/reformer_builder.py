@@ -200,8 +200,8 @@ class CaseTambovBuilder(Builder):
                 visit_item['body']['resourceGroupId'] = resource_group_id
             diagnosis_osn = safe_traverse(checkup_data, 'medical_report', 'diagnosis_osn', 'MKB')
             if diagnosis_osn:
-                diags_osl = safe_traverse(checkup_data, 'medical_report', 'diagnosis_osl', 'MKB')
-                diags_sop = safe_traverse(checkup_data, 'medical_report', 'diagnosis_sop', 'MKB')
+                diags_osl = safe_traverse(checkup_data, 'medical_report', 'diagnosis_osl')
+                diags_sop = safe_traverse(checkup_data, 'medical_report', 'diagnosis_sop')
                 visit_diagnoses = visit_item['body'].setdefault('diagnoses', [])
                 gen_info_date = to_date(safe_traverse(checkup_data[gen_info], 'date'))
                 disease_character = safe_traverse(ticket_data, 'disease_character')
@@ -213,19 +213,19 @@ class CaseTambovBuilder(Builder):
                     disease_character,
                     dm
                 )
-                for diagnosis_osl in diags_osl:
+                for diagnosis_osl in diags_osl or ():
                     self.add_visit_diagnosis(
                         visit_diagnoses,
-                        diagnosis_osl,
+                        safe_traverse(diagnosis_osl, 'MKB'),
                         '3',
                         gen_info_date,
                         disease_character,
                         dm
                     )
-                for diagnosis_sop in diags_sop:
+                for diagnosis_sop in diags_sop or ():
                     self.add_visit_diagnosis(
                         visit_diagnoses,
-                        diagnosis_sop,
+                        safe_traverse(diagnosis_sop, 'MKB'),
                         '2',
                         gen_info_date,
                         disease_character,
