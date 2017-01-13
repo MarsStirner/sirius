@@ -121,8 +121,11 @@ class ClinicTambovBuilder(Builder):
 
     def get_town_kladr(self, address):
         res = None
-        for entry in address['data']:
-            if entry['level'] == 4:
+        for entry in sorted(address['data'], key=lambda x: x['level'], reverse=True):
+            if entry['level'] == 2:
+                if not res:
+                    res = entry['kladrCode'][:11]
+            elif entry['level'] == 4:
                 if not res:
                     res = entry['kladrCode'][:11]
             elif entry['level'] == 5:
