@@ -1,6 +1,6 @@
 measure_id#rbMeasureType.code#servPrototypeId#servPrototypeCode#Mesure.code
-1#checkup#5202#B01.001.001#1
-1#checkup#5203#B01.001.002#1
+##5202#B01.001.001#
+##5203#B01.001.002#
 2#checkup#5274#B01.028.001#2
 3#checkup#5322#B01.047.001#3
 4#checkup#5356#B01.064.001#4

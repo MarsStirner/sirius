@@ -72,19 +72,49 @@ class HospitalTambovBuilder(Builder):
 
     def set_hospitals(self, hospital_rec_ids, package, req_meta):
 
+        hosp_api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.HOSPITAL_REC,
+            OperationCode.READ_ONE,
+        )
+
+        hosp_recs_by_case = {}
         for hospital_rec_id in hospital_rec_ids:
-            main_hosp_item, hospital_rec_data = package.add_main(
+            req = DataRequest()
+            req.set_req_params(
+                url=hosp_api_method['template_url'],
+                method=hosp_api_method['method'],
+                protocol=ProtocolCode.SOAP,
+                data={'id': hospital_rec_id},
+            )
+            hospital_rec_data = self.transfer__send_request(req)
+            hosp_recs_by_case.setdefault(hospital_rec_data['caseId'], {}).update(
+                {int(hospital_rec_id): hospital_rec_data}
+            )
+
+        for hosp_rec_case_id, hosp_recs_dict in hosp_recs_by_case.iteritems():
+            earliest_hosp_rec = hosp_recs_dict[min(hosp_recs_dict)]
+            latest_hosp_rec = hosp_recs_dict[max(hosp_recs_dict)]
+
+            main_hosp_item = package.add_main_pack_entity(
                 entity_code=TambovEntityCode.HOSPITAL_REC,
-                main_id_name='id',
-                main_id=hospital_rec_id,
+                method=hosp_api_method['method'],
+                main_param_name='caseId',
+                main_id=hosp_rec_case_id,
                 parents_params=req_meta['dst_parents_params'],
+                data={
+                    'resourceGroupId': latest_hosp_rec['resourceGroupId'],
+                    'admissionDate': earliest_hosp_rec['admissionDate'],
+                    'outcomeDate': latest_hosp_rec['outcomeDate'],
+                },
+                # diff_key=diff_key,
             )
 
             package.add_addition(
                 parent_item=main_hosp_item,
                 entity_code=TambovEntityCode.CASE,
                 main_id_name='id',
-                main_id=hospital_rec_data['caseId'],
+                main_id=hosp_rec_case_id,
             )
 
 
