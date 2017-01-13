@@ -36,7 +36,7 @@ class SrvPrototypeMatch(object):
                     measure_type = row[1]
                     prototype_id = row[2]
                     prototype_code = row[3]
-                    measure_code = '%04d' % int(row[4])
+                    measure_code = row[4] and '%04d' % int(row[4])
                     if prototype_id:
                         cls.srv_prototype__measure__map[prototype_id] = (
                             measure_id, measure_type
