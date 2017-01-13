@@ -60,7 +60,7 @@ common:
     # CELERYD_PREFETCH_MULTIPLIER: 1
     CELERY_IGNORE_RESULT: true
     CELERY_DISABLE_RATE_LIMITS: true
-    CELERY_DEFAULT_QUEUE: default_queue
+    CELERY_DEFAULT_QUEUE: &CELERY_QUEUE_DEFAULT default_queue
     CELERY_DEFAULT_EXCHANGE: default_exchange
     CELERY_DEFAULT_EXCHANGE_TYPE: direct
     CELERY_DEFAULT_ROUTING_KEY: default_key
@@ -317,8 +317,8 @@ subsystems:
           [program:{{ deployment.prefix }}_{{ this.name }}]
           environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
           ;command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q {{ deployment.prefix }}_{{ this.name }}_queue
-          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 4 -Q default_queue -s {{ deployment.base_dir }}/celery
-          ;command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker beat -l INFO
+          ;command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -B -n {{ deployment.prefix }}_{{ this.name }}_worker -l INFO -c 1 -Q default_queue -s {{ deployment.base_dir }}/celery/celerybeat-schedule
+          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker beat -l INFO -s {{ deployment.base_dir }}/celery/celerybeat-schedule
           directory={{ deployment.base_dir }}/code/sirius
 
           ;numprocs=1
@@ -336,3 +336,44 @@ subsystems:
 
           user={{ common.system_user.uid }}
           group={{ common.system_user.gid }}
+
+  default_worker:
+    configens:
+      supervisor:
+        template: |
+          ; ==========================
+          ;  celery default worker supervisor
+          ; ==========================
+
+          [program:{{ deployment.prefix }}_{{ this.name }}]
+          environment=PYTHONPATH={{ deployment.base_dir }}/code/sirius;TSUKINO_USAGI_URL={{ common.uwsgi_apps.TSUKINO_USAGI_URL }}
+          command={{ deployment.base_dir }}/venv/bin/celery -A sirius.celery_worker worker -n {{ deployment.prefix }}_{{ this.name }} -l INFO -c 4 -Q {{ this.configens.supervisor.queue | recurse }}
+
+          directory={{ deployment.base_dir }}/code/sirius
+
+          ;numprocs=1
+          stdout_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          stderr_logfile={{ deployment.base_dir }}/logs/{{ this.name }}.log
+          redirect_stderr=True
+          autostart=false
+          autorestart=true
+          startsecs=3
+          daemon=true
+          debug={{ common.user_apps.DEBUG }}
+
+          ; Need to wait for currently executing tasks to finish at shutdown.
+          ; Increase this if you have very long running tasks.
+          stopwaitsecs=86400
+
+          ; When resorting to send SIGKILL to the program to terminate it
+          ; send SIGKILL to its whole process group instead,
+          ; taking care of its children as well.
+          killasgroup=true
+
+          ; Set Celery priority higher than default (999)
+          ; so, if rabbitmq (or other broker) is supervised, it will start first.
+          priority=1000
+
+          user={{ common.system_user.uid }}
+          group={{ common.system_user.gid }}
+        queue: *CELERY_QUEUE_DEFAULT

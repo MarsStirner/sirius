@@ -64,26 +64,28 @@ class Schedule(Model):
         cur_datetime = datetime.today()
         cur_date = cur_datetime.date()
         cur_time = cur_datetime.time()
-        old_execs_q = SchGrReqExecute.query.join(
+        last_execs_sq = db.session.query(SchGrReqExecute.begin_datetime).join(
             ScheduleGroupRequest, ScheduleGroupRequest.id == SchGrReqExecute.sch_group_request_id
         ).filter(
             ScheduleGroupRequest.schedule_group_id == ScheduleGroup.id,
+        ).correlate(ScheduleGroup).order_by(
+            SchGrReqExecute.id.desc()
+        ).limit(1).subquery('sq')
+        old_execs_q = db.session.query('1').filter(
             case([
                 (
                     ScheduleTime.type == ScheduleTimeType.DELTA,
-                    cur_datetime - SchGrReqExecute.begin_datetime > ScheduleTime.time
+                    cur_datetime - last_execs_sq.c.begin_datetime > ScheduleTime.time
                 ),
                 (
                     ScheduleTime.type == ScheduleTimeType.TIME,
                     and_(
                         cur_time.isoformat() > ScheduleTime.time,
-                        cur_date > cast(SchGrReqExecute.begin_datetime, db.Date)
+                        cur_date > cast(last_execs_sq.c.begin_datetime, db.Date)
                     )
                 ),
             ]),
-        ).correlate(ScheduleTime).correlate(ScheduleGroup).order_by(
-            SchGrReqExecute.id.desc()
-        ).limit(1)
+        ).correlate(ScheduleTime)
         one_exec_q = SchGrReqExecute.query.join(
             ScheduleGroupRequest, ScheduleGroupRequest.id == SchGrReqExecute.sch_group_request_id
         ).filter(
