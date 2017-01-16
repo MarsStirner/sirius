@@ -41,6 +41,7 @@ class HospitalizationTulaBuilder(Builder):
         )
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = data
+            main_item['body']['result_action_id'] = ''  # заполняется в set_current_id_common_func
             if data['measure_id']:
                 local_measure_id = self.reformer.get_local_id_by_remote(
                     RisarEntityCode.MEASURE,

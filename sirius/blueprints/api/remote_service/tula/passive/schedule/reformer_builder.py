@@ -31,6 +31,7 @@ class ScheduleTulaBuilder(Builder):
         )
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = data
+            main_item['body']['schedule_id'] = ''  # заполняется в set_current_id_common_func
             if 'hospital' in data:
                 hospital_code = self.reformer.get_local_id_by_remote(
                     RisarEntityCode.ORGANIZATION,
