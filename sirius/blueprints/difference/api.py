@@ -38,12 +38,15 @@ class Difference(object):
 
     # todo: добавить выбор сериализатора в json в зависимости от
     # клиента (может из клиента уже сериализованным давать)
-    # todo: добавить root_entity_id (stream_id) в EntityImage, DiffEntityImage
+
+    # добавлено root_entity_id (stream_id) в EntityImage, DiffEntityImage
     # конфликт TambovEntityCode.BIRTH с TambovEntityCode.SMART_PATIENT
     # одинаковый root_external_id при удалении в разных потоках.
     # нет удаления основной сущности.
     # проверять по root_entity_id, считая, что не будет одинаковых сущностей
     # 1-го уровня в разных потоках, либо по stream_id (надо везде прокидывать)
+
+    # добавлен ключ куска.
     # конфликт удаления по разным кускам списков (мероприятия по разным
     # пациентам, врачи по разным ЛПУ) вводить мастер ИД и мастер сущность.
     # проверку дифф включать в билдере. только там, где нужно удаление по списку
@@ -98,11 +101,16 @@ class Difference(object):
     def _set_diffs(self, system_code, flat_entities):
         # DiffEntityImage.create_temp_table()
         DiffEntityImage.clear_temp_table()
-        root_ext_ids = set()
+        root_ent_ids = set()
+        root_entity_id = None
         for (level, entity_code), fl_entity_dict in flat_entities.iteritems():
             entity_id = Entity.get_id(system_code, entity_code)
+            if level == 1:
+                root_entity_id = entity_id
+                root_ent_ids.add(root_entity_id)
             objects = (
                 {
+                    'root_entity_id': root_entity_id,
                     'entity_id': entity_id,
                     'root_external_id': (package_record.get('root_parent') or {}).get('main_id', main_id),
                     'external_id': main_id,
@@ -113,12 +121,11 @@ class Difference(object):
                 }
                 for main_id, package_record in fl_entity_dict.iteritems()
             )
-            ids = DiffEntityImage.fill_temp_table(objects)
-            root_ext_ids.update(ids)
+            DiffEntityImage.fill_temp_table(objects)
         if self.is_delete_check:
             # после того как все записи добавлены можно смотреть чего не хватает
-            for root_ext_id in root_ext_ids:
-                DiffEntityImage.set_deleted_data(root_ext_id, self.key_range)
+            for root_ent_id in root_ent_ids:
+                DiffEntityImage.set_deleted_data(root_ent_id, self.key_range)
         DiffEntityImage.set_changed_data(self.key_range)
         DiffEntityImage.set_new_data(self.key_range)
 

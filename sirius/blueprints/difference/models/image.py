@@ -18,6 +18,8 @@ class EntityImage(Model):
 
     __tablename__ = 'entity_image'
 
+    root_entity_id = reference_col('entity', unique=False, nullable=False)
+    root_entity = relationship('Entity', backref='set_entity_image_by_root')
     entity_id = reference_col('entity', unique=False, nullable=False)
     entity = relationship('Entity', backref='set_entity_image')
     parent_id = reference_col('entity_image', unique=False, nullable=True)
@@ -35,6 +37,8 @@ class EntityImage(Model):
 class EntityImageDiff(Model):
     __tablename__ = 'entity_image_diff'
 
+    root_entity_id = reference_col('entity', unique=False, nullable=False)
+    root_entity = relationship('Entity', backref='set_entity_image_diff_by_root')
     entity_id = reference_col('entity', unique=False, nullable=False)
     entity = relationship('Entity', backref='set_entity_image_diff')
     root_external_id = Column(db.String(80), unique=False, nullable=False)
@@ -68,6 +72,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             'columns': ', '.join((
                 x[0].join(['"', '"']) + ' ' + x[1] for x in (
                     ('id', 'serial NOT NULL'),
+                    ('root_entity_id', 'integer NOT NULL'),
                     ('entity_id', 'integer NOT NULL'),
                     ('root_external_id', 'character varying(80) NOT NULL'),
                     ('external_id', 'character varying(80) NOT NULL'),
@@ -81,7 +86,6 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
 
     @classmethod
     def fill_temp_table(cls, data):
-        root_ext_ids = set()
         insert_query = '''
         INSERT INTO %(table_name)s (%(columns)s) VALUES (%(values)s)
         '''
@@ -96,8 +100,6 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
                         for x in vals
                     )),
                 }))
-            root_ext_ids.add(r['root_external_id'])
-        return root_ext_ids
 
     @classmethod
     def drop_temp_table(cls):
@@ -136,6 +138,8 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
               select store.id
                 from %(store_table_name)s store
                 where
+                  store.root_entity_id = tmp.root_entity_id and
+                  store.root_external_id = tmp.root_external_id and
                   store.entity_id = tmp.entity_id and
                   store.external_id = tmp.external_id and
                   (
@@ -173,6 +177,8 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
           select tmp.id
           from %(temp_table_name)s tmp
           join %(store_table_name)s store on
+            store.root_entity_id = tmp.root_entity_id and
+            store.root_external_id = tmp.root_external_id and
             store.entity_id = tmp.entity_id and
             store.external_id = tmp.external_id
           where
@@ -195,7 +201,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
         db.session.execute(set_query)
 
     @classmethod
-    def set_deleted_data(cls, root_external_id, key_range):
+    def set_deleted_data(cls, root_entity_id, key_range):
         key_range_beg = key_range_end = ''
         if key_range:
             key_range_beg = key_range[0]
@@ -205,6 +211,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
         set_query = '''
         insert into %(temp_table_name)s
         (
+          root_entity_id,
           entity_id,
           root_external_id,
           external_id,
@@ -215,6 +222,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
         )
         (
           select
+            store.root_entity_id,
             store.entity_id,
             store.root_external_id,
             store.external_id,
@@ -224,7 +232,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             store.level
           from %(store_table_name)s store
           where
-            store.root_external_id = '%(root_external_id)s' and
+            store.root_entity_id = '%(root_entity_id)s' and
             (
               '%(key_range_beg)s' = '' or
               store.key between '%(key_range_beg)s' and '%(key_range_end)s'
@@ -233,6 +241,8 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
               select tmp.id
                 from %(temp_table_name)s tmp
                 where
+                  store.root_entity_id = tmp.root_entity_id and  -- не обяз. но страховка
+                  store.root_external_id = tmp.root_external_id and
                   store.entity_id = tmp.entity_id and
                   store.external_id = tmp.external_id
             )
@@ -241,7 +251,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             'temp_table_name': cls.temp_table_name,
             'store_table_name': EntityImage.__tablename__,
             'operation_code': OperationCode.DELETE,
-            'root_external_id': root_external_id,
+            'root_entity_id': root_entity_id,
             'key_range_beg': key_range_beg,
             'key_range_end': key_range_end,
         })
