@@ -38,12 +38,14 @@ class SrvPrototypeMatch(object):
                     prototype_code = row[3]
                     measure_code = row[4] and '%04d' % int(row[4])
                     if prototype_id:
-                        cls.srv_prototype__measure__map[prototype_id] = (
-                            measure_id, measure_type
-                        )
-                        cls.srv_prototype__measure_code__map[prototype_id] = (
-                            measure_code, measure_type
-                        )
+                        if prototype_id not in cls.srv_prototype__measure__map:
+                            cls.srv_prototype__measure__map[prototype_id] = (
+                                measure_id, measure_type
+                            )
+                        if prototype_id not in cls.srv_prototype__measure_code__map:
+                            cls.srv_prototype__measure_code__map[prototype_id] = (
+                                measure_code, measure_type
+                            )
                         if prototype_code:
                             cls.prototype_code__srv_prototype__map[prototype_code] = prototype_id
                     # if measure_id:

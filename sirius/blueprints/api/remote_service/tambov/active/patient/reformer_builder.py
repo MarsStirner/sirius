@@ -176,7 +176,7 @@ class PatientTambovBuilder(Builder):
         main_item['body'] = {
             # 'client_id': None,  # заполняется в set_current_id_func
             'FIO': {
-                'middlename': patient['middleName'],
+                'middlename': patient['middleName'] or '',
                 'name': patient['firstName'],
                 'surname': patient['lastName']
             },
@@ -184,6 +184,12 @@ class PatientTambovBuilder(Builder):
             'gender': gender,
             # 'SNILS': None,  # заполняется в документах
         }
+        if sm_patient_data['workplaces']:
+            workplace = sm_patient_data['workplaces'][-1]
+            main_item['body']['job'] = {
+                'organisation': workplace['organization']['name'],
+                'post': workplace['position'] or Undefined,
+            }
         if patient_data['bloodGroup']:
             main_item['body']['blood_type_info'] = [{
                 'blood_type': patient_data['bloodGroup'],
