@@ -51,9 +51,9 @@ class Difference(object):
     # пациентам, врачи по разным ЛПУ) вводить мастер ИД и мастер сущность.
     # проверку дифф включать в билдере. только там, где нужно удаление по списку
 
-    # todo: addition записи в _build_flat_entities схлопываются, когда на них
+    # addition записи в _build_flat_entities схлопываются, когда на них
     # несколько main записей (врач, должность). (из-за этого лишние change).
-    # переделать ключ
+    # переделан ключ
 
     is_diff_check = True
     is_delete_check = True
@@ -88,8 +88,11 @@ class Difference(object):
     def _build_flat_entities(self, flat_entities, pack_entities, level=1):
         for entity_code, records in pack_entities.iteritems():
             for record in records:
+                root_parent_main_id = (record.get('root_parent') or {}).get(
+                    'main_id', record['main_id']
+                )
                 flat_entities.setdefault((level, entity_code), {}).update(
-                    {str(record['main_id']): record}
+                    {(str(root_parent_main_id), str(record['main_id'])): record}
                 )
                 additions = record.get('addition')
                 if additions:
@@ -112,14 +115,14 @@ class Difference(object):
                 {
                     'root_entity_id': root_entity_id,
                     'entity_id': entity_id,
-                    'root_external_id': (package_record.get('root_parent') or {}).get('main_id', main_id),
+                    'root_external_id': root_parent_main_id,
                     'external_id': main_id,
                     'key': package_record.get('diff_key'),
                     'content': self._dump_content(package_record['data']),
                     'operation_code': OperationCode.READ_MANY,
                     'level': level,
                 }
-                for main_id, package_record in fl_entity_dict.iteritems()
+                for (root_parent_main_id, main_id), package_record in fl_entity_dict.iteritems()
             )
             DiffEntityImage.fill_temp_table(objects)
         if self.is_delete_check:
@@ -135,7 +138,8 @@ class Difference(object):
             if diff_rec.operation_code != OperationCode.DELETE:
                 key = (diff_rec.level, diff_rec.entity.code)
                 fl_entity_dict = flat_entities[key]
-                package_record = fl_entity_dict[diff_rec.external_id]
+                package_record = fl_entity_dict[diff_rec.root_external_id,
+                                                diff_rec.external_id]
                 root_parent = package_record.get('root_parent')
                 if root_parent:
                     root_parent['operation_code'] = OperationCode.CHANGE
@@ -157,7 +161,8 @@ class Difference(object):
                 else:
                     key = (diff_rec.level, diff_rec.entity.code)
                     fl_entity_dict = flat_entities[key]
-                    package_record = fl_entity_dict[diff_rec.external_id]
+                    package_record = fl_entity_dict[diff_rec.root_external_id,
+                                                    diff_rec.external_id]
                     root_parent = package_record.get('root_parent')
                     root_parent['operation_code'] = OperationCode.CHANGE
 
