@@ -80,7 +80,7 @@ def check_cas_token(auth_token):
         return None
     try:
         result = requests.post(
-            app.config['COLDSTAR_URL'] + 'cas/api/check',
+            app.config['COLDSTAR_URL'] + 'cas/api/check' + '?dont_check_tgt=true',
             data=json.dumps({'token': auth_token, 'prolong': True}),
             headers={'Referer': request.url.encode('utf-8')}
         )
