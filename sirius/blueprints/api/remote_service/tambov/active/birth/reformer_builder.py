@@ -18,6 +18,7 @@ from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.blueprints.reformer.models.method import ApiMethod
+from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 from sirius.lib.xform import Undefined
 from sirius.models.operation import OperationCode
@@ -120,7 +121,7 @@ class BirthTambovBuilder(Builder):
                     'admission_date': encode(part1['InDate']),
                     'maternity_hospital': str(sta(part1, 'ClinicId')),
                     'delivery_date': encode(sta(part1, 'ChildBirth', 'Date')),
-                    'delivery_time': encode(sta(part1, 'ChildBirth', 'Time'))[:5],
+                    'delivery_time': encode(sta(part1, 'ChildBirth', 'Time'))[:5] or '00:00',
 
                     # todo: test
                     # 'pregnancy_final': sta(part1, 'ChildBirth', 'ChildBirthOutcome'),  # rbRisarPregnancy_Final
@@ -134,7 +135,9 @@ class BirthTambovBuilder(Builder):
                     # --
                     # 'diagnosis_sop': part1['Extra'] or Undefined,
                     # 'diagnosis_osl': part1['Complication'] or Undefined,
-                    'maternity_hospital_doctor': (lambda x: x and str(x) or Undefined)(sta(part1, 'ChildBirth', 'EmployeeId')),
+                    'maternity_hospital_doctor': (lambda x: x and str(x) or Undefined)(
+                        self.get_employee_positions(sta(part1, 'ChildBirth', 'EmployeeId'))
+                    ),
                     'curation_hospital': sta(part1, 'CuratioLpu') or Undefined,
                     'pregnancy_speciality': sta(part1, 'BirthSpeciality') or Undefined,
                     'postnatal_speciality': sta(part1, 'AfterBirthSpeciality') or Undefined,
@@ -208,7 +211,7 @@ class BirthTambovBuilder(Builder):
                     'length': safe_double(sta(child, 'Height')),
                     'date': encode(sta(child, 'BirthDate')),
                     # --
-                    # 'time': ???,
+                    'time': '00:00' if safe_bool(sta(child, 'Alive')) else Undefined,
                     # 'maturity_rate': sta(child, 'FullTerm') or Undefined,  # rbRisarMaturity_Rate
                     'apgar_score_1': safe_int(sta(child, 'Apgar_1min')) or Undefined,
                     'apgar_score_5': safe_int(sta(child, 'Apgar_5min')) or Undefined,
@@ -221,3 +224,30 @@ class BirthTambovBuilder(Builder):
             main_item['body']['kids'] = kids
 
         return entities
+
+    def get_employee_positions(self, employee_id):
+        if not employee_id:
+            return None
+        api_method = self.reformer.get_api_method(
+            self.remote_sys_code,
+            TambovEntityCode.EMPLOYEE_POSITION,
+            OperationCode.READ_MANY,
+        )
+        empl_pos_req = DataRequest()
+        empl_pos_req.set_req_params(
+            url=api_method['template_url'],
+            method=api_method['method'],
+            protocol=ProtocolCode.SOAP,
+            data={'employee': employee_id},
+        )
+        empl_positions_ids = self.transfer__send_request(empl_pos_req)
+        empl_positions_id = None
+        for empl_positions_id in empl_positions_ids:
+            res = self.reformer.find_local_id_by_remote(
+                RisarEntityCode.DOCTOR,
+                TambovEntityCode.EMPLOYEE_POSITION,
+                empl_positions_id,
+            )
+            if res:
+                break
+        return empl_positions_id
