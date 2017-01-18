@@ -19,11 +19,6 @@ from sirius.models.operation import OperationCode
 
 class TulaAnswer(RemoteAnswer):
 
-    def process(self, result, req_meta=None, req_data=None):
-        if not req_meta['dst_request_mode']:
-            req_meta['dst_request_mode'] = RequestModeCode.JSON_DATA
-        return super(TulaAnswer, self).process(result, req_meta, req_data)
-
     def xml_to_dict(self, result):
         e = ET.XML(result.text)
         return e

@@ -128,7 +128,9 @@ class BirthTambovBuilder(Builder):
 
                     'pregnancy_duration': sta(part1, 'ChildBirth', 'PregnantWeeks'),
                     # 'pregnancy_duration': days and int(days / 7) or 0,
-                    'diagnosis_osn': sta(part1, 'ChildBirth', 'Diagnoses', 'MainDiagnos'),
+                    # --
+                    # 'diagnosis_osn': sta(part1, 'ChildBirth', 'Diagnoses', 'MainDiagnos'),
+                    'diagnosis_osn': sta(part1, 'ChildBirth', 'Diagnoses', 'MainDiagnos') or Undefined,
                     # --
                     # 'diagnosis_sop': part1['Extra'] or Undefined,
                     # 'diagnosis_osl': part1['Complication'] or Undefined,

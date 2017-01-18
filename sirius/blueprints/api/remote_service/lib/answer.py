@@ -11,6 +11,7 @@ import logging
 from sirius.blueprints.api.remote_service.lib.transfer import \
     RequestModeCode
 from sirius.models.operation import OperationCode
+from sirius.models.protocol import ProtocolCode
 
 logger = logging.getLogger('simple')
 
@@ -18,6 +19,11 @@ logger = logging.getLogger('simple')
 class RemoteAnswer(object):
 
     def process(self, result, req_meta=None, req_data=None):
+        if not req_meta['dst_request_mode']:
+            if req_meta['dst_protocol_code'] == ProtocolCode.SOAP:
+                req_meta['dst_request_mode'] = RequestModeCode.XML_DATA
+            if req_meta['dst_protocol_code'] == ProtocolCode.REST:
+                req_meta['dst_request_mode'] = RequestModeCode.JSON_DATA
         # meta['dst_entity_code']
         if req_meta['dst_request_mode'] in (RequestModeCode.JSON_DATA, RequestModeCode.MULTIPART_FILE):
             logger.debug('%s url: %s request: %s\n response: %s' % (result.request.method, result.url, str(req_data), ': '.join((str(result), result.text))))
