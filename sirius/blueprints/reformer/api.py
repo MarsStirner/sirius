@@ -972,10 +972,7 @@ class EntitiesPackage(IStreamMeta):
                 protocol=ProtocolCode.SOAP,
                 options=(main_id,),
             )
-        try:
-            data = self.builder.transfer__send_request(req)
-        except LoggedException:
-            data = None
+        data = self.builder.transfer__send_request(req)
         item = self.add_main_pack_entity(
             entity_code=entity_code,
             method=req.method,
@@ -1009,10 +1006,7 @@ class EntitiesPackage(IStreamMeta):
                 protocol=ProtocolCode.SOAP,
                 options=(main_id,),
             )
-        try:
-            data = self.builder.transfer__send_request(req)
-        except LoggedException:
-            data = None
+        data = self.builder.transfer__send_request(req)
         item = self.add_child_pack_entity(
             root_item=self.root_item,
             parent_item=parent_item,
@@ -1048,10 +1042,7 @@ class EntitiesPackage(IStreamMeta):
                 protocol=ProtocolCode.SOAP,
                 options=(main_id,),
             )
-        try:
-            data = self.builder.transfer__send_request(req)
-        except LoggedException:
-            data = None
+        data = self.builder.transfer__send_request(req)
         self.add_addition_pack_entity(
             root_item=self.root_item,
             parent_item=parent_item,
