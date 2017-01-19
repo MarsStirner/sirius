@@ -205,8 +205,8 @@ class Scheduler(object):
             try:
                 if not org_data['regionalCode']:
                     continue
-                if not org_data['regionalCode'] in ('1434663', '89',):  # todo: для тестов
-                    continue
+                # if not org_data['regionalCode'] in ('1434663', '89',):  # todo: для тестов
+                #     continue
                 msg = self.create_message(system_code, entity_code)  # getEmployees
                 meta = msg.get_header().meta
                 meta['local_parents_params'] = {
@@ -240,8 +240,8 @@ class Scheduler(object):
             try:
                 if not org_data['regionalCode']:
                     continue
-                if not org_data['regionalCode'] in ('1434663', '89',):  # todo: для тестов
-                    continue
+                # if not org_data['regionalCode'] in ('1434663', '89',):  # todo: для тестов
+                #     continue
                 msg = self.create_message(system_code, entity_code)  # getTimes
                 meta = msg.get_header().meta
                 meta['local_parents_params'] = {
