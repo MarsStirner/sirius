@@ -121,6 +121,7 @@ class CaseTambovBuilder(Builder):
         ticket_data = pack_entity['data']
         src_operation_code = header_meta['local_operation_code']
         src_entity_code = header_meta['local_entity_code']
+        resource_group_id = None
 
         # сопоставление параметров родительских сущностей
         params_map = {
@@ -293,7 +294,8 @@ class CaseTambovBuilder(Builder):
                         src_entity_code,
                         '_'.join((str(header_meta['local_main_id']), prototype_id)),
                 ):
-                    assert resource_group_id
+                    if not resource_group_id:
+                        resource_group_id = self.get_resource_group_id(ticket_data['hospital'], ticket_data['doctor'])
                     serv_item['body']['resourceGroupId'] = resource_group_id
 
         return entities
