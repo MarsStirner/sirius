@@ -74,16 +74,31 @@ class ServiceTambovBuilder(Builder):
 
     def get_services_ids(self, reformed_req):
         req = reformed_req
-        last_request_datetime = SchGrReqExecute.last_datetime(
-            RisarEntityCode.MEASURE_RESEARCH
-        ) or datetime.today()
         for param_name, param_data in req.meta['dst_parents_params'].items():
             req.data_update({
                 param_name: param_data['id'],
-                'dateFrom': last_request_datetime.date() - timedelta(1),
+                # 'medicalOrganizationId': '89',  # todo: для тестов
             })
-        res = self.transfer__send_request(req)
-        return res
+
+        last_request_datetime = SchGrReqExecute.last_datetime(
+            RisarEntityCode.MEASURE_RESEARCH
+        )
+        cur_datetime = datetime.today()
+        req_date = (last_request_datetime or cur_datetime).date() - timedelta(1)
+        # в мис баг. dateFrom не диапазон, а дата. обходим.
+        '''
+        searchServiceRend
+        <typ:patientUid>ITPEJZ6JOK9S8EQ2</typ:patientUid>
+        <typ:dateFrom>2017-01-17</typ:dateFrom>
+        если выдает пустоту, значит в мис не исправили баг еще
+        '''
+        ids_set = set()
+        while req_date <= cur_datetime.date():
+            req.data_update({'dateFrom': req_date})
+            res = self.transfer__send_request(req)
+            ids_set.update(res)
+            req_date += timedelta(1)
+        return ids_set
 
     def set_services(self, rend_services_ids, package, req_meta):
         rend_serv_api_method = self.reformer.get_api_method(

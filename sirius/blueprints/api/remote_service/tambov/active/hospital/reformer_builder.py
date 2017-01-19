@@ -66,14 +66,15 @@ class HospitalTambovBuilder(Builder):
 
     def get_hospital_rec_ids(self, reformed_req):
         req = reformed_req
+        for param_name, param_data in req.meta['dst_parents_params'].items():
+            req.data_update({param_name: param_data['id']})
+
         last_request_datetime = SchGrReqExecute.last_datetime(
             RisarEntityCode.MEASURE_HOSPITALIZATION
         ) or datetime.today()
-        for param_name, param_data in req.meta['dst_parents_params'].items():
-            req.data_update({
-                param_name: param_data['id'],
-                'closedFromDate': last_request_datetime.date() - timedelta(1),
-            })
+        req.data_update({
+            'closedFromDate': last_request_datetime.date() - timedelta(1),
+        })
         res = self.transfer__send_request(req)
         return res
 
