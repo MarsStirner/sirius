@@ -7,7 +7,7 @@
 
 """
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from hitsl_utils.safe import safe_traverse, safe_int
 from hitsl_utils.wm_api import WebMisJsonEncoder
@@ -21,6 +21,7 @@ from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.blueprints.reformer.models.method import ApiMethod
+from sirius.blueprints.scheduler.models import SchGrReqExecute
 from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 from sirius.lib.xform import Undefined
@@ -73,10 +74,13 @@ class ServiceTambovBuilder(Builder):
 
     def get_services_ids(self, reformed_req):
         req = reformed_req
+        last_request_datetime = SchGrReqExecute.last_datetime(
+            RisarEntityCode.MEASURE_RESEARCH
+        ) or datetime.today()
         for param_name, param_data in req.meta['dst_parents_params'].items():
             req.data_update({
                 param_name: param_data['id'],
-                # 'medicalOrganizationId': '89',  # todo: для тестов
+                'dateFrom': last_request_datetime.date() - timedelta(1),
             })
         res = self.transfer__send_request(req)
         return res
