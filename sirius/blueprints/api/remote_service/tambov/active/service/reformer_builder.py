@@ -108,31 +108,30 @@ class ServiceTambovBuilder(Builder):
             )
             rend_service_data = self.transfer__send_request(req)
             # без прототипа не поймем каким методом отправлять
-            if not rend_service_data['prototypeId']:
-                srv_api_method = self.reformer.get_api_method(
-                    self.remote_sys_code,
-                    TambovEntityCode.SERVICE,
-                    OperationCode.READ_ONE,
-                )
-                req = DataRequest()
-                req.set_req_params(
-                    url=srv_api_method['template_url'],
-                    method=srv_api_method['method'],
-                    protocol=ProtocolCode.SOAP,
-                    data={
-                        'serviceId': rend_service_data['serviceId'],
-                    },
-                )
-                srv_data = self.transfer__send_request(req)
-                prototypeId = srv_data['prototype']
-                rend_service_data['prototypeId'] = prototypeId
-                if not prototypeId:
-                    # большинство услуг с разных мо без прототипа
-                    # logger.error(
-                    #     "Missing required prototypeId in referralId = '%s'. rend_service_id = '%s'" %
-                    #     (rend_service_data['referralId'], rend_service_data['id'])
-                    # )
-                    continue
+            srv_api_method = self.reformer.get_api_method(
+                self.remote_sys_code,
+                TambovEntityCode.SERVICE,
+                OperationCode.READ_ONE,
+            )
+            req = DataRequest()
+            req.set_req_params(
+                url=srv_api_method['template_url'],
+                method=srv_api_method['method'],
+                protocol=ProtocolCode.SOAP,
+                data={
+                    'serviceId': rend_service_data['serviceId'],
+                },
+            )
+            srv_data = self.transfer__send_request(req)
+            prototypeId = srv_data['prototype']
+            rend_service_data['prototypeId'] = prototypeId
+            if not prototypeId:
+                # большинство услуг с разных мо без прототипа
+                # logger.error(
+                #     "Missing required prototypeId in referralId = '%s'. rend_service_id = '%s'" %
+                #     (rend_service_data['referralId'], rend_service_data['id'])
+                # )
+                continue
 
             # на одно направление должна быть только одна услуга.
             # остальные откидываем
