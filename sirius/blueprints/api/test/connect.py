@@ -60,7 +60,7 @@ def get_role(token, role_code=''):
     )
     j = result.json()
     if not result.status_code == 200:
-        raise ConnectError('Ошибка авторизации')
+        raise ConnectError(u'Ошибка авторизации')
     return result.cookies[authoriz_token_name]
 
 
@@ -107,7 +107,7 @@ def make_api_request(method, url, session, json_data=None, url_args=None):
     #     except Exception, e:
     #         # raise e
     #         message = u'Unknown ({0})({1})({2})'.format(unicode(result), unicode(result.text)[:300], unicode(e))
-    #     raise Exception(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
+    #     raise Exception(unicode(u'Api Error: {0}'.format(message)))
     return result.json()
 
 
@@ -127,7 +127,7 @@ def make_test_api_request(testapp, method, url, session, json_data=None, url_arg
         except Exception, e:
             # raise e
             message = u'Unknown ({0})({1})'.format(unicode(result), unicode(e))
-        raise ExternalError(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
+        raise ExternalError(unicode(u'Api Error: {0}'.format(message)))
     res = result.json
     if callable(res):
         res = res()

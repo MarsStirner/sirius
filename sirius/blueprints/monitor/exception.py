@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import logging
 
 import flask
+from copy import deepcopy
 from requests import ConnectionError
 from sirius.app import app
 from sirius.extensions import db
@@ -30,20 +31,35 @@ from zeep.exceptions import TransportError as SudsTransportError, Error as SudsE
 logger = logging.getLogger('simple')
 
 
-class LoggedException(Exception):
+class EncodeArgError(object):
+    def __init__(self, *args, **kwargs):
+        args_m = list(args)
+        try:
+            args_m[0] = args[0].encode('utf-8')
+        except IndexError:
+            self.message = self.__class__.__name__
+        except UnicodeError:
+            self.message = args_m[0]
+        else:
+            self.message = args_m[0]
+        super(EncodeArgError, self).__init__(*tuple(args_m), **kwargs)
+
+
+class LoggedException(EncodeArgError, Exception):
     """Залогированное исключение"""
+    def __repr__(self):
+        return self.message
+
+
+class InternalError(EncodeArgError, StandardError):
     pass
 
 
-class InternalError(StandardError):
+class ExternalError(EncodeArgError, StandardError):
     pass
 
 
-class ExternalError(StandardError):
-    pass
-
-
-class ConnectError(StandardError):
+class ConnectError(EncodeArgError, StandardError):
     pass
 
 
@@ -66,23 +82,23 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
                 exit_time = time()
             except (StandardError, ZeepError, SudsError) as exc:
                 error_datetime = datetime.today()
-                traceback.print_exc()
+                # traceback.print_exc()
                 if isinstance(exc, ZeepFault):
-                    message = ': '.join((exc.code, exc.message)).encode('utf-8')
+                    message = ': '.join((exc.code, exc.message))
                 elif isinstance(exc, ZeepError):
-                    message = ': '.join((type(exc).__name__, exc.message)).encode('utf-8')
+                    message = ': '.join((type(exc).__name__, exc.message))
                 else:
-                    message = traceback.format_exception_only(type(exc), exc)[-1]
+                    message = traceback.format_exception_only(type(exc), exc)[-1].decode('utf-8')
                 params = {
                     'stream': get_stream_data(module, func, obj, meta, body),
                     'message': message,
                     'enter_time': enter_datetime,
                     'error_time': error_datetime,
-                    'traceback': traceback.format_exc(),
+                    'traceback': traceback.format_exc().decode('utf-8'),
                 }
                 logger.error(params_to_str(params))
                 # logg_to_MonitorDB(params)
-                reraise(Exception, LoggedException(params), sys.exc_info()[2])
+                reraise(Exception, LoggedException(message), sys.exc_info()[2])
             else:
                 params = {
                     'stream': get_stream_data(module, func, obj, meta),
@@ -90,7 +106,7 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
                     'enter_time': enter_datetime,
                     'work_time': exit_time - enter_time,
                 }
-                logger.info(unicode(params))
+                logger.info(params_to_str(params))
                 # logg_to_MonitorDB(params)
             return res
         return wrapper
@@ -118,21 +134,23 @@ def check_point(function=None, stream_pos=2, self_pos=1):
                 exit_time = time()
             except (StandardError, ZeepError, SudsError) as exc:
                 error_datetime = datetime.today()
-                traceback.print_exc()
-                if isinstance(exc, ZeepError):
-                    message = ': '.join((exc.code, exc.message)).encode('utf-8')
+                # traceback.print_exc()
+                if isinstance(exc, ZeepFault):
+                    message = ': '.join((exc.code, exc.message))
+                elif isinstance(exc, ZeepError):
+                    message = ': '.join((type(exc).__name__, exc.message))
                 else:
-                    message = traceback.format_exception_only(type(exc), exc)[-1]
+                    message = traceback.format_exception_only(type(exc), exc)[-1].decode('utf-8')
                 params = {
                     'stream': get_stream_data(module, func, obj, meta, body),
                     'message': message,
                     'enter_time': enter_datetime,
                     'error_time': error_datetime,
-                    'traceback': traceback.format_exc(),
+                    'traceback': traceback.format_exc().decode('utf-8'),
                 }
                 logger.error(params_to_str(params))
                 # logg_to_MonitorDB(params)
-                reraise(Exception, LoggedException(params), sys.exc_info()[2])
+                reraise(Exception, LoggedException(message), sys.exc_info()[2])
             return res
         return wrapper
     if callable(function):
@@ -141,8 +159,26 @@ def check_point(function=None, stream_pos=2, self_pos=1):
 
 
 def params_to_str(params):
-    r = '\n'.join([': '.join((k.upper(), str(v))) for k, v in params.items()])
-    return r.decode('utf-8')
+    r = '\n'.join([': '.join(
+        (k.upper(), prepare_objects(v))
+    ) for k, v in params.items()])
+    return r
+
+
+def prepare_objects(d):
+    def deep_cleaner(o):
+        if isinstance(o, dict):
+            for k, v in o.iteritems():
+                if callable(v):
+                    o[k] = unicode(v)
+                deep_cleaner(v)
+    if isinstance(d, dict):
+        dc = deepcopy(d)
+        deep_cleaner(dc)
+        dc = json_dumps(dc)
+    else:
+        dc = unicode(d)
+    return dc
 
 
 def task_entry(function=None, stream_pos=1, self_pos=2):
@@ -176,7 +212,7 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                     exit_time = time()
                 except LoggedException as exc:
                     db.session.rollback()
-                    reraise(Exception, LoggedException(exc.args[0]), sys.exc_info()[2])
+                    raise
                 except SAOperationalError as exc:
                     logger.error(unicode(exc))
                     # logg_to_MonitorDB(params)
@@ -191,18 +227,18 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                             raise
                     db.session.rollback()
                     error_datetime = datetime.today()
-                    traceback.print_exc()
-                    message = traceback.format_exception_only(type(exc), exc)[-1]
+                    # traceback.print_exc()
+                    message = traceback.format_exception_only(type(exc), exc)[-1].decode('utf-8')
                     params = {
                         'stream': get_stream_data(module, func, obj, meta, body),
                         'message': message,
                         'enter_time': enter_datetime,
                         'error_time': error_datetime,
-                        'traceback': traceback.format_exc(),
+                        'traceback': traceback.format_exc().decode('utf-8'),
                     }
                     logger.error(params_to_str(params))
                     # logg_to_MonitorDB(params)
-                    reraise(Exception, LoggedException(params), sys.exc_info()[2])
+                    reraise(Exception, LoggedException(message), sys.exc_info()[2])
                 else:
                     params = {
                         'stream': get_stream_data(module, func, obj, meta),
@@ -210,7 +246,7 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                         'enter_time': enter_datetime,
                         'work_time': exit_time - enter_time,
                     }
-                    logger.info(unicode(params))
+                    logger.info(params_to_str(params))
                     # logg_to_MonitorDB(params)
             return res
         return wrapper
@@ -237,22 +273,23 @@ def beat_entry(function=None, self_pos=1):
                 exit_time = time()
             except LoggedException as exc:
                 db.session.rollback()
-                reraise(Exception, LoggedException(exc.args[0]), sys.exc_info()[2])
+                raise
+                # reraise(Exception, LoggedException(exc.args[0]), sys.exc_info()[2])
             except Exception as exc:
                 db.session.rollback()
                 error_datetime = datetime.today()
-                traceback.print_exc()
-                message = traceback.format_exception_only(type(exc), exc)[-1]
+                # traceback.print_exc()
+                message = traceback.format_exception_only(type(exc), exc)[-1].decode('utf-8')
                 params = {
                     'stream': get_stream_data(module, func, obj, meta),
                     'message': message,
                     'enter_time': enter_datetime,
                     'error_time': error_datetime,
-                    'traceback': traceback.format_exc(),
+                    'traceback': traceback.format_exc().decode('utf-8'),
                 }
                 logger.error(params_to_str(params))
                 # logg_to_MonitorDB(params)
-                reraise(Exception, LoggedException(params), sys.exc_info()[2])
+                reraise(Exception, LoggedException(message), sys.exc_info()[2])
             else:
                 # params = {
                 #     'stream': get_stream_data(module, func, obj, meta),
@@ -303,10 +340,10 @@ def connect_entry(function=None, login=None, nowait=False):
                         kwargs['session'] = session
                     res = func(*args, **kwargs)
                 except (ConnectError, ConnectionError) as exc:
-                    traceback.print_exc()
+                    # traceback.print_exc()
                     try:
-                        exc_txt = str(exc)
-                    except UnicodeDecodeError:
+                        exc_txt = exc.args[0].decode('utf-8')
+                    except (IndexError, UnicodeError):
                         exc_txt = exc.__name__
                     logger.error(exc_txt)
                     # logg_to_MonitorDB(params)
@@ -336,7 +373,7 @@ def get_stream_data(module, func, obj, meta, body=None):
     return {
         'module': module and module.__name__,
         'method': func and func.__name__,
-        'stream type': obj and type(obj),
+        'stream type': obj and type(obj).__name__,
         'meta': meta,
         'body': body,
     }
@@ -416,9 +453,7 @@ def remote_api_method(func=None, hook=None, authorization=False):
                     hook(code, j, e)
                 # logg_to_MonitorDB(params)
             except LoggedException, e:
-                params = e.args[0]
-                exc = InternalError(params['message'])
-                j, code, headers = jsonify_exception(exc, traceback.extract_tb(sys.exc_info()[2]))
+                j, code, headers = jsonify_exception(e, traceback.extract_tb(sys.exc_info()[2]))
             except Exception, e:
                 traceback.print_exc()
                 exc = InternalError(str(e))
