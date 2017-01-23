@@ -172,6 +172,8 @@ def prepare_objects(d):
                 if callable(v):
                     o[k] = unicode(v)
                 deep_cleaner(v)
+        if isinstance(o, (list, tuple)):
+            map(deep_cleaner, o)
     if isinstance(d, dict):
         dc = deepcopy(d)
         deep_cleaner(dc)
@@ -342,7 +344,7 @@ def connect_entry(function=None, login=None, nowait=False):
                 except (ConnectError, ConnectionError) as exc:
                     # traceback.print_exc()
                     try:
-                        exc_txt = exc.args[0].decode('utf-8')
+                        exc_txt = str(exc)
                     except (IndexError, UnicodeError):
                         exc_txt = exc.__name__
                     logger.error(exc_txt)
