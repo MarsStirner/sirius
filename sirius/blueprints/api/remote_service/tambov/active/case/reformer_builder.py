@@ -60,16 +60,8 @@ class CaseTambovBuilder(Builder):
         src_operation_code = self.get_operation_code_by_method(msg_meta['src_method'])
 
         for ticket_data in tickets:
-            root_item = main_item = package.add_main_pack_entity(
-                entity_code=ticket_code,
-                operation_code=src_operation_code,
-                method=msg_meta['dst_method'],
-                main_param_name=msg_meta['src_main_param_name'],
-                main_id=msg_meta['src_main_id'],
-                parents_params=msg_meta['src_parents_params'],
-                data=ticket_data,
-            )
-
+            if not self.validate_ticket(ticket_data):
+                continue
             data_req = DataRequest()
             data_req.set_meta(
                 dst_system_code=SystemCode.LOCAL,
@@ -83,6 +75,20 @@ class CaseTambovBuilder(Builder):
             # self.reformer.set_local_id(data_req)
             self.reformer.set_request_service(data_req)
             checkup_data = self.reformer.local_request_by_req(data_req)
+
+            if not self.validate_checkup(checkup_data, checkup_code):
+                continue
+
+            root_item = main_item = package.add_main_pack_entity(
+                entity_code=ticket_code,
+                operation_code=src_operation_code,
+                method=msg_meta['dst_method'],
+                main_param_name=msg_meta['src_main_param_name'],
+                main_id=msg_meta['src_main_id'],
+                parents_params=msg_meta['src_parents_params'],
+                data=ticket_data,
+            )
+
             package.add_addition_pack_entity(
                 root_item=root_item,
                 parent_item=main_item,
@@ -90,6 +96,45 @@ class CaseTambovBuilder(Builder):
                 main_id=msg_meta['src_main_id'],
                 data=checkup_data,
             )
+
+    def validate_ticket(self, ticket_data):
+        values = (
+            safe_traverse(ticket_data, 'diagnosis'),
+            to_date(safe_traverse(ticket_data, 'date_open')),
+            safe_traverse(ticket_data, 'visit_type'),
+            safe_traverse(ticket_data, 'disease_character'),
+            safe_traverse(ticket_data, 'disease_outcome'),
+            safe_traverse(ticket_data, 'treatment_result'),
+            safe_traverse(ticket_data, 'medical_care'),
+            safe_traverse(ticket_data, 'medical_care_emergency'),
+            safe_traverse(ticket_data, 'medical_care_profile'),
+            any(map(
+                self.validate_service,
+                (safe_traverse(ticket_data, 'medical_services') or ())
+            )),
+        )
+        return all(values)
+
+    @staticmethod
+    def validate_service(service_data):
+        values = (
+            safe_traverse(service_data, 'medical_service'),
+            safe_traverse(service_data, 'medical_service_quantity'),
+            safe_traverse(service_data, 'medical_service_doctor'),
+        )
+        return all(values)
+
+    @staticmethod
+    def validate_checkup(checkup_data, checkup_code):
+        if checkup_code == RisarEntityCode.CHECKUP_OBS_FIRST:
+            gen_info = 'general_info'
+        else:
+            gen_info = 'dynamic_monitoring'
+        values = (
+            safe_traverse(checkup_data, 'medical_report', 'diagnosis_osn', 'MKB'),
+            to_date(safe_traverse(checkup_data[gen_info], 'date')),
+        )
+        return all(values)
 
     ##################################################################
     ##  reform entities
@@ -239,6 +284,8 @@ class CaseTambovBuilder(Builder):
             OperationCode.READ_MANY,
         )
         for medical_serv_item in (safe_traverse(ticket_data, 'medical_services') or ()):
+            if not self.validate_service(medical_serv_item):
+                continue
             prototype_code = safe_traverse(medical_serv_item, 'medical_service') or ''
             prototype_id = SrvPrototypeMatch.get_prototype_id_by_prototype_code(prototype_code)
 
@@ -294,8 +341,10 @@ class CaseTambovBuilder(Builder):
                         src_entity_code,
                         '_'.join((str(header_meta['local_main_id']), prototype_id)),
                 ):
-                    if not resource_group_id:
-                        resource_group_id = self.get_resource_group_id(ticket_data['hospital'], ticket_data['doctor'])
+                    resource_group_id = self.get_resource_group_id(
+                        ticket_data['hospital'],
+                        safe_traverse(medical_serv_item, 'medical_service_doctor')
+                    )
                     serv_item['body']['resourceGroupId'] = resource_group_id
 
         return entities
