@@ -168,15 +168,19 @@ def params_to_str(params):
 def prepare_objects(d):
     pr_objs = set()
 
-    def deep_cleaner(o):
-        if id(o) in pr_objs:
-            return
-        pr_objs.add(id(o))
+    def deep_cleaner(o, pre_o=None, pre_k=None):
         if isinstance(o, dict):
+            if id(o) in pr_objs:
+                if pre_o:
+                    # str_o = unicode(o)
+                    pre_o[pre_k] = u'...'
+                return
+            pr_objs.add(id(o))
             for k, v in o.iteritems():
                 if callable(v):
                     o[k] = unicode(v)
-                deep_cleaner(v)
+                deep_cleaner(v, o, k)
+            pr_objs.remove(id(o))
         if isinstance(o, (list, tuple)):
             map(deep_cleaner, o)
     if isinstance(d, dict):
