@@ -166,7 +166,12 @@ def params_to_str(params):
 
 
 def prepare_objects(d):
+    pr_objs = set()
+
     def deep_cleaner(o):
+        if id(o) in pr_objs:
+            return
+        pr_objs.add(id(o))
         if isinstance(o, dict):
             for k, v in o.iteritems():
                 if callable(v):
