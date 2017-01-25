@@ -19,9 +19,11 @@ class EntityImage(Model):
     __tablename__ = 'entity_image'
 
     root_entity_id = reference_col('entity', unique=False, nullable=False)
-    root_entity = relationship('Entity', backref='set_entity_image_by_root')
+    root_entity = relationship('Entity', backref='set_entity_image_by_root',
+                               foreign_keys='EntityImage.root_entity_id')
     entity_id = reference_col('entity', unique=False, nullable=False)
-    entity = relationship('Entity', backref='set_entity_image')
+    entity = relationship('Entity', backref='set_entity_image',
+                          foreign_keys='EntityImage.entity_id')
     parent_id = reference_col('entity_image', unique=False, nullable=True)
     parent = relationship('EntityImage')
     root_external_id = Column(db.String(80), unique=False, nullable=False)
@@ -38,9 +40,11 @@ class EntityImageDiff(Model):
     __tablename__ = 'entity_image_diff'
 
     root_entity_id = reference_col('entity', unique=False, nullable=False)
-    root_entity = relationship('Entity', backref='set_entity_image_diff_by_root')
+    root_entity = relationship('Entity', backref='set_entity_image_diff_by_root',
+                               foreign_keys='EntityImageDiff.root_entity_id')
     entity_id = reference_col('entity', unique=False, nullable=False)
-    entity = relationship('Entity', backref='set_entity_image_diff')
+    entity = relationship('Entity', backref='set_entity_image_diff',
+                          foreign_keys='EntityImageDiff.entity_id')
     root_external_id = Column(db.String(80), unique=False, nullable=False)
     external_id = Column(db.String(80), unique=False, nullable=False, index=True)
     key = Column(db.String(80), unique=False, nullable=False, index=True, server_default='')
