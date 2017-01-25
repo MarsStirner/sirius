@@ -18,6 +18,8 @@ class EntityImage(Model):
 
     __tablename__ = 'entity_image'
 
+    root_entity_id = reference_col('entity', unique=False, nullable=False)
+    root_entity = relationship('Entity', backref='set_entity_image_by_root')
     entity_id = reference_col('entity', unique=False, nullable=False)
     entity = relationship('Entity', backref='set_entity_image')
     parent_id = reference_col('entity_image', unique=False, nullable=True)
@@ -35,6 +37,8 @@ class EntityImage(Model):
 class EntityImageDiff(Model):
     __tablename__ = 'entity_image_diff'
 
+    root_entity_id = reference_col('entity', unique=False, nullable=False)
+    root_entity = relationship('Entity', backref='set_entity_image_diff_by_root')
     entity_id = reference_col('entity', unique=False, nullable=False)
     entity = relationship('Entity', backref='set_entity_image_diff')
     root_external_id = Column(db.String(80), unique=False, nullable=False)
