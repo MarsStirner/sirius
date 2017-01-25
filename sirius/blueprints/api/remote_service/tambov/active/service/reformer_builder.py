@@ -7,7 +7,7 @@
 
 """
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from hitsl_utils.safe import safe_traverse, safe_int
 from hitsl_utils.wm_api import WebMisJsonEncoder
@@ -21,6 +21,7 @@ from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.blueprints.reformer.models.method import ApiMethod
+from sirius.blueprints.scheduler.models import SchGrReqExecute
 from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 from sirius.lib.xform import Undefined
@@ -74,9 +75,30 @@ class ServiceTambovBuilder(Builder):
     def get_services_ids(self, reformed_req):
         req = reformed_req
         for param_name, param_data in req.meta['dst_parents_params'].items():
-            req.data_update({param_name: param_data['id']})
-        res = self.transfer__send_request(req)
-        return res
+            req.data_update({
+                param_name: param_data['id'],
+                # 'medicalOrganizationId': '89',  # todo: для тестов
+            })
+
+        last_request_datetime = SchGrReqExecute.last_datetime(
+            RisarEntityCode.MEASURE_RESEARCH
+        )
+        cur_datetime = datetime.today()
+        req_date = (last_request_datetime or cur_datetime).date() - timedelta(1)
+        # в мис баг. dateFrom не диапазон, а дата. обходим.
+        '''
+        searchServiceRend
+        <typ:patientUid>ITPEJZ6JOK9S8EQ2</typ:patientUid>
+        <typ:dateFrom>2017-01-17</typ:dateFrom>
+        если выдает пустоту, значит в мис не исправили баг еще
+        '''
+        ids_set = set()
+        while req_date <= cur_datetime.date():
+            req.data_update({'dateFrom': req_date})
+            res = self.transfer__send_request(req)
+            ids_set.update(res)
+            req_date += timedelta(1)
+        return ids_set
 
     def set_services(self, rend_services_ids, package, req_meta):
         rend_serv_api_method = self.reformer.get_api_method(
@@ -101,10 +123,28 @@ class ServiceTambovBuilder(Builder):
             )
             rend_service_data = self.transfer__send_request(req)
             # без прототипа не поймем каким методом отправлять
-            if not rend_service_data['prototypeId']:
+            srv_api_method = self.reformer.get_api_method(
+                self.remote_sys_code,
+                TambovEntityCode.SERVICE,
+                OperationCode.READ_ONE,
+            )
+            req = DataRequest()
+            req.set_req_params(
+                url=srv_api_method['template_url'],
+                method=srv_api_method['method'],
+                protocol=ProtocolCode.SOAP,
+                data={
+                    'serviceId': rend_service_data['serviceId'],
+                },
+            )
+            srv_data = self.transfer__send_request(req)
+            prototypeId = srv_data['prototype']
+            rend_service_data['prototypeId'] = prototypeId
+            if not prototypeId:
+                # большинство услуг с разных мо без прототипа
                 # logger.error(
-                #     'Missing required prototypeId in referralId = "%s"' %
-                #     (rend_service_data['referralId'])
+                #     "Missing required prototypeId in referralId = '%s'. rend_service_id = '%s'" %
+                #     (rend_service_data['referralId'], rend_service_data['id'])
                 # )
                 continue
 

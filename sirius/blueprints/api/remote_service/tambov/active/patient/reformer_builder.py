@@ -176,7 +176,7 @@ class PatientTambovBuilder(Builder):
         main_item['body'] = {
             # 'client_id': None,  # заполняется в set_current_id_func
             'FIO': {
-                'middlename': patient['middleName'],
+                'middlename': patient['middleName'] or '',
                 'name': patient['firstName'],
                 'surname': patient['lastName']
             },
@@ -184,6 +184,12 @@ class PatientTambovBuilder(Builder):
             'gender': gender,
             # 'SNILS': None,  # заполняется в документах
         }
+        if sm_patient_data['workplaces']:
+            workplace = sm_patient_data['workplaces'][-1]
+            main_item['body']['job'] = {
+                'organisation': workplace['organization']['name'],
+                'post': workplace['position'] or Undefined,
+            }
         if patient_data['bloodGroup']:
             main_item['body']['blood_type_info'] = [{
                 'blood_type': patient_data['bloodGroup'],
@@ -202,7 +208,9 @@ class PatientTambovBuilder(Builder):
                 main_item['body']['SNILS'] = document_data.number
             # elif document_data.codeType == '1' and not main_item['body']['SNILS'] is None:  # SNILS
             #     main_item['body']['SNILS'] = document_data.code
-            elif document_data.type == '_26':  # ENP  # insurance_document_issuing_authority приходит код, а нужно ИД
+            elif document_data.type in ('24', '25', '26', '40'):  # ENP
+                # в insurance_document_issuing_authority приходит код, а нужно ИД
+                continue
                 main_item['body'].setdefault('insurance_documents', []).append({
                     'insurance_document_type': document_data.type or '',
                     'insurance_document_number': document_data.number or '',
@@ -210,16 +218,14 @@ class PatientTambovBuilder(Builder):
                     'insurance_document_series': document_data.series or Undefined,
                     'insurance_document_issuing_authority': document_issuing_authority,    # —
                 })
-            elif document_data.type == '13':  # passport
-                main_item['body'].setdefault('document', {}).update({
+            else:  # passport ('13') и прочие документы
+                main_item['body'].setdefault('documents', []).append({
                     'document_type_code': safe_int(document_data.type),
                     'document_number': document_data.number,
                     'document_beg_date': encode(document_data.issueDate) or '2000-01-01',
                     'document_series': document_data.series or Undefined,
                     'document_issuing_authority': document_issuing_authority,
                 })
-            else:
-                pass
         for address_data in sm_patient_data['addresses']:
             if address_data['type'] == '3':
                 addr_type_name = 'residential_address'

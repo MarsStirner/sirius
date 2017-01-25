@@ -193,10 +193,10 @@ class ReferralTambovBuilder(Builder):
                 # 'id': None,  # проставляется в set_current_id_func
                 'patientUid': header_meta['remote_parents_params']['patientUid']['id'],
                 'referralDate': to_date(date),
-                'referralOrganizationId': org_code,
+                'referralOrganizationId': appoint_data.get('appointed_lpu'),
                 'refServiceId': srv_data and [srv_data['id']],  # баг какой-то. ждет список
                 'typeId': typeId,
-                'receivingOrganizationId': appoint_data.get('referral_lpu'),
+                'receivingOrganizationId': org_code,
                 'referralSpecialistId': appoint_data.get('appointed_doctor'),
             }
             dm = DiagsMatch()

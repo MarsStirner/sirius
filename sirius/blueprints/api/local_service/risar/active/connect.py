@@ -65,7 +65,7 @@ def get_role(token, role_code=''):
     )
     j = result.json()
     if not result.status_code == 200:
-        raise ConnectError('Ошибка авторизации')
+        raise ConnectError(u'Ошибка авторизации')
     return result.cookies[authoriz_token_name]
 
 

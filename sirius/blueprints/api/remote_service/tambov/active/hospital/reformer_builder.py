@@ -6,7 +6,7 @@
 @date: 23.09.2016
 
 """
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from hitsl_utils.safe import safe_traverse, safe_int, safe_traverse_attrs
 from hitsl_utils.wm_api import WebMisJsonEncoder
@@ -19,6 +19,7 @@ from sirius.blueprints.reformer.api import Builder, EntitiesPackage, \
     RequestEntities, DataRequest
 from sirius.blueprints.reformer.models.matching import MatchingId
 from sirius.blueprints.reformer.models.method import ApiMethod
+from sirius.blueprints.scheduler.models import SchGrReqExecute
 from sirius.models.protocol import ProtocolCode
 from sirius.models.system import SystemCode
 from sirius.lib.xform import Undefined
@@ -67,6 +68,13 @@ class HospitalTambovBuilder(Builder):
         req = reformed_req
         for param_name, param_data in req.meta['dst_parents_params'].items():
             req.data_update({param_name: param_data['id']})
+
+        last_request_datetime = SchGrReqExecute.last_datetime(
+            RisarEntityCode.MEASURE_HOSPITALIZATION
+        ) or datetime.today()
+        req.data_update({
+            'closedFromDate': last_request_datetime.date() - timedelta(1),
+        })
         res = self.transfer__send_request(req)
         return res
 

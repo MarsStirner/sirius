@@ -67,6 +67,15 @@ class TambovSOAPClient(object):
         self.check_error(result)
         return getattr(result, 'patientCard', {})
 
+    def getBirthResult(self, **kw):
+        result = None
+        try:
+            result = self.client.service.getBirthResult(**kw)
+        except ZeepWebFault as exc:
+            if exc.message != 'PATIENT NOT FOUND':
+                raise
+        return result
+
 
 class TambovRESTClient(object):
     basic_auth = HTTPBasicAuth(tambov_api_login, tambov_api_password)

@@ -19,11 +19,6 @@ from sirius.models.operation import OperationCode
 
 class TulaAnswer(RemoteAnswer):
 
-    def process(self, result, req_meta=None, req_data=None):
-        if not req_meta['dst_request_mode']:
-            req_meta['dst_request_mode'] = RequestModeCode.JSON_DATA
-        return super(TulaAnswer, self).process(result, req_meta, req_data)
-
     def xml_to_dict(self, result):
         e = ET.XML(result.text)
         return e
@@ -101,8 +96,7 @@ class TulaAnswer(RemoteAnswer):
                     message = u'{0}: {1}'.format(j['meta']['code'],
                                                  j['meta']['name'])
             except Exception, e:
-                message = u'Unknown ({0})({1})({2})'.format(unicode(response),
-                                                            unicode(response.text)[
-                                                            :300], unicode(e))
-            raise ExternalError(
-                unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
+                message = u'Unknown ({0})({1})({2})'.format(
+                    unicode(response), unicode(response.text)[:1000], unicode(e)
+                )
+            raise ExternalError(u'Api Error: {0}'.format(message))

@@ -111,7 +111,7 @@ def jsonify_api_exception(exc, tb):
 def jsonify_exception(exc, tb):
     meta = dict(
         code=500,
-        name=repr(exc),
+        name=repr(exc).decode('utf-8'),  # далее дампу нужен уникод
     )
     if app.debug:
         meta['traceback'] = map(encode_tb, tb)

@@ -137,6 +137,8 @@ class Scheduler(object):
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \
             RisarEntityCode
+        from sirius.blueprints.api.remote_service.tambov.entities import \
+            TambovEntityCode
 
         implement = Implementation()
         reformer = implement.get_reformer(system_code)
@@ -151,6 +153,9 @@ class Scheduler(object):
         #         'id': 14  # todo: при тестировании работаем пока с одной картой
         #     }
         # }
+        implement = Implementation()
+        reformer = implement.get_reformer(system_code)
+
         msg = Message(data)
         msg.to_local_service()
         msg.set_request_type()
@@ -160,6 +165,13 @@ class Scheduler(object):
         card_msg = producer.send(msg, async=False)
         for card_data in card_msg.get_data():
             try:
+                if not reformer.find_remote_id_by_local(
+                    TambovEntityCode.SMART_PATIENT,
+                    RisarEntityCode.CARD,
+                    card_data['card_id'],
+                ):
+                    continue
+
                 msg = self.create_message(system_code, entity_code)  # searchServiceRend
                 meta = msg.get_header().meta
                 meta['local_parents_params'] = {
@@ -193,7 +205,7 @@ class Scheduler(object):
             try:
                 if not org_data['regionalCode']:
                     continue
-                # if not org_data['regionalCode'] in ('1434663',):  # в Тамбове права выданы только на эти лпу
+                # if not org_data['regionalCode'] in ('1434663', '89',):  # todo: для тестов
                 #     continue
                 msg = self.create_message(system_code, entity_code)  # getEmployees
                 meta = msg.get_header().meta
@@ -228,7 +240,7 @@ class Scheduler(object):
             try:
                 if not org_data['regionalCode']:
                     continue
-                # if not org_data['regionalCode'] in ('87',):  # todo: для тестов
+                # if not org_data['regionalCode'] in ('1434663', '89',):  # todo: для тестов
                 #     continue
                 msg = self.create_message(system_code, entity_code)  # getTimes
                 meta = msg.get_header().meta
@@ -245,6 +257,8 @@ class Scheduler(object):
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \
             RisarEntityCode
+        from sirius.blueprints.api.remote_service.tambov.entities import \
+            TambovEntityCode
 
         implement = Implementation()
         reformer = implement.get_reformer(system_code)
@@ -268,6 +282,13 @@ class Scheduler(object):
         card_msg = producer.send(msg, async=False)
         for card_data in card_msg.get_data():
             try:
+                if not reformer.find_remote_id_by_local(
+                    TambovEntityCode.SMART_PATIENT,
+                    RisarEntityCode.CARD,
+                    card_data['card_id'],
+                ):
+                    continue
+
                 msg = self.create_message(system_code, entity_code, OperationCode.READ_ONE)  # getBirthResult
                 meta = msg.get_header().meta
                 meta['local_parents_params'] = {
@@ -283,6 +304,8 @@ class Scheduler(object):
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \
             RisarEntityCode
+        from sirius.blueprints.api.remote_service.tambov.entities import \
+            TambovEntityCode
 
         implement = Implementation()
         reformer = implement.get_reformer(system_code)
@@ -327,6 +350,13 @@ class Scheduler(object):
         }
         for card_data in card_msg.get_data():
             try:
+                if not reformer.find_remote_id_by_local(
+                    TambovEntityCode.SMART_PATIENT,
+                    RisarEntityCode.CARD,
+                    card_data['card_id'],
+                ):
+                    continue
+
                 exch_card_req['doc']['event_id'] = card_data['card_id']
                 # POST /print_subsystem/fill_template
                 exch_card_method = reformer.get_api_method(
@@ -367,6 +397,8 @@ class Scheduler(object):
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \
             RisarEntityCode
+        from sirius.blueprints.api.remote_service.tambov.entities import \
+            TambovEntityCode
 
         implement = Implementation()
         reformer = implement.get_reformer(system_code)
@@ -390,6 +422,13 @@ class Scheduler(object):
         card_msg = producer.send(msg, async=False)
         for card_data in card_msg.get_data():
             try:
+                if not reformer.find_remote_id_by_local(
+                    TambovEntityCode.SMART_PATIENT,
+                    RisarEntityCode.CARD,
+                    card_data['card_id'],
+                ):
+                    continue
+
                 msg = self.create_message(system_code, entity_code)  # searchHspRecord
                 meta = msg.get_header().meta
                 meta['local_parents_params'] = {

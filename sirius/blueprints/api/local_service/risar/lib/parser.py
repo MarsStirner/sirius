@@ -129,4 +129,4 @@ class LocalAnswerParser(object):
                     message = u'{0}: {1}'.format(j['meta']['code'], j['meta']['name'])
             except Exception, e:
                 message = u'Unknown ({0})({1})({2})'.format(unicode(response), unicode(response.text)[:300], unicode(e))
-            raise ExternalError(unicode(u'Api Error: {0}'.format(message)).encode('utf-8'))
+            raise ExternalError(unicode(u'Api Error: {0}'.format(message)))

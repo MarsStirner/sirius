@@ -14,10 +14,6 @@ from sirius.blueprints.api.remote_service.tambov.entities import \
 
 
 class TambovAnswer(RemoteAnswer):
-    def process(self, result, req_meta=None, req_data=None):
-        if not req_meta['dst_request_mode']:
-            req_meta['dst_request_mode'] = RequestModeCode.XML_DATA
-        return super(TambovAnswer, self).process(result, req_meta, req_data)
 
     def get_params(self, entity_code, response, param_name):
         # разбирает ответ локальной системы и достает полезные данные

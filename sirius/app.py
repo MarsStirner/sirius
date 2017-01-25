@@ -139,6 +139,6 @@ def init_logger():
 
     logger.setLevel(logging.DEBUG)
     logger.addHandler(handler)
-    logger.addHandler(logging.StreamHandler())
+    # logger.addHandler(logging.StreamHandler())
 
     logger.debug('SimpleLogs Handler initialized')
