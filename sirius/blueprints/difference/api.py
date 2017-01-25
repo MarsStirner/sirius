@@ -85,32 +85,32 @@ class Difference(object):
         db.session.commit()
         return entity_package
 
-    def _build_flat_entities(self, flat_entities, pack_entities, level=1):
+    def _build_flat_entities(self, flat_entities, pack_entities, level=1, root_entity_code=None):
         for entity_code, records in pack_entities.iteritems():
             for record in records:
+                if level == 1:
+                    root_entity_code = entity_code
                 root_parent_main_id = (record.get('root_parent') or {}).get(
                     'main_id', record['main_id']
                 )
-                flat_entities.setdefault((level, entity_code), {}).update(
+                flat_entities.setdefault((level, root_entity_code, entity_code), {}).update(
                     {(str(root_parent_main_id), str(record['main_id'])): record}
                 )
                 additions = record.get('addition')
                 if additions:
-                    self._build_flat_entities(flat_entities, additions, level + 1)
+                    self._build_flat_entities(flat_entities, additions, level + 1, root_entity_code)
                 childs = record.get('childs')
                 if childs:
-                    self._build_flat_entities(flat_entities, childs, level + 1)
+                    self._build_flat_entities(flat_entities, childs, level + 1, root_entity_code)
 
     def _set_diffs(self, system_code, flat_entities):
         # DiffEntityImage.create_temp_table()
         DiffEntityImage.clear_temp_table()
         root_ent_ids = set()
-        root_entity_id = None
-        for (level, entity_code), fl_entity_dict in flat_entities.iteritems():
+        for (level, root_entity_code, entity_code), fl_entity_dict in flat_entities.iteritems():
+            root_entity_id = Entity.get_id(system_code, root_entity_code)
             entity_id = Entity.get_id(system_code, entity_code)
-            if level == 1:
-                root_entity_id = entity_id
-                root_ent_ids.add(root_entity_id)
+            root_ent_ids.add(root_entity_id)
             objects = (
                 {
                     'root_entity_id': root_entity_id,
@@ -136,7 +136,7 @@ class Difference(object):
         diff_records = DiffEntityImage.get_marked_data()
         for diff_rec in diff_records:
             if diff_rec.operation_code != OperationCode.DELETE:
-                key = (diff_rec.level, diff_rec.entity.code)
+                key = (diff_rec.level, diff_rec.root_entity.code, diff_rec.entity.code)
                 fl_entity_dict = flat_entities[key]
                 package_record = fl_entity_dict[diff_rec.root_external_id,
                                                 diff_rec.external_id]
@@ -159,12 +159,13 @@ class Difference(object):
                         is_changed=True,
                     )
                 else:
-                    key = (diff_rec.level, diff_rec.entity.code)
-                    fl_entity_dict = flat_entities[key]
-                    package_record = fl_entity_dict[diff_rec.root_external_id,
-                                                    diff_rec.external_id]
-                    root_parent = package_record.get('root_parent')
-                    root_parent['operation_code'] = OperationCode.CHANGE
+                    ent_key = (diff_rec.level, diff_rec.root_entity.code, diff_rec.entity.code)
+                    fl_entity_dict = flat_entities[ent_key]
+                    ent_d_key = (diff_rec.root_external_id, diff_rec.external_id)
+                    package_record = fl_entity_dict.get(ent_d_key)
+                    if package_record:
+                        root_parent = package_record['root_parent']
+                        root_parent['operation_code'] = OperationCode.CHANGE
 
     # def save_all_changes(self):
     #     # вносит изменения в EntityImage, удаляет временные таблицы

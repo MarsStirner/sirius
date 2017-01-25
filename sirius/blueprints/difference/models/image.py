@@ -236,7 +236,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             store.level
           from %(store_table_name)s store
           where
-            store.root_entity_id = '%(root_entity_id)s' and
+            store.root_entity_id = %(root_entity_id)s and
             (
               '%(key_range_beg)s' = '' or
               store.key between '%(key_range_beg)s' and '%(key_range_end)s'
@@ -245,7 +245,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
               select tmp.id
                 from %(temp_table_name)s tmp
                 where
-                  store.root_entity_id = tmp.root_entity_id and  -- не обяз. но страховка
+                  store.root_entity_id = tmp.root_entity_id and  -- not req. but insurance
                   store.root_external_id = tmp.root_external_id and
                   store.entity_id = tmp.entity_id and
                   store.external_id = tmp.external_id

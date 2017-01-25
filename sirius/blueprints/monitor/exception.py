@@ -285,7 +285,6 @@ def beat_entry(function=None, self_pos=1):
             except LoggedException as exc:
                 db.session.rollback()
                 raise
-                # reraise(Exception, LoggedException(exc.args[0]), sys.exc_info()[2])
             except Exception as exc:
                 db.session.rollback()
                 error_datetime = datetime.today()
