@@ -64,7 +64,8 @@ class ServiceTambovBuilder(Builder):
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
             # todo: переопределить diff_key. (в ответе должен быть dateFrom)
-            package.enable_diff_check()
+            # отключено: если мис исправит баг по dateFrom, то на одни и те же услуги будут разные ключи
+            # package.enable_diff_check()
             services_ids = self.get_services_ids(reformed_req, package)
             self.set_services(services_ids, package, req_meta)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
@@ -95,11 +96,11 @@ class ServiceTambovBuilder(Builder):
         '''
         ids_set = set()
         while req_date <= cur_datetime.date():
-            diff_key = req_date.isoformat()
+            # diff_key = req_date.isoformat()
             req.data_update({'dateFrom': req_date})
             res = self.transfer__send_request(req)
-            # ids_set.update(res)
-            ids_set.update(((r, diff_key) for r in res))
+            ids_set.update(res)
+            # ids_set.update(((r, diff_key) for r in res))
             req_date += timedelta(1)
         return ids_set
 
@@ -116,7 +117,8 @@ class ServiceTambovBuilder(Builder):
         )
 
         referralIds = set()
-        for rend_service_id, diff_key in rend_services_ids:
+        # for rend_service_id, diff_key in rend_services_ids:
+        for rend_service_id in rend_services_ids:
             req = DataRequest()
             req.set_req_params(
                 url=rend_serv_api_method['template_url'],
@@ -192,7 +194,7 @@ class ServiceTambovBuilder(Builder):
                 main_id=referralId,
                 parents_params=req_meta['dst_parents_params'],
                 data=referral_data,
-                diff_key=diff_key,
+                # diff_key=diff_key,
             )
 
             rend_srv_item = package.add_child_pack_entity(
@@ -202,7 +204,7 @@ class ServiceTambovBuilder(Builder):
                 method=req.method,
                 main_id=rend_service_id,
                 data=rend_service_data,
-                diff_key=diff_key,
+                # diff_key=diff_key,
             )
 
             # data_req = DataRequest()
@@ -243,7 +245,7 @@ class ServiceTambovBuilder(Builder):
                 entity_code=TambovEntityCode.SERVICE_ATTACHMENT,
                 main_id=rend_service_id,
                 data=srv_attachment_data,
-                diff_key=diff_key,
+                # diff_key=diff_key,
             )
 
 
