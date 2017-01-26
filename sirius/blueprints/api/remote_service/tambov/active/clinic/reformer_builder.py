@@ -41,9 +41,8 @@ class ClinicTambovBuilder(Builder):
         package = EntitiesPackage(self, self.remote_sys_code)
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
-            # пока без удаления
-            # package.enable_diff_check()
-            # package.set_diff_key_range()
+            package.enable_diff_check()
+            package.set_diff_key_range(('', ''))
             req = reformed_req.copy()
             clinics_ids = self.transfer__send_request(req)
             self.set_clinics(clinics_ids, package, req_meta)
@@ -60,7 +59,7 @@ class ClinicTambovBuilder(Builder):
                 main_id_name='clinic',
                 main_id=clinic_id,
                 parents_params=req_meta['dst_parents_params'],
-                # diff_key=,
+                diff_key='',
             )
 
             AddressAllInfo_data = package.add_addition(
@@ -68,7 +67,6 @@ class ClinicTambovBuilder(Builder):
                 entity_code=TambovEntityCode.ADDRESS_ALL_INFO,
                 main_id_name='id',
                 main_id=safe_traverse_attrs(clinic_data, 'actualAddress', 'addressId'),
-                # diff_key=,
             )
 
     ##################################################################

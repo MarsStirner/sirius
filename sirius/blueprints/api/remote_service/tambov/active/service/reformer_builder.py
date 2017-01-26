@@ -63,16 +63,15 @@ class ServiceTambovBuilder(Builder):
         package = EntitiesPackage(self, self.remote_sys_code)
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
-            # пока без удаления
-            # package.enable_diff_check()
-            # package.set_diff_key_range()
-            services_ids = self.get_services_ids(reformed_req)
+            # todo: переопределить diff_key. (в ответе должен быть dateFrom)
+            package.enable_diff_check()
+            services_ids = self.get_services_ids(reformed_req, package)
             self.set_services(services_ids, package, req_meta)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
             self.set_services([req_meta['dst_id']], package, req_meta)
         return package
 
-    def get_services_ids(self, reformed_req):
+    def get_services_ids(self, reformed_req, package):
         req = reformed_req
         for param_name, param_data in req.meta['dst_parents_params'].items():
             req.data_update({
@@ -85,6 +84,8 @@ class ServiceTambovBuilder(Builder):
         )
         cur_datetime = datetime.today()
         req_date = (last_request_datetime or cur_datetime).date() - timedelta(1)
+        package.set_diff_key_range((req_date.isoformat(),
+                                    cur_datetime.date().isoformat()))
         # в мис баг. dateFrom не диапазон, а дата. обходим.
         '''
         searchServiceRend
@@ -94,9 +95,11 @@ class ServiceTambovBuilder(Builder):
         '''
         ids_set = set()
         while req_date <= cur_datetime.date():
+            diff_key = req_date.isoformat()
             req.data_update({'dateFrom': req_date})
             res = self.transfer__send_request(req)
-            ids_set.update(res)
+            # ids_set.update(res)
+            ids_set.update(((r, diff_key) for r in res))
             req_date += timedelta(1)
         return ids_set
 
@@ -113,7 +116,7 @@ class ServiceTambovBuilder(Builder):
         )
 
         referralIds = set()
-        for rend_service_id in rend_services_ids:
+        for rend_service_id, diff_key in rend_services_ids:
             req = DataRequest()
             req.set_req_params(
                 url=rend_serv_api_method['template_url'],
@@ -189,6 +192,7 @@ class ServiceTambovBuilder(Builder):
                 main_id=referralId,
                 parents_params=req_meta['dst_parents_params'],
                 data=referral_data,
+                diff_key=diff_key,
             )
 
             rend_srv_item = package.add_child_pack_entity(
@@ -198,6 +202,7 @@ class ServiceTambovBuilder(Builder):
                 method=req.method,
                 main_id=rend_service_id,
                 data=rend_service_data,
+                diff_key=diff_key,
             )
 
             # data_req = DataRequest()
@@ -238,6 +243,7 @@ class ServiceTambovBuilder(Builder):
                 entity_code=TambovEntityCode.SERVICE_ATTACHMENT,
                 main_id=rend_service_id,
                 data=srv_attachment_data,
+                diff_key=diff_key,
             )
 
 

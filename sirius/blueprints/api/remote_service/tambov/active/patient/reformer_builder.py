@@ -44,7 +44,6 @@ class PatientTambovBuilder(Builder):
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
             # проблема с определением ключа выборки
             # package.enable_diff_check()
-            # package.set_diff_key_range()
             api_method = self.reformer.get_api_method(
                 self.remote_sys_code,
                 TambovEntityCode.SMART_PATIENT,

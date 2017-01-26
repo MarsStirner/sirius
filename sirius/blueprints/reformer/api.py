@@ -170,6 +170,7 @@ class Reformer(object):
                         rec_meta['dst_id'],
                     )
                     matching_id.update(local_id=answer_res['main_id'])
+                    rec_meta['dst_id'] = answer_res['main_id']
 
     def conformity_remote(self, record, trans_res):
         # сопоставление ID в БД при добавлении данных
@@ -880,6 +881,7 @@ class EntitiesPackage(IStreamMeta):
     pack_entities = None
     builder = None
     root_item = None
+    diff_key = None
     _is_diff_check = False
     _is_delete_check = True
     _diff_key_range = None
@@ -918,6 +920,7 @@ class EntitiesPackage(IStreamMeta):
         }
         self.pack_entities.setdefault(entity_code, []).append(item)
         self.root_item = item
+        self.diff_key = diff_key
         return item
 
     def add_child_pack_entity(
@@ -984,7 +987,7 @@ class EntitiesPackage(IStreamMeta):
         )
         return item, data
 
-    def add_child(self, parent_item, entity_code, main_id_name, main_id, diff_key=None):
+    def add_child(self, parent_item, entity_code, main_id_name, main_id):
         # реализовано только на сбор пакета в remote soap
         api_method = self.builder.reformer.get_api_method(
             self.system_code,
@@ -1014,11 +1017,11 @@ class EntitiesPackage(IStreamMeta):
             method=req.method,
             main_id=main_id,
             data=data,
-            diff_key=diff_key,
+            diff_key=self.diff_key,
         )
         return item, data
 
-    def add_addition(self, parent_item, entity_code, main_id_name, main_id, diff_key=None):
+    def add_addition(self, parent_item, entity_code, main_id_name, main_id):
         # реализовано только на сбор пакета в remote soap
         if not main_id:
             return None
@@ -1049,7 +1052,7 @@ class EntitiesPackage(IStreamMeta):
             entity_code=entity_code,
             main_id=main_id,
             data=data,
-            diff_key=diff_key,
+            diff_key=self.diff_key,
         )
         return data
 

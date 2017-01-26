@@ -55,23 +55,26 @@ class HospitalTambovBuilder(Builder):
         package = EntitiesPackage(self, self.remote_sys_code)
         req_meta = reformed_req.meta
         if req_meta['dst_operation_code'] == OperationCode.READ_MANY:
-            # пока без удаления
+            # проблема с определением diff_key.
+            # (набор результатов может меняться + в ответе должен быть closedFromDate)
             # package.enable_diff_check()
-            # package.set_diff_key_range()
-            hospital_rec_ids = self.get_hospital_rec_ids(reformed_req)
+            hospital_rec_ids = self.get_hospital_rec_ids(reformed_req, package)
             self.set_hospitals(hospital_rec_ids, package, req_meta)
         elif req_meta['dst_operation_code'] == OperationCode.READ_ONE:
             self.set_hospitals([req_meta['dst_id']], package, req_meta)
         return package
 
-    def get_hospital_rec_ids(self, reformed_req):
+    def get_hospital_rec_ids(self, reformed_req, package):
         req = reformed_req
         for param_name, param_data in req.meta['dst_parents_params'].items():
             req.data_update({param_name: param_data['id']})
 
+        datetime_today = datetime.today()
         last_request_datetime = SchGrReqExecute.last_datetime(
             RisarEntityCode.MEASURE_HOSPITALIZATION
-        ) or datetime.today()
+        ) or datetime_today
+        # package.set_diff_key_range((last_request_datetime.date().isoformat(),
+        #                             datetime_today.date().isoformat()))
         req.data_update({
             'closedFromDate': last_request_datetime.date() - timedelta(1),
         })
@@ -115,7 +118,7 @@ class HospitalTambovBuilder(Builder):
                     'admissionDate': earliest_hosp_rec['admissionDate'],
                     'outcomeDate': latest_hosp_rec['outcomeDate'],
                 },
-                # diff_key=diff_key,
+                # diff_key=?['closedFromDate'],
             )
 
             package.add_addition(
