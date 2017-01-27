@@ -30,5 +30,6 @@ class ClientTulaBuilder(Builder):
         )
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = data
+            main_item['body']['client_id'] = ''  # заполняется в set_current_id_common_func
 
         return entities
