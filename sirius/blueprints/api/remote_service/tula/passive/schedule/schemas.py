@@ -43,6 +43,14 @@ class ScheduleSchema(Schema):
                 "description": "Запланированное количество приемов в интервале",
                 "type": "integer"
             },
+            "quota_type": {
+                "description": "Тип квоты",
+                "type": "string"
+            },
+            "appointment_permited": {
+                "description": "Разрешена запись на прием",
+                "type": "boolean"
+            },
             "schedule_tickets": {
                 "description": "Список слотов расписания",
                 "type": "array",
@@ -63,12 +71,20 @@ class ScheduleSchema(Schema):
                         "patient": {
                             "description": "Пациент (id пациента)",
                             "type": "string"
+                        },
+                        "schedule_ticket_type": {
+                            "description": "Тип записи на прием",
+                            "type": "string"
+                        },
+                        "schedule_ticket_id": {
+                            "description": "id записи на прием",
+                            "type": "string"
                         }
                      },
-                    "required": ["time_begin","time_end"]
+                    "required": ["schedule_ticket_type"]
                 },
                 "minItems": 0
             }
         },
-        "required": ["hospital","doctor","date","time_begin","time_end"]
+        "required": ["hospital","doctor","date","time_begin","time_end","quota_type"]
     }]

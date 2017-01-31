@@ -21,7 +21,7 @@ main_id_name = 'schedule_id'
 @module.route('/api/integration/<int:api_version>/schedule/full/',
               methods=['POST'])
 @module.route('/api/integration/<int:api_version>/schedule/full/<' + main_id_name + '>',
-              methods=['PUT', 'DELETE'])
+              methods=['DELETE'])
 @remote_api_method(hook=hook)
 def api_schedule_change(api_version, **kwargs):
     main_id = kwargs.get(main_id_name)

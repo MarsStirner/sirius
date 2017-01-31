@@ -241,6 +241,34 @@ class MatchingId(Model):
         return res and res.local_id
 
     @classmethod
+    def find_all_matches_by_remote_id(cls, local_entity_code, remote_entity_code, remote_id, remote_sys_code, remote_id_prefix=None):
+        LocalEntity = aliased(Entity, name='LocalEntity')
+        LocalSystem = aliased(System, name='LocalSystem')
+        RemoteEntity = aliased(Entity, name='RemoteEntity')
+        RemoteSystem = aliased(System, name='RemoteSystem')
+        res = cls.query.join(
+            LocalEntity, LocalEntity.id == cls.local_entity_id
+        ).join(
+            LocalSystem, LocalSystem.id == LocalEntity.system_id
+        ).join(
+            RemoteEntity, RemoteEntity.id == cls.remote_entity_id
+        ).join(
+            RemoteSystem, RemoteSystem.id == RemoteEntity.system_id
+        ).filter(
+            LocalEntity.code == local_entity_code,
+            LocalSystem.code == SystemCode.LOCAL,
+            cls.remote_id == str(remote_id),
+            RemoteEntity.code == remote_entity_code,
+            RemoteSystem.code == remote_sys_code,
+        )
+        if remote_id_prefix:
+            res = res.filter(
+                cls.remote_id_prefix == (remote_id_prefix or ''),
+            )
+        res = res.all()
+        return res
+
+    @classmethod
     def get_remote_id(cls, local_entity_code, local_id, remote_entity_code, remote_sys_code, local_id_prefix=None):
         LocalEntity = aliased(Entity, name='LocalEntity')
         LocalSystem = aliased(System, name='LocalSystem')

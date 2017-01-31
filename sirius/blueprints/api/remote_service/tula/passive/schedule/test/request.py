@@ -19,6 +19,6 @@ def edit_schedule(testapp, session, main_id, data):
 
 def delete_schedule(testapp, session, main_id):
     url = u'/tula/api/integration/0/schedule/full/%s' % main_id
-    result = make_test_api_request(testapp, 'delete', url, session)
-    # result = make_api_request('delete', url, session)
+    # result = make_test_api_request(testapp, 'delete', url, session)
+    result = make_api_request('delete', url, session)
     return result

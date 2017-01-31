@@ -32,20 +32,21 @@ class ScheduleTicketTulaBuilder(Builder):
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = data
             main_item['body']['schedule_ticket_id'] = ''  # заполняется в set_current_id_common_func
-            if 'hospital' in data:
-                hospital_code = self.reformer.get_local_id_by_remote(
-                    RisarEntityCode.ORGANIZATION,
-                    TulaEntityCode.ORGANIZATION,
-                    data['hospital'],
-                )
-                main_item['body']['hospital'] = hospital_code
-            if 'doctor' in data:
-                doctor_code = self.reformer.get_local_id_by_remote(
-                    RisarEntityCode.DOCTOR,
-                    TulaEntityCode.DOCTOR,
-                    data['doctor'],
-                )
-                main_item['body']['doctor'] = doctor_code
+            # внешний код хранится в рисар в исходном виде
+            # if 'hospital' in data:
+            #     hospital_code = self.reformer.get_local_id_by_remote(
+            #         RisarEntityCode.ORGANIZATION,
+            #         TulaEntityCode.ORGANIZATION,
+            #         data['hospital'],
+            #     )
+            #     main_item['body']['hospital'] = hospital_code
+            # if 'doctor' in data:
+            #     doctor_code = self.reformer.get_local_id_by_remote(
+            #         RisarEntityCode.DOCTOR,
+            #         TulaEntityCode.DOCTOR,
+            #         data['doctor'],
+            #     )
+            #     main_item['body']['doctor'] = doctor_code
             if 'patient' in data:
                 patient_code = self.reformer.get_local_id_by_remote(
                     RisarEntityCode.CLIENT,

@@ -31,12 +31,13 @@ class OrgDepartmentTulaBuilder(Builder):
         )
         if src_operation_code != OperationCode.DELETE:
             main_item['body'] = data
-            if 'organisation_id' in data:
-                org_id = self.reformer.get_local_id_by_remote(
-                    RisarEntityCode.ORGANIZATION,
-                    TulaEntityCode.ORGANIZATION,
-                    data['organisation_id'],
-                )
-                main_item['body']['organisation_id'] = org_id
+            # внешний код хранится в рисар в исходном виде
+            # if 'organisation_id' in data:
+            #     org_id = self.reformer.get_local_id_by_remote(
+            #         RisarEntityCode.ORGANIZATION,
+            #         TulaEntityCode.ORGANIZATION,
+            #         data['organisation_id'],
+            #     )
+            #     main_item['body']['organisation_id'] = org_id
 
         return entities

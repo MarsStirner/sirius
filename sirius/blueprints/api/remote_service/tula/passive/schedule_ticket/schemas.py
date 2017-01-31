@@ -42,7 +42,11 @@ class ScheduleTicketSchema(Schema):
                 "description": "Время приема",
                 "type": "string",
                 "pattern": "^([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$"
+            },
+            "schedule_ticket_type": {
+                "description": "Тип записи на прием",
+                "type": "string"
             }
         },
-        "required": ["hospital","doctor","patient","date","time_begin","time_end"]
+        "required": ["hospital","doctor","patient","date","schedule_ticket_type"]
     }]

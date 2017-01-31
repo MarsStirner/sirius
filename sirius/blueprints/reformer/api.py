@@ -638,6 +638,15 @@ class Reformer(object):
         )
         return res
 
+    def find_all_matches_by_remote(self, local_entity_code, remote_entity_code, remote_id):
+        res = MatchingId.find_all_matches_by_remote_id(
+            local_entity_code,
+            remote_entity_code,
+            remote_id,
+            self.remote_sys_code,
+        )
+        return res
+
     def get_register_entity_match(
         self,
         local_entity_code, local_main_id,
@@ -1210,7 +1219,7 @@ class RequestEntities(IStreamMeta):
         return item
 
     def set_operation_order(self, entity, order):
-        self.operation_order.setdefault(order, []).append(entity)
+        self.operation_order.setdefault(order, set()).add(entity)
 
     # def set_rest_url_params(self, meta):
     #     # todo: dst_protocol_code должен быть всегда

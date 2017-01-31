@@ -32,9 +32,21 @@ class _TestSchedule:
         code = result['meta']['code']
         assert code == 400
 
-    def _test_create(self, testapp):
-        schedule_id = 324
-        result = create_schedule(testapp, session, get_schedule_data_required(schedule_id))
+    def test_create(self, testapp):
+        schedule_id = 'schedule_id_1'
+        org_id = '-2'
+        doctor_id = 999
+        quota_type = 1
+        time_begin = 15
+        schedule_tickets_ids = ['st_1', 'st_2', 'st_3']
+        result = create_schedule(testapp, session, get_schedule_data_required(
+            schedule_id, org_id, doctor_id, quota_type, time_begin, schedule_tickets_ids
+        ))
+        quota_type = 2
+        time_begin = 16
+        result = create_schedule(testapp, session, get_schedule_data_required(
+            schedule_id, org_id, doctor_id, quota_type, time_begin, schedule_tickets_ids
+        ))
         code = result['meta']['code']
         assert code == 200
 
@@ -50,8 +62,8 @@ class _TestSchedule:
         code = result['meta']['code']
         assert code == 200
 
-    def _test_delete(self, testapp):
-        schedule_id = 324
+    def test_delete(self, testapp):
+        schedule_id = 'schedule_id_1'
         result = delete_schedule(testapp, session, schedule_id)
         code = result['meta']['code']
         assert code == 200
