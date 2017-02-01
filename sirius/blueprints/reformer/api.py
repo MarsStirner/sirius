@@ -370,6 +370,9 @@ class Reformer(object):
             self.pre_conformity_local(record)
             parser, answer = request_by_url(method, url, body)
             self.conformity_local(record, parser, answer)
+            after_send_func = rec_meta.get('after_send_func')
+            if after_send_func:
+                after_send_func(record, parser, answer)
 
         soo = sorted(entities.operation_order.items(), key=lambda x: x[0])
         for order, entity_codes in soo:
@@ -647,10 +650,12 @@ class Reformer(object):
         )
         return res
 
-    def get_register_entity_match(
+    def register_entity_match(
         self,
         local_entity_code, local_main_id,
-        remote_entity_code, remote_main_id
+        remote_entity_code, remote_main_id,
+        local_param_name=None, remote_param_name=None,
+        matching_parent_id=None,
     ):
         local_entity_id = Entity.get_id(SystemCode.LOCAL, local_entity_code)
         remote_entity_id = Entity.get_id(self.remote_sys_code, remote_entity_code)
@@ -659,8 +664,27 @@ class Reformer(object):
             local_id=local_main_id,
             remote_entity_id=remote_entity_id,
             remote_id=remote_main_id,
+            matching_parent_id=matching_parent_id,
+            local_param_name=local_param_name,
+            remote_param_name=remote_param_name,
         )
         return res
+
+    # def unregister_entity_match(
+    #     self,
+    #     local_entity_code, local_main_id,
+    #     remote_entity_code, remote_main_id
+    # ):
+    #     res = MatchingId.remove(
+    #         remote_sys_code=self.remote_sys_code,
+    #         remote_entity_code=remote_entity_code,
+    #         # remote_id_prefix=None,
+    #         remote_id=remote_main_id,
+    #         local_entity_code=local_entity_code,
+    #         # local_id_prefix=None,
+    #         local_id=local_main_id,
+    #     )
+    #     return res
 
     def update_remote_match_prefix(
         self, remote_entity_code, local_entity_code, remote_id, remote_id_prefix,
@@ -1117,7 +1141,8 @@ class RequestEntities(IStreamMeta):
         self, dst_entity_code, dst_parents_params,
         dst_main_id_name, src_operation_code, src_entity_code,
         src_main_id_name, src_id, level_count, set_current_id_func=None,
-            src_id_prefix=None, dst_id_prefix=None, dst_request_mode=None,
+        after_send_func=None,
+        src_id_prefix=None, dst_id_prefix=None, dst_request_mode=None,
     ):
         def set_current_id_common_func(record):
             entity_meta = record['meta']
@@ -1129,6 +1154,15 @@ class RequestEntities(IStreamMeta):
             # self.set_rest_url_params(entity_meta)
             if callable(set_current_id_func):
                 set_current_id_func(entity_meta, entity_body)
+
+        def after_send_common_func(record, parser, answer):
+            entity_meta = record['meta']
+            entity_body = None
+            if src_operation_code != OperationCode.DELETE:
+                entity_body = record['body']
+            if callable(after_send_func):
+                answer_body = parser.get_data(answer)
+                after_send_func(entity_meta, entity_body, answer_body)
 
         item = ReqEntity(
             meta={
@@ -1144,6 +1178,7 @@ class RequestEntities(IStreamMeta):
                 'dst_parents_params': dst_parents_params,
                 'dst_request_mode': dst_request_mode,
                 'set_current_id_func': set_current_id_common_func,
+                'after_send_func': after_send_common_func,
             }
         )
         level = 1
@@ -1161,6 +1196,7 @@ class RequestEntities(IStreamMeta):
         dst_main_id_name, dst_parent_id_name, src_operation_code,
         src_entity_code, src_main_id_name, src_id,
         set_current_id_func=None, set_parent_id_func=None,
+        after_send_func=None,
         src_id_prefix=None, dst_id_prefix=None, dst_request_mode=None,
     ):
         def set_current_id_common_func(record):
@@ -1192,6 +1228,14 @@ class RequestEntities(IStreamMeta):
             if callable(set_parent_id_func):
                 set_parent_id_func(parent_meta, entity_meta, entity_body)
 
+        def after_send_common_func(record, parser, answer):
+            entity_meta = record['meta']
+            entity_body = None
+            if src_operation_code != OperationCode.DELETE:
+                entity_body = record['body']
+            if callable(after_send_func):
+                after_send_func(entity_meta, entity_body, parser, answer)
+
         item = ReqEntity(
             meta={
                 'src_operation_code': src_operation_code,
@@ -1206,6 +1250,7 @@ class RequestEntities(IStreamMeta):
                 'dst_request_mode': dst_request_mode,
                 'set_current_id_func': set_current_id_common_func,
                 'set_parent_id_func': set_parent_id_common_func,
+                'after_send_func': after_send_common_func,
                 'parent_entity': parent_item,
             }
         )

@@ -44,6 +44,7 @@ class _TestSchedule:
         ))
         quota_type = 2
         time_begin = 16
+        schedule_tickets_ids = ['st_4', 'st_5', 'st_6']
         result = create_schedule(testapp, session, get_schedule_data_required(
             schedule_id, org_id, doctor_id, quota_type, time_begin, schedule_tickets_ids
         ))

@@ -93,7 +93,7 @@ def api_card_register():
     rld = RequestLocalData(data)
     implement = Implementation()
     reformer = implement.get_reformer(rld.data.get('remote_system_code'))
-    res = reformer.get_register_entity_match(
+    res = reformer.register_entity_match(
         RisarEntityCode.CARD,
         rld.data.get('local_main_id'),
         rld.data.get('remote_entity_code'),

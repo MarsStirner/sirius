@@ -6,6 +6,8 @@
 @date: 23.09.2016
 
 """
+from copy import deepcopy
+
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tula.entities import TulaEntityCode
 from sirius.blueprints.reformer.api import Builder, RequestEntities
@@ -20,6 +22,35 @@ class ScheduleTulaBuilder(Builder):
         src_operation_code = self.get_operation_code_by_method(header_meta['remote_method'])
         entities = RequestEntities()
         if src_operation_code != OperationCode.DELETE:
+            def after_send_func(entity_meta, entity_body, answer_body):
+                if src_operation_code != OperationCode.DELETE:
+                    # пишем сопоставления по всем тикетам, чтобы по ним
+                    # можно было работать в потоке schedule_ticket
+                    matching_parent = self.reformer.get_by_local_id(
+                        remote_entity_code=TulaEntityCode.SCHEDULE,
+                        local_entity_code=RisarEntityCode.SCHEDULE,
+                        local_id=entity_meta['dst_id'],
+                    )
+                    answ_tickets = {}
+                    for answ_st in answer_body.get('schedule_tickets') or ():
+                        answ_tickets[(
+                            answ_st['time_begin'],
+                            answ_st['time_end']
+                        )] = answ_st['schedule_ticket_id']
+                    for req_st in data.get('schedule_tickets') or ():
+                        answ_st_id = answ_tickets[(
+                            req_st['time_begin'],
+                            req_st['time_end']
+                        )]
+                        self.reformer.register_entity_match(
+                            RisarEntityCode.SCHEDULE_TICKET,
+                            answ_st_id,
+                            TulaEntityCode.SCHEDULE_TICKET,
+                            req_st['schedule_ticket_id'],
+                            local_param_name='schedule_ticket_id',
+                            remote_param_name='schedule_ticket_id',
+                            matching_parent_id=matching_parent.id,
+                        )
             main_item = entities.set_main_entity(
                 dst_entity_code=RisarEntityCode.SCHEDULE,
                 dst_parents_params=header_meta['local_parents_params'],
@@ -27,11 +58,12 @@ class ScheduleTulaBuilder(Builder):
                 src_operation_code=src_operation_code,
                 src_entity_code=header_meta['remote_entity_code'],
                 src_main_id_name=header_meta['remote_main_param_name'],
+                after_send_func=after_send_func,
                 src_id_prefix=data['quota_type'],
                 src_id=header_meta['remote_main_id'],
                 level_count=1,
             )
-            main_item['body'] = data
+            main_item['body'] = deepcopy(data)
             main_item['body']['schedule_id'] = ''  # заполняется в set_current_id_common_func
             # внешний код хранится в рисар в исходном виде
             # if 'hospital' in data:

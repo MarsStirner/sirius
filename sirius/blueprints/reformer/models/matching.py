@@ -21,17 +21,20 @@ class MatchingId(Model):
 
     local_entity_id = reference_col('entity', unique=False, nullable=False)
     local_entity = relationship('Entity', backref='set_local_matching_id',
-                                foreign_keys='MatchingId.local_entity_id')
+                                foreign_keys=local_entity_id)
     local_id_prefix = Column(db.String(80), unique=False, nullable=False, index=False, server_default='')
     local_id = Column(db.String(80), unique=False, nullable=False, index=True)
     local_param_name = Column(db.String(80), unique=False, nullable=True)
 
     remote_entity_id = reference_col('entity', unique=False, nullable=False)
     remote_entity = relationship('Entity', backref='set_remote_matching_id',
-                                 foreign_keys='MatchingId.remote_entity_id')
+                                 foreign_keys=remote_entity_id)
     remote_id_prefix = Column(db.String(80), unique=False, nullable=False, index=False, server_default='')
     remote_id = Column(db.String(80), unique=False, nullable=False, index=True)
     remote_param_name = Column(db.String(80), unique=False, nullable=True)
+
+    parent_id = reference_col('matching_id', unique=False, nullable=True, ondelete='CASCADE')
+
     created = Column(db.DateTime, unique=False, nullable=False, server_default=text('now()'))
 
     __table_args__ = (
@@ -411,6 +414,7 @@ class MatchingId(Model):
         remote_id_prefix=None,
         remote_id=None,
         remote_param_name=None,
+        matching_parent_id=None,
     ):
         cls.create(
             local_entity_id=local_entity_id,
@@ -421,6 +425,7 @@ class MatchingId(Model):
             remote_id_prefix=remote_id_prefix or '',
             remote_id=remote_id,
             remote_param_name=remote_param_name,
+            parent_id=matching_parent_id,
         )
 
     @classmethod
