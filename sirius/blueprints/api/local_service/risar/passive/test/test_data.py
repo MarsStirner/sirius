@@ -191,6 +191,45 @@ def get_send_to_mis_pc_ticket25_data(card_id, checkup_id, is_create):
     }
 
 
+def get_send_to_mis_first_checkup_data(card_id, checkup_id, is_create):
+    return {
+        'service_method': 'risar.api_checkup_obs_first_get',
+        'request_method': 'get',
+        'main_param_name': 'external_id',
+        'request_params': {'card_id': card_id},
+        'request_url': '/risar/api/integration/0/card/%s/checkup/obs/first/%s/' % (card_id, checkup_id),
+        'event': RisarEvents.SAVE_CHECKUP,
+        'main_id': checkup_id,
+        'method': 'post' if is_create else 'put',
+    }
+
+
+def get_send_to_mis_second_checkup_data(card_id, checkup_id, is_create):
+    return {
+        'service_method': 'risar.api_checkup_obs_second_get',
+        'request_method': 'get',
+        'main_param_name': 'external_id',
+        'request_params': {'card_id': card_id},
+        'request_url': '/risar/api/integration/0/card/%s/checkup/obs/second/%s/' % (card_id, checkup_id),
+        'event': RisarEvents.SAVE_CHECKUP,
+        'main_id': checkup_id,
+        'method': 'post' if is_create else 'put',
+    }
+
+
+def get_send_to_mis_pc_checkup_data(card_id, checkup_id, is_create):
+    return {
+        'service_method': 'risar.api_checkup_pc_get',
+        'request_method': 'get',
+        'main_param_name': 'external_id',
+        'request_params': {'card_id': card_id},
+        'request_url': '/risar/api/integration/0/card/%s/checkup/obs/pc/%s/' % (card_id, checkup_id),
+        'event': RisarEvents.SAVE_CHECKUP,
+        'main_id': checkup_id,
+        'method': 'post' if is_create else 'put',
+    }
+
+
 def get_send_to_mis_measures_data(card_id, is_create):
     return {
         'service_method': 'risar.api_measure_list_get',

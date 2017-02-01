@@ -15,7 +15,8 @@ from sirius.blueprints.api.local_service.risar.passive.test.test_data import \
     get_sch_ticket_data_required, get_send_to_mis_card_data, \
     get_send_to_mis_first_ticket25_data, get_send_to_mis_measures_data, \
     get_send_to_mis_epicrisis_data, get_send_to_mis_second_ticket25_data, \
-    get_send_to_mis_pc_ticket25_data
+    get_send_to_mis_pc_ticket25_data, get_send_to_mis_first_checkup_data, \
+    get_send_to_mis_second_checkup_data, get_send_to_mis_pc_checkup_data
 from sirius.blueprints.api.remote_service.tula.passive.checkup_first_ticket25.test.request import \
     edit_checkup_first_ticket25
 from sirius.blueprints.api.remote_service.tula.passive.checkup_first_ticket25.test.test_data import \
@@ -78,7 +79,7 @@ class _TestTula:
         # создать запись на прием в вебе
         # mr_to_mis_sch_ticket(testapp, org_id, doctor_id, client_id, sch_ticket_id)
         # card_id = !mr_create_card(testapp, client_id)
-        card_id = 163  # создать карту в вебе
+        card_id = 163  # создать карту в вебе  # 690
         ext_card_id = 222
         # mr_to_mis_card(testapp, client_id, card_id)
         # !mr_create_first_checkup(testapp, card_id)
@@ -89,6 +90,9 @@ class _TestTula:
         ext_first_checkup_id = 222
         # mr_to_mis_second_ticket25(testapp, card_id, second_checkup_id)
         # mr_to_mis_pc_ticket25(testapp, card_id, pc_checkup_id)
+        # mr_to_mis_first_checkup(testapp, card_id, first_checkup_id)
+        # mr_to_mis_second_checkup(testapp, card_id, second_checkup_id)
+        # mr_to_mis_pc_checkup(testapp, card_id, pc_checkup_id)
         # создать направления в вебе - осмотр, госпитализация, исследования
         # mr_to_mis_measures(testapp, card_id)
         # ch_event_measure_id = 6255
@@ -104,7 +108,7 @@ class _TestTula:
         ext_research_id = 116
         # mis_to_mr_meas_research(testapp, ext_card_id, ext_org_id, ext_doctor_id,
         #                         ext_res_event_measure_id, ext_research_id)
-        mis_to_mr_first_ticket25(testapp, ext_card_id, ext_org_id, ext_doctor_id, ext_first_checkup_id)
+        # mis_to_mr_first_ticket25(testapp, ext_card_id, ext_org_id, ext_doctor_id, ext_first_checkup_id)
         # mis_to_mr_second_ticket25
         # mis_to_mr_pc_ticket25
         # mis_to_mr_childbirth(testapp, ext_card_id, ext_org_id, ext_doctor_id)
@@ -169,6 +173,21 @@ def mr_to_mis_second_ticket25(testapp, card_id, checkup_id):
 def mr_to_mis_pc_ticket25(testapp, card_id, checkup_id):
     is_create = True
     request_local(testapp, risar_session, get_send_to_mis_pc_ticket25_data(card_id, checkup_id, is_create))
+
+
+def mr_to_mis_first_checkup(testapp, card_id, checkup_id):
+    is_create = True
+    request_local(testapp, risar_session, get_send_to_mis_first_checkup_data(card_id, checkup_id, is_create))
+
+
+def mr_to_mis_second_checkup(testapp, card_id, checkup_id):
+    is_create = True
+    request_local(testapp, risar_session, get_send_to_mis_second_checkup_data(card_id, checkup_id, is_create))
+
+
+def mr_to_mis_pc_checkup(testapp, card_id, checkup_id):
+    is_create = True
+    request_local(testapp, risar_session, get_send_to_mis_pc_checkup_data(card_id, checkup_id, is_create))
 
 
 def mr_to_mis_measures(testapp, card_id):

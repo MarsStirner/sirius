@@ -9,8 +9,14 @@
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.api.remote_service.tula.active.card.reformer_builder import \
     CardTulaBuilder
+from sirius.blueprints.api.remote_service.tula.active.checkup_first.reformer_builder import \
+    CheckupFirstTulaBuilder
 from sirius.blueprints.api.remote_service.tula.active.checkup_first_ticket25.reformer_builder import \
     CheckupFirstTicket25TulaBuilder as ActCheckupFirstTicket25TulaBuilder
+from sirius.blueprints.api.remote_service.tula.active.checkup_pc.reformer_builder import \
+    CheckupPCTulaBuilder
+from sirius.blueprints.api.remote_service.tula.active.checkup_second.reformer_builder import \
+    CheckupSecondTulaBuilder
 from sirius.blueprints.api.remote_service.tula.active.checkup_second_ticket25.reformer_builder import \
     CheckupSecondTicket25TulaBuilder as ActCheckupSecondTicket25TulaBuilder
 from sirius.blueprints.api.remote_service.tula.active.checkup_pc_ticket25.reformer_builder import \
@@ -111,6 +117,12 @@ class TulaReformer(Reformer):
             res = ActCheckupSecondTicket25TulaBuilder(self).build_remote_entities(header_meta, data)
         elif local_entity_code == RisarEntityCode.CHECKUP_PC_TICKET:
             res = ActCheckupPCTicket25TulaBuilder(self).build_remote_entities(header_meta, data)
+        elif local_entity_code == RisarEntityCode.CHECKUP_OBS_FIRST:
+            res = CheckupFirstTulaBuilder(self).build_remote_entities(header_meta, data)
+        elif local_entity_code == RisarEntityCode.CHECKUP_OBS_SECOND:
+            res = CheckupSecondTulaBuilder(self).build_remote_entities(header_meta, data)
+        elif local_entity_code == RisarEntityCode.CHECKUP_PC:
+            res = CheckupPCTulaBuilder(self).build_remote_entities(header_meta, data)
         elif local_entity_code == RisarEntityCode.MEASURE:
             res = MeasureTulaBuilder(self).build_remote_entities(header_meta, data)
         elif local_entity_code == RisarEntityCode.EPICRISIS:
@@ -158,6 +170,12 @@ class TulaReformer(Reformer):
             res = ActCheckupSecondTicket25TulaBuilder(self).build_local_entity_packages(msg)
         elif src_entity == RisarEntityCode.CHECKUP_PC_TICKET:
             res = ActCheckupPCTicket25TulaBuilder(self).build_local_entity_packages(msg)
+        elif src_entity == RisarEntityCode.CHECKUP_OBS_FIRST:
+            res = CheckupFirstTulaBuilder(self).build_local_entity_packages(msg)
+        elif src_entity == RisarEntityCode.CHECKUP_OBS_SECOND:
+            res = CheckupSecondTulaBuilder(self).build_local_entity_packages(msg)
+        elif src_entity == RisarEntityCode.CHECKUP_PC:
+            res = CheckupPCTulaBuilder(self).build_local_entity_packages(msg)
         elif src_entity == RisarEntityCode.MEASURE:
             res = MeasureTulaBuilder(self).build_local_entity_packages(msg)
         elif src_entity == RisarEntityCode.EPICRISIS:

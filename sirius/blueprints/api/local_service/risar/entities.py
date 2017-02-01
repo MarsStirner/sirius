@@ -28,6 +28,7 @@ class RisarEntityCode(Enum):
     SCHEDULE_TICKET = 'schedule_ticket'
     CHILDBIRTH = 'childbirth'
     CHECKUP_PC_TICKET = 'checkup_pc_ticket'
+    CHECKUP_PC = 'checkup_pc'
     RISAR_REFBOOK_NAME = 'risar_refbook_name'
     RISAR_REFBOOK = 'risar_refbook'
     VESTA_REFBOOK = 'vesta_refbook'
