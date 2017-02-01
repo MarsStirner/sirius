@@ -59,7 +59,7 @@ class ScheduleTulaBuilder(Builder):
                 src_entity_code=header_meta['remote_entity_code'],
                 src_main_id_name=header_meta['remote_main_param_name'],
                 after_send_func=after_send_func,
-                src_id_prefix=data['quota_type'],
+                src_id_prefix=data['time_begin'],
                 src_id=header_meta['remote_main_id'],
                 level_count=1,
             )
