@@ -111,7 +111,8 @@ def api_events_binded():
         RegionCode.TULA: [
             RisarEvents.CREATE_CARD,
             RisarEvents.MAKE_APPOINTMENT,
-            RisarEvents.SAVE_CHECKUP,
+            RisarEvents.SAVE_CHECKUP,  # todo: для тестов
+            RisarEvents.CLOSE_CHECKUP,
             RisarEvents.CLOSE_CARD,
             RisarEvents.CREATE_REFERRAL,
         ],
