@@ -7,7 +7,8 @@ from flask import Flask, render_template
 
 from sirius import commands
 from sirius.assets import assets
-from sirius.extensions import bcrypt, cache, csrf_protect, db, debug_toolbar, login_manager, migrate, celery
+from sirius.extensions import bcrypt, cache, csrf_protect, db, debug_toolbar, login_manager, migrate, celery, \
+    cas
 
 app = Flask(__name__)
 
@@ -55,7 +56,7 @@ def register_extensions(app, is_lazy_db):
     migrate.init_app(app, db)
     if app.config['CELERY_ENABLED']:
         celery.init_app(app)
-    # cas.init_app(app)
+    cas.init_app(app)
     return None
 
 

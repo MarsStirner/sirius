@@ -227,11 +227,14 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                 except SAOperationalError as exc:
                     logger.error(unicode(exc))
                     # logg_to_MonitorDB(params)
-                    if retry_count > max_retry:
+                    if retry_count >= max_retry:
                         # todo: stop celery workers (back rabbit msg)
                         db.session.rollback()
-                    retry = True
-                    sleep(sleep_timeout)
+                        message = traceback.format_exception_only(type(exc), exc)[-1].decode('utf-8')
+                        reraise(Exception, LoggedException(message), sys.exc_info()[2])
+                    else:
+                        retry = True
+                        sleep(sleep_timeout)
                 except Exception as exc:
                     if isinstance(exc, ApiException):
                         if exc.code == 200:
@@ -345,7 +348,7 @@ def connect_entry(function=None, login=None, nowait=False):
                         ):
                             session = login()
                         dtime = datetime.today()
-                        # считаем, что сессия стареет с последнего доступа
+                        # сессия стареет с последнего доступа
                         im_func._session = session, dtime
                         kwargs['session'] = session
                     res = func(*args, **kwargs)
@@ -357,9 +360,10 @@ def connect_entry(function=None, login=None, nowait=False):
                         exc_txt = exc.__name__
                     logger.error(exc_txt)
                     # logg_to_MonitorDB(params)
-                    if retry_count > max_retry:
+                    if retry_count >= max_retry:
                         # todo: stop celery workers (back rabbit msg)
-                        pass
+                        logger.info('Retry count = %s. Stop retrying' % (retry_count,))
+                        nowait = True
                     if nowait:
                         reraise(Exception, exc, sys.exc_info()[2])
                     else:
@@ -389,7 +393,7 @@ def get_stream_data(module, func, obj, meta, body=None):
     }
 
 
-def local_api_method(func=None, hook=None, authorization=False):
+def local_api_method(func=None, hook=None, authentication=True):
     """Декоратор API-функции. Автомагически оборачивает результат или исключение в jsonify-ответ
     :param func: декорируемая функция
     :type func: callable
@@ -397,10 +401,10 @@ def local_api_method(func=None, hook=None, authorization=False):
     :type: callable
     """
     def decorator(func):
-        if authorization:
+        if authentication:
             func.is_api = True
         else:
-            func.is_public_api = True
+            func.cas_is_public = True
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -439,7 +443,7 @@ def local_api_method(func=None, hook=None, authorization=False):
     return decorator(func)
 
 
-def remote_api_method(func=None, hook=None, authorization=False):
+def remote_api_method(func=None, hook=None, authentication=True):
     """Декоратор API-функции. Автомагически оборачивает результат или исключение в jsonify-ответ
     :param func: декорируемая функция
     :type func: callable
@@ -447,10 +451,10 @@ def remote_api_method(func=None, hook=None, authorization=False):
     :type: callable
     """
     def decorator(func):
-        if authorization:
+        if authentication:
             func.is_api = True
         else:
-            func.is_public_api = True
+            func.cas_is_public = True
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):

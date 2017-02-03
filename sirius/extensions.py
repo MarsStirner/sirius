@@ -8,7 +8,8 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CsrfProtect
 from flask_celery import Celery
-from hitsl_utils.cas import CasExtension
+# from hitsl_utils.cas import CasExtension
+from sirius.lib.cas import CasExtension
 
 bcrypt = Bcrypt()
 csrf_protect = CsrfProtect()
@@ -18,4 +19,4 @@ migrate = Migrate()
 cache = Cache()
 debug_toolbar = DebugToolbarExtension()
 celery = Celery()
-# cas = CasExtension()
+cas = CasExtension()

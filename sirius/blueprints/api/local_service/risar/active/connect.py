@@ -9,6 +9,8 @@
 """
 
 import requests
+from hitsl_utils.safe import safe_traverse
+
 from sirius.app import app
 
 from contextlib import contextmanager
@@ -23,6 +25,9 @@ password = config.get('HIPPOCRATE_API_PASSWORD', '')
 authent_token_name = config.get('CASTIEL_AUTH_TOKEN', 'CastielAuthToken')
 authoriz_token_name = config.get('HIPPOCRATE_SESSION_KEY', 'hippocrates.session.id')
 session = None
+dont_check_tgt = safe_traverse(
+    config, 'external_cas', 'enabled', default=False
+)
 
 
 def get_token(login, password):
@@ -81,9 +86,10 @@ def make_login():
 
 def make_api_request(method, url, session, json_data=None, url_args=None):
     authent_token, authoriz_token = session
-    # todo: если используется внешний cas, добавлять постфикс (параметр в конф)
+    if dont_check_tgt:
+        url += '?dont_check_tgt=true'
     response = getattr(requests, method)(
-        url + '?dont_check_tgt=true',
+        url,
         json=json_data,
         params=url_args,
         cookies={authent_token_name: authent_token,

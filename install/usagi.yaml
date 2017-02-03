@@ -67,6 +67,8 @@ common:
 
     FILE_STORAGE_PATH: &FILE_STORAGE_PATH '/tmp'
 
+    external_cas:
+      enabled: false
 
 subsystems:
 
