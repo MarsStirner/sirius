@@ -32,17 +32,24 @@ class ScheduleTulaBuilder(Builder):
                         local_id=entity_meta['dst_id'],
                     )
                     answ_tickets = {}
+                    extra_answ_tickets = []
                     for answ_st in answer_body.get('schedule_tickets') or ():
-                        answ_tickets[(
-                            answ_st['time_begin'],
-                            answ_st['time_end']
-                        )] = answ_st['schedule_ticket_id']
+                        if answ_st.get('schedule_ticket_type') == '1':
+                            extra_answ_tickets.append(answ_st['schedule_ticket_id'])
+                        else:
+                            answ_tickets[(
+                                answ_st['time_begin'],
+                                answ_st['time_end']
+                            )] = answ_st['schedule_ticket_id']
                     for req_st in data.get('schedule_tickets') or ():
-                        if 'schedule_ticket_id' in req_st:
-                            answ_st_id = answ_tickets[(
-                                req_st['time_begin'],
-                                req_st['time_end']
-                            )]
+                        if req_st.get('schedule_ticket_id'):
+                            if req_st.get('schedule_ticket_type') == '1':
+                                answ_st_id = extra_answ_tickets.pop()
+                            else:
+                                answ_st_id = answ_tickets[(
+                                    req_st['time_begin'],
+                                    req_st['time_end']
+                                )]
                             upd_res = self.reformer.update_remote_match_parent(
                                 RisarEntityCode.SCHEDULE_TICKET,
                                 TulaEntityCode.SCHEDULE_TICKET,
