@@ -43,15 +43,22 @@ class ScheduleTulaBuilder(Builder):
                                 req_st['time_begin'],
                                 req_st['time_end']
                             )]
-                            self.reformer.register_entity_match(
+                            upd_res = self.reformer.update_remote_match_parent(
                                 RisarEntityCode.SCHEDULE_TICKET,
-                                answ_st_id,
                                 TulaEntityCode.SCHEDULE_TICKET,
                                 req_st['schedule_ticket_id'],
-                                local_param_name='schedule_ticket_id',
-                                remote_param_name='schedule_ticket_id',
-                                matching_parent_id=matching_parent.id,
+                                matching_parent.id,
                             )
+                            if not upd_res:
+                                self.reformer.register_entity_match(
+                                    RisarEntityCode.SCHEDULE_TICKET,
+                                    answ_st_id,
+                                    TulaEntityCode.SCHEDULE_TICKET,
+                                    req_st['schedule_ticket_id'],
+                                    local_param_name='schedule_ticket_id',
+                                    remote_param_name='schedule_ticket_id',
+                                    matching_parent_id=matching_parent.id,
+                                )
             main_item = entities.set_main_entity(
                 dst_entity_code=RisarEntityCode.SCHEDULE,
                 dst_parents_params=header_meta['local_parents_params'],
