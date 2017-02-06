@@ -48,11 +48,13 @@ class ScheduleTicketTulaBuilder(Builder):
             #     )
             #     main_item['body']['doctor'] = doctor_code
             if 'patient' in data:
-                patient_code = self.reformer.get_local_id_by_remote(
+                patient_code = self.reformer.find_local_id_by_remote(
                     RisarEntityCode.CLIENT,
                     TulaEntityCode.CLIENT,
                     data['patient'],
                 )
-                main_item['body']['patient'] = patient_code
+                # 1 - ИД псевдо пациента "Занято". Бывает нужен,
+                # если занято мужчиной, либо пациент еще не приходил
+                main_item['body']['patient'] = patient_code or '1'
 
         return entities

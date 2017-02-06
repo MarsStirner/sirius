@@ -20,7 +20,8 @@ from sirius.models.operation import OperationCode
 class TulaAnswer(RemoteAnswer):
 
     def xml_to_dict(self, result):
-        e = ET.XML(result.text)
+        # в исходной кодировке (utf-8)
+        e = ET.XML(result.content)
         return e
 
     def get_params_ext(self, req_meta, req_result):

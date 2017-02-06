@@ -35,7 +35,12 @@ class RemoteAnswer(object):
             else:
                 res = True
         elif req_meta['dst_request_mode'] == RequestModeCode.XML_DATA:
-            logger.debug('request: %s\n response: %s' % (str(req_data), str(result).decode('utf-8')))
+            if req_meta['dst_protocol_code'] == ProtocolCode.SOAP:
+                logger.debug('request: %s\n response: %s' % (str(req_data), str(result).decode('utf-8')))
+            elif req_meta['dst_protocol_code'] == ProtocolCode.REST:
+                logger.debug('request: %s\n response: %s' % (str(req_data), result.text))
+            else:
+                logger.debug('request: %s\n response: %s' % (str(req_data), ': '.join((str(result), result.text))))
             res = self.xml_to_dict(result)
             if req_meta['dst_operation_code'] in (OperationCode.ADD, OperationCode.CHANGE, OperationCode.DELETE):
                 res = self.get_params_ext(req_meta, res)
