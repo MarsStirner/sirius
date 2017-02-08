@@ -47,7 +47,11 @@ class RequestLocalData(object):
         pass
 
     def get_params(self, data):
-        self.request_url = data.get('request_url') and (Host.get_url(SystemCode.LOCAL).rstrip('/') + data.get('request_url'))
+        if data.get('request_url'):
+            if data.get('request_url').startswith('http:'):
+                self.request_url = data.get('request_url')
+            else:
+                self.request_url = (Host.get_url(SystemCode.LOCAL).rstrip('/') + data.get('request_url'))
         self.request_method = data.get('request_method')
 
         self.entity_code = data.get('entity_code')
