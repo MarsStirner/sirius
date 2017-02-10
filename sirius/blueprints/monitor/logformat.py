@@ -53,8 +53,11 @@ def format_logger_message(code, j, exception=None):
         return format_ok % d
 
 
-def hook(code, j, e=None):
+def hook(code, j, e=None, stream_id=None):
+    stream_id_txt = ''
+    if stream_id:
+        stream_id_txt = 'stream_id: %s ' % stream_id
     if e:
-        logger.error(format_logger_message(code, j))
+        logger.error('%s' % stream_id_txt + format_logger_message(code, j))
     else:
-        logger.debug(format_logger_message(code, j))
+        logger.debug('%s' % stream_id_txt + format_logger_message(code, j))

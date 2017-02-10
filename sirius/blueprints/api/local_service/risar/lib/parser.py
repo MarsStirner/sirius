@@ -23,6 +23,7 @@ class RequestLocalData(object):
     main_id = None
     main_param_name = None
     body = None
+    stream_id = None
     # разбирает запрос локальной системы и достает полезные данные
 
     def __init__(self, data):
@@ -62,6 +63,7 @@ class RequestLocalData(object):
         self.main_id = data.get('main_id')
         self.main_param_name = data.get('main_param_name')
         self.body = data.get('data')
+        self.stream_id = data.get('stream_id')
 
     def get_msg_meta(self):
         meta = {

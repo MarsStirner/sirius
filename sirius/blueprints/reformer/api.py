@@ -31,15 +31,17 @@ class Reformer(object):
     orig_msg = None
     # direct = None
     transfer = None
+    stream_id = None
     remote_sys_code = None
     version = None
     local_version = None
     remote_version = None
 
-    def __init__(self):
+    def __init__(self, stream_id):
         from sirius.blueprints.api.local_service.risar.active.request import \
             request_by_req
         self.local_request_by_req = request_by_req
+        self.stream_id = stream_id
         self.version = {
             self.remote_sys_code: self.remote_version,
             SystemCode.LOCAL: self.local_version,
@@ -79,7 +81,7 @@ class Reformer(object):
     @abstractmethod
     def get_local_entities(self, header_meta, data):
         # реализация в регионе
-        return RequestEntities()
+        return RequestEntities(self.stream_id)
 
     def pre_conformity_local(self, record):
         # делаем предварительный запрос по сущностям, чтобы
@@ -327,8 +329,10 @@ class Reformer(object):
             if set_parent_id_func:
                 set_parent_id_func(record)
             if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
-                logger.debug("skip resend or skip trash for id='%s'" %
-                             rec_meta['dst_id'])
+                logger.debug(
+                    "stream_id: %s skip resend or skip trash for id='%s'" %
+                    (self.stream_id, rec_meta['dst_id'])
+                )
                 return
             self.set_rest_url_params(rec_meta)
             self.pre_conformity_remote(record)
@@ -360,8 +364,10 @@ class Reformer(object):
             if set_parent_id_func:
                 set_parent_id_func(record)
             if rec_meta['skip_resend'] or rec_meta.get('skip_trash'):
-                logger.debug("skip resend or skip trash for id='%s'" %
-                             rec_meta['dst_id'])
+                logger.debug(
+                    "stream_id: %s skip resend or skip trash for id='%s'" %
+                    (self.stream_id, rec_meta['dst_id'])
+                )
                 return
             self.set_rest_url_params(rec_meta)
             url = rec_meta['dst_url']
@@ -575,7 +581,7 @@ class Reformer(object):
             for item in items:
                 if not item['is_changed']:
                     continue
-                msg = Message(item)
+                msg = Message(item, entities_package.stream_id)
                 msg.to_local_service()
                 msg.set_send_data_type()
                 header_meta = msg.get_header().meta
@@ -597,7 +603,7 @@ class Reformer(object):
             for item in items:
                 # if not item['is_changed']:  # для diff
                 #     continue
-                msg = Message(item)
+                msg = Message(item, entities_package.stream_id)
                 msg.to_remote_service()
                 msg.set_send_data_type()
                 header_meta = msg.get_header().meta
@@ -796,7 +802,7 @@ class Builder(object):
         return trans_res
 
     def build_remote_request_common(self, header_meta, dst_entity_code):
-        data_req = DataRequest()
+        data_req = DataRequest(self.reformer.stream_id)
         data_req.set_meta(
             src_entity_code=header_meta['local_entity_code'],
             src_id=header_meta['local_main_id'],
@@ -932,6 +938,7 @@ class EntitiesPackage(IStreamMeta):
     builder = None
     root_item = None
     diff_key = None
+    stream_id = None
     _is_diff_check = False
     _is_delete_check = True
     _diff_key_range = None
@@ -940,6 +947,7 @@ class EntitiesPackage(IStreamMeta):
         self.pack_entities = {}
         self.system_code = system_code
         self.builder = builder
+        self.stream_id = builder.reformer.stream_id
 
     def get_pack_entities(self):
         return self.pack_entities
@@ -951,6 +959,9 @@ class EntitiesPackage(IStreamMeta):
     def get_stream_body(self):
         res = self.__class__.__name__
         return res
+
+    def get_stream_id(self):
+        return self.stream_id
 
     def add_main_pack_entity(
         self, entity_code, method, main_param_name, main_id, parents_params,
@@ -1010,7 +1021,7 @@ class EntitiesPackage(IStreamMeta):
             entity_code,
             OperationCode.READ_ONE,
         )
-        req = DataRequest()
+        req = DataRequest(self.stream_id)
         if main_id_name:
             req.set_req_params(
                 url=api_method['template_url'],
@@ -1044,7 +1055,7 @@ class EntitiesPackage(IStreamMeta):
             entity_code,
             OperationCode.READ_ONE,
         )
-        req = DataRequest()
+        req = DataRequest(self.stream_id)
         if main_id_name:
             req.set_req_params(
                 url=api_method['template_url'],
@@ -1080,7 +1091,7 @@ class EntitiesPackage(IStreamMeta):
             entity_code,
             OperationCode.READ_ONE,
         )
-        req = DataRequest()
+        req = DataRequest(self.stream_id)
         if main_id_name:
             req.set_req_params(
                 url=api_method['template_url'],
@@ -1137,11 +1148,13 @@ class RequestEntities(IStreamMeta):
     operation_order = None
     level_count = None
     levels = None
+    stream_id = None
 
-    def __init__(self):
+    def __init__(self, stream_id):
         self.req_entities = {}
         self.operation_order = {}
         self.levels = {}
+        self.stream_id = stream_id
 
     def get_data(self):
         return self.req_entities
@@ -1153,6 +1166,9 @@ class RequestEntities(IStreamMeta):
     def get_stream_body(self):
         res = self.__class__.__name__
         return res
+
+    def get_stream_id(self):
+        return self.stream_id
 
     def set_main_entity(
         self, dst_entity_code, dst_parents_params,
@@ -1182,6 +1198,7 @@ class RequestEntities(IStreamMeta):
                 after_send_func(entity_meta, entity_body, answer_body)
 
         item = ReqEntity(
+            self.stream_id,
             meta={
                 # 'src_system_code': SystemCode.LOCAL,
                 'src_operation_code': src_operation_code,
@@ -1254,6 +1271,7 @@ class RequestEntities(IStreamMeta):
                 after_send_func(entity_meta, entity_body, parser, answer)
 
         item = ReqEntity(
+            self.stream_id,
             meta={
                 'src_operation_code': src_operation_code,
                 'src_entity_code': src_entity_code,
@@ -1293,11 +1311,12 @@ class RequestEntities(IStreamMeta):
 
 
 class ReqEntity(dict, IStreamMeta):
-    def __init__(self, *a, **k):
+    def __init__(self, stream_id, *a, **k):
         super(ReqEntity, self).__init__(*a, **k)
         self['meta'] = self.get('meta', {})
         self['body'] = self.get('body', {})
         self['options'] = self.get('options', tuple())
+        self['stream_id'] = stream_id
 
     def get_stream_meta(self):
         res = {'params': self['meta'], 'options': self['options']}
@@ -1306,6 +1325,9 @@ class ReqEntity(dict, IStreamMeta):
     def get_stream_body(self):
         res = self['body']
         return res
+
+    def get_stream_id(self):
+        return self['stream_id']
 
     @property
     def url(self):
@@ -1329,14 +1351,15 @@ class ReqEntity(dict, IStreamMeta):
 
 
 class DataRequest(IStreamMeta):
-    req_data = None
+    req_data = stream_id = None
 
-    def __init__(self):
+    def __init__(self, stream_id):
         self.req_data = {
             'meta': {},
             'body': {},
             'options': tuple(),
         }
+        self.stream_id = stream_id
 
     def set_meta(
         self, dst_system_code, dst_entity_code, dst_operation_code, dst_id,
@@ -1376,6 +1399,9 @@ class DataRequest(IStreamMeta):
 
     def get_stream_body(self):
         return self.req_data['body']
+
+    def get_stream_id(self):
+        return self.stream_id
 
     def data_update(self, data):
         self.req_data['body'].update(data)

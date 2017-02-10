@@ -12,6 +12,7 @@ import os
 from sirius.blueprints.monitor.exception import InternalError, LoggedException
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message
+from sirius.lib.stream import get_stream_id
 from sirius.models.operation import OperationCode
 from sirius.models.system import SystemCode
 from .models import Schedule, SchGrReqExecute
@@ -42,12 +43,13 @@ class Scheduler(object):
 
         entity_code = req_data.entity.code
         system_code = req_data.system.code
+        stream_id = get_stream_id()
         sampling_method_name = req_data.sampling_method
-        logger.info('Scheduler execute %s %s %s' % (system_code, entity_code, sampling_method_name))
+        logger.info('stream_id: %s Scheduler execute %s %s %s' % (stream_id, system_code, entity_code, sampling_method_name))
         if sampling_method_name:
             sampling_method_func = getattr(self, sampling_method_name, None)
             if callable(sampling_method_func):
-                sampling_method_func(system_code, entity_code)
+                sampling_method_func(system_code, entity_code, stream_id)
             else:
                 raise InternalError(
                     'Sampling method (%s) not found' %
@@ -61,7 +63,8 @@ class Scheduler(object):
     def create_message(self, system_code, entity_code, operation_code=OperationCode.READ_MANY):
         # создает сообщение с параметрами, по которым сообщение реформируется
         # в данные для правильного запроса сущностей из Удаленной системы
-        msg = Message(None)
+        sub_stream_id = get_stream_id()
+        msg = Message(None, sub_stream_id)
         msg.to_remote_service()
         msg.set_request_type()
         meta = msg.get_header().meta
@@ -74,20 +77,20 @@ class Scheduler(object):
     ## Тамбов
     ## todo: убрать методы Тамбова к себе. Возможность построения дозапроса параметров для запроса данных
 
-    def get_measures_results_planned(self, system_code, entity_code):
+    def get_measures_results_planned(self, system_code, entity_code, stream_id):
         from sirius.blueprints.api.local_service.producer import LocalProducer
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \
             RisarEntityCode
 
         implement = Implementation()
-        reformer = implement.get_reformer(system_code)
+        reformer = implement.get_reformer(system_code, stream_id)
 
         # /api/integration/<int:api_version>/card/list/
         card_list_method = reformer.get_api_method(
             SystemCode.LOCAL, RisarEntityCode.CARD, OperationCode.READ_MANY
         )
-        msg = Message(None)
+        msg = Message(None, stream_id)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -111,7 +114,7 @@ class Scheduler(object):
             dst_param_ids = [dst_url_entities[param_entity] for param_entity in measures_list_method['params_entities']]
             dst_url = measures_list_method['template_url'].format(*dst_param_ids)
 
-            msg = Message(None)
+            msg = Message(None, stream_id)
             msg.to_local_service()
             msg.set_request_type()
             msg.set_immediate_answer()
@@ -132,7 +135,7 @@ class Scheduler(object):
                 producer = LocalProducer()
                 producer.send(msg)
 
-    def get_measures_results(self, system_code, entity_code):
+    def get_measures_results(self, system_code, entity_code, stream_id):
         from sirius.blueprints.api.local_service.producer import LocalProducer
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \
@@ -141,7 +144,7 @@ class Scheduler(object):
             TambovEntityCode
 
         implement = Implementation()
-        reformer = implement.get_reformer(system_code)
+        reformer = implement.get_reformer(system_code, stream_id)
 
         # /api/integration/<int:api_version>/card/list/
         card_list_method = reformer.get_api_method(
@@ -154,9 +157,9 @@ class Scheduler(object):
         #     }
         # }
         implement = Implementation()
-        reformer = implement.get_reformer(system_code)
+        reformer = implement.get_reformer(system_code, stream_id)
 
-        msg = Message(data)
+        msg = Message(data, stream_id)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -182,19 +185,19 @@ class Scheduler(object):
             except LoggedException:
                 pass
 
-    def get_doctors(self, system_code, entity_code):
+    def get_doctors(self, system_code, entity_code, stream_id):
         from sirius.blueprints.api.local_service.producer import LocalProducer
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \
             RisarEntityCode
 
         implement = Implementation()
-        reformer = implement.get_reformer(system_code)
+        reformer = implement.get_reformer(system_code, stream_id)
 
         org_list_method = reformer.get_api_method(
             SystemCode.LOCAL, RisarEntityCode.ORGANIZATION, OperationCode.READ_MANY
         )
-        msg = Message(None)
+        msg = Message(None, stream_id)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -205,8 +208,8 @@ class Scheduler(object):
             try:
                 if not org_data['regionalCode']:
                     continue
-                # if not org_data['regionalCode'] in ('1434663', '89',):  # todo: для тестов
-                #     continue
+                if not org_data['regionalCode'] in ('1434663', '89',):  # todo: для тестов
+                    continue
                 msg = self.create_message(system_code, entity_code)  # getEmployees
                 meta = msg.get_header().meta
                 meta['local_parents_params'] = {
@@ -217,19 +220,19 @@ class Scheduler(object):
             except LoggedException:
                 pass
 
-    def get_times(self, system_code, entity_code):
+    def get_times(self, system_code, entity_code, stream_id):
         from sirius.blueprints.api.local_service.producer import LocalProducer
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \
             RisarEntityCode
 
         implement = Implementation()
-        reformer = implement.get_reformer(system_code)
+        reformer = implement.get_reformer(system_code, stream_id)
 
         org_list_method = reformer.get_api_method(
             SystemCode.LOCAL, RisarEntityCode.ORGANIZATION, OperationCode.READ_MANY
         )
-        msg = Message(None)
+        msg = Message(None, stream_id)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -240,8 +243,8 @@ class Scheduler(object):
             try:
                 if not org_data['regionalCode']:
                     continue
-                # if not org_data['regionalCode'] in ('1434663', '89',):  # todo: для тестов
-                #     continue
+                if not org_data['regionalCode'] in ('1434663', '89',):  # todo: для тестов
+                    continue
                 msg = self.create_message(system_code, entity_code)  # getTimes
                 meta = msg.get_header().meta
                 meta['local_parents_params'] = {
@@ -252,7 +255,7 @@ class Scheduler(object):
             except LoggedException:
                 pass
 
-    def get_birth_results(self, system_code, entity_code):
+    def get_birth_results(self, system_code, entity_code, stream_id):
         from sirius.blueprints.api.local_service.producer import LocalProducer
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \
@@ -261,7 +264,7 @@ class Scheduler(object):
             TambovEntityCode
 
         implement = Implementation()
-        reformer = implement.get_reformer(system_code)
+        reformer = implement.get_reformer(system_code, stream_id)
 
         # /api/integration/<int:api_version>/card/list/
         card_list_method = reformer.get_api_method(
@@ -273,7 +276,7 @@ class Scheduler(object):
         #         'id': 14  # todo: при тестировании работаем пока с одной картой
         #     }
         # }
-        msg = Message(data)
+        msg = Message(data, stream_id)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -299,7 +302,7 @@ class Scheduler(object):
             except LoggedException:
                 pass
 
-    def send_exchange_card(self, system_code, entity_code):
+    def send_exchange_card(self, system_code, entity_code, stream_id):
         from sirius.blueprints.api.local_service.producer import LocalProducer
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \
@@ -308,7 +311,7 @@ class Scheduler(object):
             TambovEntityCode
 
         implement = Implementation()
-        reformer = implement.get_reformer(system_code)
+        reformer = implement.get_reformer(system_code, stream_id)
 
         # /api/integration/<int:api_version>/card/list/
         card_list_method = reformer.get_api_method(
@@ -326,7 +329,7 @@ class Scheduler(object):
         #         'id': 14  # todo: при тестировании работаем пока с одной картой
         #     }
         # }
-        msg = Message(data)
+        msg = Message(data, stream_id)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -357,13 +360,14 @@ class Scheduler(object):
                 ):
                     continue
 
+                sub_stream_id = get_stream_id()
                 exch_card_req['doc']['event_id'] = card_data['card_id']
                 # POST /print_subsystem/fill_template
                 exch_card_method = reformer.get_api_method(
                     SystemCode.LOCAL, RisarEntityCode.EXCHANGE_CARD,
                     OperationCode.ADD
                 )
-                msg = Message(exch_card_req)
+                msg = Message(exch_card_req, sub_stream_id)
                 msg.to_local_service()
                 msg.set_request_type()
                 msg.set_immediate_answer()
@@ -374,7 +378,7 @@ class Scheduler(object):
                     'card_LPU': card_data['card_LPU'],
                     'exch_card': exch_card_msg.get_data(),
                 }
-                msg = Message(exch_card_data)
+                msg = Message(exch_card_data, sub_stream_id)
                 msg.to_remote_service()
                 msg.set_send_data_type()
                 meta = msg.get_header().meta
@@ -392,7 +396,7 @@ class Scheduler(object):
             except LoggedException:
                 pass
 
-    def get_hospital_rec(self, system_code, entity_code):
+    def get_hospital_rec(self, system_code, entity_code, stream_id):
         from sirius.blueprints.api.local_service.producer import LocalProducer
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \
@@ -401,7 +405,7 @@ class Scheduler(object):
             TambovEntityCode
 
         implement = Implementation()
-        reformer = implement.get_reformer(system_code)
+        reformer = implement.get_reformer(system_code, stream_id)
 
         # /api/integration/<int:api_version>/card/list/
         card_list_method = reformer.get_api_method(
@@ -412,7 +416,7 @@ class Scheduler(object):
         #         'id': 3  # todo: при тестировании работаем пока с одной картой
         #     }
         # }
-        msg = Message(None)
+        msg = Message(None, stream_id)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -442,19 +446,19 @@ class Scheduler(object):
     ########################################
     ## Тула
 
-    def get_tula_schedules_notused(self, system_code, entity_code):
+    def get_tula_schedules_notused(self, system_code, entity_code, stream_id):
         from sirius.blueprints.api.local_service.producer import LocalProducer
         from sirius.blueprints.api.remote_service.producer import RemoteProducer
         from sirius.blueprints.api.local_service.risar.entities import \
             RisarEntityCode
 
         implement = Implementation()
-        reformer = implement.get_reformer(system_code)
+        reformer = implement.get_reformer(system_code, stream_id)
 
         org_list_method = reformer.get_api_method(
             SystemCode.LOCAL, RisarEntityCode.ORGANIZATION, OperationCode.READ_MANY
         )
-        msg = Message(None)
+        msg = Message(None, stream_id)
         msg.to_local_service()
         msg.set_request_type()
         msg.set_immediate_answer()
@@ -480,7 +484,7 @@ class Scheduler(object):
                              doctor_list_method['params_entities']]
             dst_url = doctor_list_method['template_url'].format(*dst_param_ids)
 
-            msg = Message(None)
+            msg = Message(None, stream_id)
             msg.to_local_service()
             msg.set_request_type()
             msg.set_immediate_answer()

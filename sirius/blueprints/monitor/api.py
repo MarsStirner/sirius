@@ -19,3 +19,7 @@ class IStreamMeta(object):
     @abstractmethod
     def get_stream_body(self):
         pass
+
+    @abstractmethod
+    def get_stream_id(self):
+        pass

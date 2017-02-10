@@ -108,7 +108,7 @@ class BirthTambovBuilder(Builder):
         }
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
 
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         if not safe_traverse_attrs(birth_data, 'Part1', 'InDate'):
             # пустой ответ
             return entities
@@ -251,7 +251,7 @@ class BirthTambovBuilder(Builder):
             TambovEntityCode.EMPLOYEE_POSITION,
             OperationCode.READ_MANY,
         )
-        empl_pos_req = DataRequest()
+        empl_pos_req = DataRequest(self.reformer.stream_id)
         empl_pos_req.set_req_params(
             url=api_method['template_url'],
             method=api_method['method'],

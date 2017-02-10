@@ -28,9 +28,10 @@ parent_id_name = 'card_id'
 def api_specialists_checkup_change(api_version, **kwargs):
     main_id = kwargs.get(main_id_name)
     parent_id = kwargs.get(parent_id_name)
+    stream_id = kwargs.get('stream_id')
     data = None
     delete = request.method == 'DELETE'
-    xform = SpecialistsCheckupTulaXForm(api_version)
+    xform = SpecialistsCheckupTulaXForm(api_version, stream_id)
     if not delete:
         data = request.get_json()
         xform.validate(data)

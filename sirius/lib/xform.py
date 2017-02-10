@@ -77,8 +77,9 @@ class XForm(object):
     remote_system_code = None
     entity_code = None
 
-    def __init__(self, api_version, is_create=False):
+    def __init__(self, api_version, stream_id, is_create=False):
         self.version = 0
+        self.stream_id = stream_id
         self.new = is_create
         self.parent_obj_id = None
         self.target_obj_id = None
@@ -118,7 +119,7 @@ class XForm(object):
             )
 
     def send_messages(self, entity_id, param_name, data, service_name, method_code, parents_params=None):
-        msg = Message(data)
+        msg = Message(data, self.stream_id)
         msg.to_local_service()
         msg.set_send_data_type()
         msg.get_header().meta.update({
@@ -135,7 +136,8 @@ class XForm(object):
         # todo: строить пакет. рассмотреть объединение сценариев этот и remote.consumer в remote.producer
         # from sirius.lib.implement import Implementation
         # implement = Implementation()
-        # reformer = implement.get_reformer(self.remote_system_code)
+        # reformer = implement.get_reformer(self.remote_system_code,
+        #                                   self.stream_id)
         # miss_reqs = reformer.get_missing_requests(msg)
         # miss_data = reformer.transfer_give_data(miss_reqs)
         # msg.add_missing_data(miss_data)

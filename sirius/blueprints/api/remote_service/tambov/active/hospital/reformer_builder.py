@@ -91,7 +91,7 @@ class HospitalTambovBuilder(Builder):
 
         hosp_recs_by_case = {}
         for hospital_rec_id in hospital_rec_ids:
-            req = DataRequest()
+            req = DataRequest(self.reformer.stream_id)
             req.set_req_params(
                 url=hosp_api_method['template_url'],
                 method=hosp_api_method['method'],
@@ -148,7 +148,7 @@ class HospitalTambovBuilder(Builder):
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
         dm = DiagsMatch()
 
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         hosp_entity = entities.set_main_entity(
             dst_entity_code=RisarEntityCode.MEASURE_HOSPITALIZATION,
             dst_parents_params=header_meta['local_parents_params'],
@@ -188,7 +188,7 @@ class HospitalTambovBuilder(Builder):
             TambovEntityCode.LOCATION,
             OperationCode.READ_ONE,
         )
-        req = DataRequest()
+        req = DataRequest(self.reformer.stream_id)
         req.set_req_params(
             url=location_api_method['template_url'],
             method=location_api_method['method'],

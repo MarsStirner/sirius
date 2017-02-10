@@ -85,7 +85,7 @@ class EmployeePositionTambovBuilder(Builder):
                 TambovEntityCode.EMPLOYEE_POSITION,
                 OperationCode.READ_MANY,
             )
-            empl_pos_req = DataRequest()
+            empl_pos_req = DataRequest(self.reformer.stream_id)
             empl_pos_req.set_req_params(
                 url=api_method['template_url'],
                 method=api_method['method'],
@@ -101,7 +101,7 @@ class EmployeePositionTambovBuilder(Builder):
                     TambovEntityCode.EMPLOYEE_POSITION,
                     OperationCode.READ_ONE,
                 )
-                emp_pos_req = DataRequest()
+                emp_pos_req = DataRequest(self.reformer.stream_id)
                 emp_pos_req.set_req_params(
                     url=api_method['template_url'],
                     method=api_method['method'],
@@ -117,7 +117,7 @@ class EmployeePositionTambovBuilder(Builder):
                     TambovEntityCode.POSITION,
                     OperationCode.READ_ONE,
                 )
-                emp_spec_req = DataRequest()
+                emp_spec_req = DataRequest(self.reformer.stream_id)
                 emp_spec_req.set_req_params(
                     url=api_method['template_url'],
                     method=api_method['method'],
@@ -133,7 +133,7 @@ class EmployeePositionTambovBuilder(Builder):
                     TambovEntityCode.EMPLOYEE,
                     OperationCode.READ_ONE,
                 )
-                employee_req = DataRequest()
+                employee_req = DataRequest(self.reformer.stream_id)
                 employee_req.set_req_params(
                     url=api_method['template_url'],
                     method=api_method['method'],
@@ -150,7 +150,7 @@ class EmployeePositionTambovBuilder(Builder):
                     TambovEntityCode.INDIVIDUAL,
                     OperationCode.READ_ONE,
                 )
-                individual_req = DataRequest()
+                individual_req = DataRequest(self.reformer.stream_id)
                 individual_req.set_req_params(
                     url=api_method['template_url'],
                     method=api_method['method'],
@@ -209,7 +209,7 @@ class EmployeePositionTambovBuilder(Builder):
 
         empl_pos_addition = pack_entity['addition']  # в эмплой позишн клали индивид, т.к. первый не нужен в диффах
 
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         doctor_item = entities.set_main_entity(
             dst_entity_code=RisarEntityCode.DOCTOR,
             dst_parents_params=header_meta['local_parents_params'],

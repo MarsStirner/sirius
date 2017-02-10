@@ -153,7 +153,7 @@ class _TestLocalApi:
         with open('diagsf.csv', 'w') as diagsf:
             transfer = TambovTransfer()
             for partNumber in range(1, 31):
-                req = DataRequest()
+                req = DataRequest('_test_import_diags')
                 req.set_req_params(
                     url='https://test68.r-mis.ru/refbooks-ws/refbooksWS?wsdl',
                     method='getRefbookPartial',
@@ -222,8 +222,9 @@ class _TestLocalApi:
         SrvPrototypeMatch.init()
         pr_code_map = SrvPrototypeMatch.prototype_code__srv_prototype__map
 
+        stream_id = '_test_create_miss_prototype_list'
         implement = Implementation()
-        reformer = implement.get_reformer(SystemCode.TAMBOV)
+        reformer = implement.get_reformer(SystemCode.TAMBOV, stream_id)
         with app.app_context():
             srv_api_method = reformer.get_api_method(
                 reformer.remote_sys_code,
@@ -236,7 +237,7 @@ class _TestLocalApi:
             for pr_code in pr_code_map:
                 prototype_id = SrvPrototypeMatch.get_prototype_id_by_prototype_code(pr_code)
 
-                req = DataRequest()
+                req = DataRequest(stream_id)
                 req.set_req_params(
                     url=srv_api_method['template_url'],
                     method=srv_api_method['method'],

@@ -25,9 +25,10 @@ item_code_name = 'code'
 @remote_api_method(hook=hook)
 def api_refbook_change(api_version, reference_book_code, **kwargs):
     item_code = kwargs.get(item_code_name)
+    stream_id = kwargs.get('stream_id')
     data = None
     delete = request.method == 'DELETE'
-    xform = RefbookTulaXForm(api_version)
+    xform = RefbookTulaXForm(api_version, stream_id)
     if not delete:
         data = request.get_json()
         xform.validate(data)

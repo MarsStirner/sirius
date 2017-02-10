@@ -58,7 +58,7 @@ class MeasureTulaBuilder(Builder):
                 data=measure,
             )
 
-            data_req = DataRequest()
+            data_req = DataRequest(self.reformer.stream_id)
             data_req.set_meta(
                 dst_system_code=SystemCode.LOCAL,
                 dst_entity_code=RisarEntityCode.APPOINTMENT,
@@ -109,7 +109,7 @@ class MeasureTulaBuilder(Builder):
         }
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
 
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         main_item = entities.set_main_entity(
             dst_entity_code=TulaEntityCode.MEASURE,
             dst_parents_params=header_meta['remote_parents_params'],

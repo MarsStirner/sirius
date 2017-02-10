@@ -92,7 +92,7 @@ class ScheduleTicketTulaBuilder(Builder):
         }
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
 
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         main_item = entities.set_main_entity(
             dst_entity_code=TulaEntityCode.SCHEDULE_TICKET,
             dst_parents_params=header_meta['remote_parents_params'],
@@ -139,7 +139,7 @@ class ScheduleTicketTulaBuilder(Builder):
             )
             main_item['body'] = sched_remove_req_data
 
-        # sched_reserve_req = DataRequest()
+        # sched_reserve_req = DataRequest(self.reformer.stream_id)
         # sched_reserve_req.set_meta(
         #     dst_system_code=self.remote_sys_code,
         #     dst_entity_code=TulaEntityCode.SCHEDULE_TICKET,
@@ -284,7 +284,7 @@ class ScheduleTicketTulaBuilder(Builder):
             workdate,
         )
 
-        sched_reserve_req = DataRequest()
+        sched_reserve_req = DataRequest(self.reformer.stream_id)
         sched_reserve_req.set_meta(
             dst_system_code=self.remote_sys_code,
             dst_entity_code=TulaEntityCode.SCHEDULE,

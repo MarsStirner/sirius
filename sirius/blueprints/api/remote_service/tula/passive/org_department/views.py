@@ -25,9 +25,10 @@ main_id_name = 'regionalCode'
 @remote_api_method(hook=hook)
 def api_org_department_change(api_version, **kwargs):
     main_id = kwargs.get(main_id_name)
+    stream_id = kwargs.get('stream_id')
     data = None
     delete = request.method == 'DELETE'
-    xform = OrgDepartmentTulaXForm(api_version)
+    xform = OrgDepartmentTulaXForm(api_version, stream_id)
     if not delete:
         data = request.get_json()
         xform.validate(data)

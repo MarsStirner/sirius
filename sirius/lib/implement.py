@@ -28,11 +28,11 @@ for imp in implements:
 
 
 class Implementation(object):
-    def get_reformer(self, rmt_sys_code):
+    def get_reformer(self, rmt_sys_code, stream_id):
         try:
             reformer_cls, transfer_cls = imp_map[rmt_sys_code]
         except KeyError:
             raise InternalError('Unknown remote system code "%s" in implements' % rmt_sys_code)
-        reformer = reformer_cls()
+        reformer = reformer_cls(stream_id)
         reformer.set_transfer(transfer_cls())
         return reformer

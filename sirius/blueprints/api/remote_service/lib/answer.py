@@ -18,7 +18,7 @@ logger = logging.getLogger('simple')
 
 class RemoteAnswer(object):
 
-    def process(self, result, req_meta=None, req_data=None):
+    def process(self, result, req_meta, req_data, stream_id):
         if not req_meta['dst_request_mode']:
             if req_meta['dst_protocol_code'] == ProtocolCode.SOAP:
                 req_meta['dst_request_mode'] = RequestModeCode.XML_DATA
@@ -26,7 +26,7 @@ class RemoteAnswer(object):
                 req_meta['dst_request_mode'] = RequestModeCode.JSON_DATA
         # meta['dst_entity_code']
         if req_meta['dst_request_mode'] in (RequestModeCode.JSON_DATA, RequestModeCode.MULTIPART_FILE):
-            logger.debug('%s url: %s request: %s\n response: %s' % (result.request.method, result.url, str(req_data), ': '.join((str(result), result.text))))
+            logger.debug('stream_id: %s %s url: %s request: %s\n response: %s' % (stream_id, result.request.method, result.url, str(req_data), ': '.join((str(result), result.text))))
             self.check_json(result)
             if req_meta['dst_operation_code'] in (OperationCode.READ_MANY, OperationCode.READ_ONE):
                 res = self.get_data(result)
@@ -36,16 +36,16 @@ class RemoteAnswer(object):
                 res = True
         elif req_meta['dst_request_mode'] == RequestModeCode.XML_DATA:
             if req_meta['dst_protocol_code'] == ProtocolCode.SOAP:
-                logger.debug('request: %s\n response: %s' % (str(req_data), str(result).decode('utf-8')))
+                logger.debug('stream_id: %s request: %s\n response: %s' % (stream_id, str(req_data), str(result).decode('utf-8')))
             elif req_meta['dst_protocol_code'] == ProtocolCode.REST:
-                logger.debug('request: %s\n response: %s' % (str(req_data), result.text))
+                logger.debug('stream_id: %s request: %s\n response: %s' % (stream_id, str(req_data), result.text))
             else:
-                logger.debug('request: %s\n response: %s' % (str(req_data), ': '.join((str(result), result.text))))
+                logger.debug('stream_id: %s request: %s\n response: %s' % (stream_id, str(req_data), ': '.join((str(result), result.text))))
             res = self.xml_to_dict(result)
             if req_meta['dst_operation_code'] in (OperationCode.ADD, OperationCode.CHANGE, OperationCode.DELETE):
                 res = self.get_params_ext(req_meta, res)
         else:
-            logger.debug('request: %s\n response: %s' % (str(req_data), ': '.join((str(result), result.text))))
+            logger.debug('stream_id: %s request: %s\n response: %s' % (stream_id, str(req_data), ': '.join((str(result), result.text))))
             res = result.text
         return res
 

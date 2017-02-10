@@ -212,7 +212,7 @@ class ScheduleTulaBuilder(Builder):  # by Scheduler
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
         find_prefix = './/{http://sdsys.ru/}'
 
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         main_item = entities.set_main_entity(
             dst_entity_code=RisarEntityCode.SCHEDULE,
             dst_parents_params=header_meta['local_parents_params'],
@@ -245,7 +245,8 @@ class ScheduleTulaBuilder(Builder):  # by Scheduler
                     )
                     # если пациент еще не передавался в МР, но занял слот
                     if not client_id:
-                        logger.debug('INTERVAL PCODE: (' + pcode + ')')
+                        logger.debug('stream_id: %s INTERVAL PCODE: (%s)' %
+                                     (self.reformer.stream_id, pcode))
 
                 build_schedule_tickets.append({
                     'time_begin': self.time_misf_mrf(INTERVAL, find_prefix + 'BHOUR', find_prefix + 'BMIN'),

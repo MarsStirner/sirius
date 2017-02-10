@@ -28,7 +28,7 @@ class CheckupFirstTicket25TulaBuilder(Builder):
         }
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
 
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         main_item = entities.set_main_entity(
             dst_entity_code=RisarEntityCode.CHECKUP_OBS_FIRST_TICKET,
             dst_parents_params=header_meta['local_parents_params'],

@@ -62,7 +62,7 @@ class CaseTambovBuilder(Builder):
         for ticket_data in tickets:
             if not self.validate_ticket(ticket_data):
                 continue
-            data_req = DataRequest()
+            data_req = DataRequest(self.reformer.stream_id)
             data_req.set_meta(
                 dst_system_code=SystemCode.LOCAL,
                 dst_entity_code=checkup_code,
@@ -177,7 +177,7 @@ class CaseTambovBuilder(Builder):
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
         dm = DiagsMatch()
 
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         main_item = entities.set_main_entity(
             dst_entity_code=TambovEntityCode.CASE,
             dst_parents_params=header_meta['remote_parents_params'],
@@ -305,7 +305,7 @@ class CaseTambovBuilder(Builder):
                 set_parent_id_func=set_parent_id_func,
             )
             org_code = safe_traverse(ticket_data, 'hospital') or ''
-            req = DataRequest()
+            req = DataRequest(self.reformer.stream_id)
             req.set_req_params(
                 url=srv_api_method['template_url'],
                 method=srv_api_method['method'],
@@ -355,7 +355,7 @@ class CaseTambovBuilder(Builder):
             TambovEntityCode.LOCATION,
             OperationCode.ADD,
         )
-        req = DataRequest()
+        req = DataRequest(self.reformer.stream_id)
         req.set_req_params(
             url=location_api_method['template_url'],
             method=location_api_method['method'],

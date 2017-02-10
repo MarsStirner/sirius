@@ -76,7 +76,7 @@ class ClinicTambovBuilder(Builder):
         clinic_data = pack_entity['data']
         clinic_addition = safe_traverse(pack_entity, 'addition') or {}
         AddressAllInfos = clinic_addition.get(TambovEntityCode.ADDRESS_ALL_INFO)
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
 
         src_entity_code = header_meta['remote_entity_code']
         src_operation_code = header_meta['remote_operation_code']

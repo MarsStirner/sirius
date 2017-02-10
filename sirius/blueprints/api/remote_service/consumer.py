@@ -21,7 +21,7 @@ class RemoteConsumer(object):
         assert isinstance(msg, Message)
         res = True
         implement = Implementation()
-        reformer = implement.get_reformer(rmt_sys_code)
+        reformer = implement.get_reformer(rmt_sys_code, msg.get_stream_id())
 
         # сценарий обработки сообщения
         if msg.is_to_remote:
@@ -30,7 +30,7 @@ class RemoteConsumer(object):
                     reformed_data = reformer.reform_msg(msg)
                     reformer.send_to_remote_data(reformed_data)
                     hdr = msg.get_header()
-                    op_res = OperationResult()
+                    op_res = OperationResult(msg.stream_id)
                     result_msg = op_res.check(hdr.method, hdr.url)
                     if result_msg:
                         self.producer_send_msgs([result_msg])

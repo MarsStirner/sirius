@@ -119,7 +119,7 @@ class ServiceTambovBuilder(Builder):
         referralIds = set()
         # for rend_service_id, diff_key in rend_services_ids:
         for rend_service_id in rend_services_ids:
-            req = DataRequest()
+            req = DataRequest(self.reformer.stream_id)
             req.set_req_params(
                 url=rend_serv_api_method['template_url'],
                 method=rend_serv_api_method['method'],
@@ -133,7 +133,7 @@ class ServiceTambovBuilder(Builder):
                 TambovEntityCode.SERVICE,
                 OperationCode.READ_ONE,
             )
-            req = DataRequest()
+            req = DataRequest(self.reformer.stream_id)
             req.set_req_params(
                 url=srv_api_method['template_url'],
                 method=srv_api_method['method'],
@@ -148,8 +148,8 @@ class ServiceTambovBuilder(Builder):
             if not prototypeId:
                 # большинство услуг с разных мо без прототипа
                 # logger.error(
-                #     "Missing required prototypeId in referralId = '%s'. rend_service_id = '%s'" %
-                #     (rend_service_data['referralId'], rend_service_data['id'])
+                #     "stream_id: %s Missing required prototypeId in referralId = '%s'. rend_service_id = '%s'" %
+                #     (self.reformer.stream_id, rend_service_data['referralId'], rend_service_data['id'])
                 # )
                 continue
 
@@ -158,8 +158,8 @@ class ServiceTambovBuilder(Builder):
             referralId = rend_service_data['referralId']
             if referralId and referralId in referralIds:
                 logger.error(
-                    'referralId "%s" already have other rend_service_id. Skipped current rend_service_id = "%s"' %
-                    (referralId, rend_service_id)
+                    'stream_id: %s referralId "%s" already have other rend_service_id. Skipped current rend_service_id = "%s"' %
+                    (self.reformer.stream_id, referralId, rend_service_id)
                 )
                 continue
             referralIds.add(referralId)
@@ -171,7 +171,7 @@ class ServiceTambovBuilder(Builder):
             # если в мис проставят другое направление, то в МР по-хорошему
             # должны создать новое и перепривязать услугу.
             if referralId:
-                req = DataRequest()
+                req = DataRequest(self.reformer.stream_id)
                 req.set_req_params(
                     url=referral_api_method['template_url'],
                     method=referral_api_method['method'],
@@ -207,7 +207,7 @@ class ServiceTambovBuilder(Builder):
                 # diff_key=diff_key,
             )
 
-            # data_req = DataRequest()
+            # data_req = DataRequest(self.reformer.stream_id)
             # data_req.set_meta(
             #     dst_system_code=self.remote_sys_code,
             #     dst_entity_code=TambovEntityCode.DATA_REND_SERVICE,
@@ -226,7 +226,7 @@ class ServiceTambovBuilder(Builder):
             #     main_id=rend_service_id,
             #     data=data_rend_srv_data,
             # )
-            data_req = DataRequest()
+            data_req = DataRequest(self.reformer.stream_id)
             data_req.set_meta(
                 dst_system_code=self.remote_sys_code,
                 dst_entity_code=TambovEntityCode.SERVICE_ATTACHMENT,
@@ -308,7 +308,7 @@ class ServiceTambovBuilder(Builder):
 #         }
 #         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
 #
-#         entities = RequestEntities()
+#         entities = RequestEntities(self.reformer.stream_id)
 #         main_item = entities.set_main_entity(
 #             dst_entity_code=RisarEntityCode.MEASURE_RESEARCH,
 #             dst_parents_params=header_meta['local_parents_params'],
@@ -440,7 +440,7 @@ class ServiceTambovBuilder(Builder):
         }
         self.reform_local_parents_params(header_meta, src_entity_code, params_map)
 
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         main_item = entities.set_main_entity(
             dst_entity_code=TambovEntityCode.REND_SERVICE,
             dst_parents_params=header_meta['remote_parents_params'],
@@ -458,7 +458,7 @@ class ServiceTambovBuilder(Builder):
                 TambovEntityCode.SERVICE,
                 OperationCode.READ_MANY,
             )
-            req = DataRequest()
+            req = DataRequest(self.reformer.stream_id)
             req.set_req_params(
                 url=srv_api_method['template_url'],
                 method=srv_api_method['method'],

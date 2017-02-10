@@ -23,7 +23,7 @@ class LocalConsumer(object):
             parser, answer = request_by_url(hdr.method, hdr.url, msg.get_data())
             local_data = parser.get_data(answer)
 
-            next_msg = Message(local_data)
+            next_msg = Message(local_data, msg.stream_id)
             next_msg.to_remote_service()
             next_msg.set_send_data_type()
             next_msg.get_header().meta.update(hdr.meta)
@@ -39,7 +39,7 @@ class LocalConsumer(object):
         elif msg.is_send_data:
             implement = Implementation()
             rmt_sys_code = msg.get_header().meta['remote_system_code']
-            reformer = implement.get_reformer(rmt_sys_code)
+            reformer = implement.get_reformer(rmt_sys_code, msg.get_stream_id())
             entities = reformer.reform_msg(msg)
             reformer.send_to_local_data(entities, request_by_url)
         else:

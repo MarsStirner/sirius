@@ -18,7 +18,7 @@ class ScheduleTicketTulaBuilder(Builder):
 
     def build_local_entities(self, header_meta, data):
         src_operation_code = self.get_operation_code_by_method(header_meta['remote_method'])
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         main_item = entities.set_main_entity(
             dst_entity_code=RisarEntityCode.SCHEDULE_TICKET,
             dst_parents_params=header_meta['local_parents_params'],

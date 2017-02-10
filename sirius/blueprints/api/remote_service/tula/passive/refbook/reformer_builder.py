@@ -59,7 +59,7 @@ class RefbookTulaBuilder(Builder):
         parents_params = {
             'rb_code': {'entity': RisarEntityCode.RISAR_REFBOOK_NAME, 'id': rb_code}
         }
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         if rb_code in self.risar_refbooks:
             main_item = entities.set_main_entity(
                 dst_entity_code=RisarEntityCode.RISAR_REFBOOK,

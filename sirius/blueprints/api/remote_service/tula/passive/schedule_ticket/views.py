@@ -25,9 +25,10 @@ main_id_name = 'schedule_ticket_id'
 @remote_api_method(hook=hook)
 def api_schedule_ticket_change(api_version, **kwargs):
     main_id = kwargs.get(main_id_name)
+    stream_id = kwargs.get('stream_id')
     data = None
     delete = request.method == 'DELETE'
-    xform = ScheduleTicketTulaXForm(api_version)
+    xform = ScheduleTicketTulaXForm(api_version, stream_id)
     if not delete:
         data = request.get_json()
         xform.validate(data)

@@ -24,9 +24,10 @@ client_id_name = 'client_id'
 @remote_api_method(hook=hook)
 def api_client_change(api_version, **kwargs):
     client_id = kwargs.get(client_id_name)
+    stream_id = kwargs.get('stream_id')
     data = None
     delete = request.method == 'DELETE'
-    xform = ClientTulaXForm(api_version)
+    xform = ClientTulaXForm(api_version, stream_id)
     if not delete:
         data = request.get_json()
         xform.validate(data)

@@ -28,6 +28,8 @@ from zeep.exceptions import TransportError as ZeepTransportError, Error as ZeepE
 # from suds.transport import TransportError as SudsTransportError
 from zeep.exceptions import TransportError as SudsTransportError, Error as SudsError  # заглушка (вдруг понадобится suds)
 
+from sirius.lib.stream import get_stream_id
+
 logger = logging.getLogger('simple')
 
 
@@ -70,12 +72,13 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            res = meta = body = module = obj = None
+            res = meta = body = module = obj = stream_id = None
             enter_datetime = datetime.today()
             enter_time = time()
             try:
                 module = type(args[self_pos - 1])
                 obj = args[stream_pos - 1]
+                stream_id = obj.get_stream_id()
                 meta = obj.get_stream_meta()
                 body = obj.get_stream_body()
                 res = func(*args, **kwargs)
@@ -90,6 +93,7 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
                 else:
                     message = traceback.format_exception_only(type(exc), exc)[-1].decode('utf-8')
                 params = {
+                    'stream_id': stream_id,
                     'stream': get_stream_data(module, func, obj, meta, body),
                     'message': message,
                     'enter_time': enter_datetime,
@@ -101,6 +105,7 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
                 reraise(Exception, LoggedException(message), sys.exc_info()[2])
             else:
                 params = {
+                    'stream_id': stream_id,
                     'stream': get_stream_data(module, func, obj, meta),
                     'message': 'OK',
                     'enter_time': enter_datetime,
@@ -122,12 +127,13 @@ def check_point(function=None, stream_pos=2, self_pos=1):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            res = meta = body = module = obj = None
+            res = meta = body = module = obj = stream_id = None
             enter_datetime = datetime.today()
             enter_time = time()
             try:
                 module = type(args[self_pos - 1])
                 obj = args[stream_pos - 1]
+                stream_id = obj.get_stream_id()
                 meta = obj.get_stream_meta()
                 body = obj.get_stream_body()
                 res = func(*args, **kwargs)
@@ -142,6 +148,7 @@ def check_point(function=None, stream_pos=2, self_pos=1):
                 else:
                     message = traceback.format_exception_only(type(exc), exc)[-1].decode('utf-8')
                 params = {
+                    'stream_id': stream_id,
                     'stream': get_stream_data(module, func, obj, meta, body),
                     'message': message,
                     'enter_time': enter_datetime,
@@ -201,7 +208,7 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            res = meta = body = module = obj = None
+            res = meta = body = module = obj = stream_id = None
             enter_datetime = datetime.today()
             enter_time = time()
             # task = args[self_pos - 1]
@@ -217,6 +224,7 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                         module = type(args[self_pos - 1])
                     if stream_pos is not None:
                         obj = args[stream_pos - 1]
+                        stream_id = obj.get_stream_id()
                         meta = obj.get_stream_meta()
                         body = obj.get_stream_body()
                     res = func(*args, **kwargs)
@@ -225,7 +233,7 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                     db.session.rollback()
                     raise
                 except SAOperationalError as exc:
-                    logger.error(unicode(exc))
+                    logger.error('stream_id: %s' % stream_id + unicode(exc))
                     # logg_to_MonitorDB(params)
                     if retry_count >= max_retry:
                         # todo: stop celery workers (back rabbit msg)
@@ -244,6 +252,7 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                     # traceback.print_exc()
                     message = traceback.format_exception_only(type(exc), exc)[-1].decode('utf-8')
                     params = {
+                        'stream_id': stream_id,
                         'stream': get_stream_data(module, func, obj, meta, body),
                         'message': message,
                         'enter_time': enter_datetime,
@@ -255,6 +264,7 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                     reraise(Exception, LoggedException(message), sys.exc_info()[2])
                 else:
                     params = {
+                        'stream_id': stream_id,
                         'stream': get_stream_data(module, func, obj, meta),
                         'message': 'OK',
                         'enter_time': enter_datetime,
@@ -334,6 +344,7 @@ def connect_entry(function=None, login=None, nowait=False):
             res = None
             retry = True
             retry_count = 0
+            loc_nowait = nowait
             sleep_timeout = begin_sleep_timeout
             while retry:
                 retry = False
@@ -363,8 +374,8 @@ def connect_entry(function=None, login=None, nowait=False):
                     if retry_count >= max_retry:
                         # todo: stop celery workers (back rabbit msg)
                         logger.info('Retry count = %s. Stop retrying' % (retry_count,))
-                        nowait = True
-                    if nowait:
+                        loc_nowait = True
+                    if loc_nowait:
                         reraise(Exception, exc, sys.exc_info()[2])
                     else:
                         retry = True
@@ -408,13 +419,14 @@ def local_api_method(func=None, hook=None, authentication=True):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            stream_id = None
             try:
-                result = func(*args, **kwargs)
+                result, stream_id = func(*args, **kwargs)
             except ApiException, e:
                 traceback.print_exc()
                 j, code, headers = jsonify_api_exception(e, traceback.extract_tb(sys.exc_info()[2]))
                 if hook:
-                    hook(code, j, e)
+                    hook(code, j, e, stream_id=stream_id)
                 # logg_to_MonitorDB(params)
             except LoggedException, e:
                 j, code, headers = jsonify_exception(e, traceback.extract_tb(sys.exc_info()[2]))
@@ -422,7 +434,7 @@ def local_api_method(func=None, hook=None, authentication=True):
                 traceback.print_exc()
                 j, code, headers = jsonify_exception(e, traceback.extract_tb(sys.exc_info()[2]))
                 if hook:
-                    hook(code, j, e)
+                    hook(code, j, e, stream_id=stream_id)
                 # logg_to_MonitorDB(params)
             else:
                 if isinstance(result, RawApiResult):
@@ -432,7 +444,7 @@ def local_api_method(func=None, hook=None, authentication=True):
                 else:
                     j, code, headers = jsonify_ok(result)
                 if hook:
-                    hook(code, j)
+                    hook(code, j, stream_id=stream_id)
                 # logg_to_MonitorDB(params)
             return flask.make_response(j, code, headers)
 
@@ -458,13 +470,15 @@ def remote_api_method(func=None, hook=None, authentication=True):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            stream_id = get_stream_id()
             try:
+                kwargs['stream_id'] = stream_id
                 result = func(*args, **kwargs)
             except ApiException, e:
                 traceback.print_exc()
                 j, code, headers = jsonify_api_exception(e, traceback.extract_tb(sys.exc_info()[2]))
                 if hook:
-                    hook(code, j, e)
+                    hook(code, j, e, stream_id=stream_id)
                 # logg_to_MonitorDB(params)
             except LoggedException, e:
                 j, code, headers = jsonify_exception(e, traceback.extract_tb(sys.exc_info()[2]))
@@ -473,7 +487,7 @@ def remote_api_method(func=None, hook=None, authentication=True):
                 exc = InternalError(str(e))
                 j, code, headers = jsonify_exception(exc, traceback.extract_tb(sys.exc_info()[2]))
                 if hook:
-                    hook(code, j, e)
+                    hook(code, j, e, stream_id=stream_id)
                 # logg_to_MonitorDB(params)
             else:
                 if isinstance(result, RawApiResult):
@@ -483,7 +497,7 @@ def remote_api_method(func=None, hook=None, authentication=True):
                 else:
                     j, code, headers = jsonify_ok(result)
                 if hook:
-                    hook(code, j)
+                    hook(code, j, stream_id=stream_id)
                 # logg_to_MonitorDB(params)
             return flask.make_response(j, code, headers)
 

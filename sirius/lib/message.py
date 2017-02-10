@@ -65,10 +65,11 @@ class Message(IStreamMeta):
     header = None
     body = None
 
-    def __init__(self, data):
+    def __init__(self, data, stream_id):
         self.header = Header()
         self.body = data
         self.missing = None
+        self.stream_id = stream_id
 
     def get_header(self):
         return self.header
@@ -127,6 +128,9 @@ class Message(IStreamMeta):
 
     def get_stream_body(self):
         return self.body
+
+    def get_stream_id(self):
+        return self.stream_id
 
     @property
     def is_to_local(self):

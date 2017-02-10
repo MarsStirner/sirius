@@ -61,8 +61,8 @@ class ReferralTambovBuilder(Builder):
         for measure_data in measures:
             if not measure_data.get('appointment_id'):
                 # logger.error(
-                #     'Missing required appointment_id in measure_id = "%s", measure_type_code = "%s"' %
-                #     (measure_data['measure_id'], measure_data.get('measure_type_code'))
+                #     'stream_id: %s Missing required appointment_id in measure_id = "%s", measure_type_code = "%s"' %
+                #     (self.reformer.stream_id, measure_data['measure_id'], measure_data.get('measure_type_code'))
                 # )
                 continue
 
@@ -76,7 +76,7 @@ class ReferralTambovBuilder(Builder):
                 data=measure_data,
             )
 
-            data_req = DataRequest()
+            data_req = DataRequest(self.reformer.stream_id)
             data_req.set_meta(
                 dst_system_code=SystemCode.LOCAL,
                 dst_entity_code=RisarEntityCode.APPOINTMENT,
@@ -128,7 +128,7 @@ class ReferralTambovBuilder(Builder):
         src_operation_code = header_meta['local_operation_code']
         src_entity_code = header_meta['local_entity_code']
 
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         # todo: стоит напрямую найти measure_type, а в неГоспитализациях дозапрашивать
         # prototype_id, так как в госпитализации нет прототипа (в файле
         # фейковый проставлен)
@@ -171,7 +171,7 @@ class ReferralTambovBuilder(Builder):
         srv_data = None
         typeId = self.measure_type__type_id__map[measure_type]
         if measure_type != 'hospitalization':
-            req = DataRequest()
+            req = DataRequest(self.reformer.stream_id)
             req.set_req_params(
                 url=srv_api_method['template_url'],
                 method=srv_api_method['method'],
@@ -223,7 +223,7 @@ class ReferralTambovBuilder(Builder):
         }
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
 
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         childs = pack_entity['childs']
         rend_serv_item = childs[TambovEntityCode.REND_SERVICE][0]
         rend_serv_data = rend_serv_item['data']
@@ -390,7 +390,7 @@ class ReferralTambovBuilder(Builder):
             TambovEntityCode.LOCATION,
             OperationCode.READ_ONE,
         )
-        req = DataRequest()
+        req = DataRequest(self.reformer.stream_id)
         req.set_req_params(
             url=location_api_method['template_url'],
             method=location_api_method['method'],

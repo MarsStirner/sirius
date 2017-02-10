@@ -58,7 +58,7 @@ class TimeTambovBuilder(Builder):
             today = date.today()
             # today = date(2016, 12, 29)  # todo для тестов
             # range_val = 14
-            range_val = 2  # todo для тестов
+            range_val = 7  # todo для тестов
             max_date = today + timedelta(range_val)
             package.set_diff_key_range((
                 '_'.join((str(clinic_id), today.isoformat())),
@@ -101,7 +101,7 @@ class TimeTambovBuilder(Builder):
             TambovEntityCode.SERVICE,
             OperationCode.READ_MANY,
         )
-        req = DataRequest()
+        req = DataRequest(self.reformer.stream_id)
         req.set_req_params(
             url=service_api_method['template_url'],
             method=service_api_method['method'],
@@ -117,7 +117,7 @@ class TimeTambovBuilder(Builder):
             TambovEntityCode.LOCATION,
             OperationCode.READ_MANY,
         )
-        req = DataRequest()
+        req = DataRequest(self.reformer.stream_id)
         req.set_req_params(
             url=location_api_method['template_url'],
             method=location_api_method['method'],
@@ -133,7 +133,7 @@ class TimeTambovBuilder(Builder):
             TambovEntityCode.LOCATION,
             OperationCode.READ_ONE,
         )
-        req = DataRequest()
+        req = DataRequest(self.reformer.stream_id)
         req.set_req_params(
             url=location_api_method['template_url'],
             method=location_api_method['method'],
@@ -190,7 +190,7 @@ class TimeTambovBuilder(Builder):
             TambovEntityCode.RESERVE_FILTERED,
             OperationCode.READ_MANY,
         )
-        req = DataRequest()
+        req = DataRequest(self.reformer.stream_id)
         req.set_req_params(
             url=reserv_api_method['template_url'],
             method=reserv_api_method['method'],
@@ -263,7 +263,7 @@ class TimeTambovBuilder(Builder):
         }
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
 
-        entities = RequestEntities()
+        entities = RequestEntities(self.reformer.stream_id)
         doctor_code = self.reformer.find_local_id_by_remote(
             RisarEntityCode.DOCTOR,
             TambovEntityCode.EMPLOYEE_POSITION,
@@ -320,7 +320,7 @@ class TimeTambovBuilder(Builder):
 
     def request_patient(self, patient_uid):
         from sirius.blueprints.api.local_service.producer import LocalProducer
-        msg = Message(None)
+        msg = Message(None, self.reformer.stream_id)
         msg.to_remote_service()
         msg.set_request_type()
         meta = msg.get_header().meta

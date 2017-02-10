@@ -26,14 +26,14 @@ from sirius.models.system import RegionCode
 def api_request_local():
     data = request.get_json()
     rld = RequestLocalData(data)
-    msg = Message(None)
+    msg = Message(None, rld.stream_id)
     msg.to_local_service()
     msg.set_request_type()
     msg.set_method(rld.request_method, rld.request_url)
     msg.get_header().meta.update(rld.get_msg_meta())
     prod = LocalProducer()
     res = prod.send(msg)
-    return res
+    return res, rld.stream_id
 
 
 @module.route('/api/request/remote/', methods=["POST"])
@@ -43,7 +43,7 @@ def api_request_remote():
     # если коды внешней системы и шины разъедутся, придется вынести RisarEntityCode
     data = request.get_json()
     rld = RequestLocalData(data)
-    msg = Message(None)
+    msg = Message(None, rld.stream_id)
     msg.to_remote_service()
     msg.set_request_type()
     meta = msg.get_header().meta
@@ -53,7 +53,7 @@ def api_request_remote():
     meta['remote_main_id'] = rld.data.get('remote_main_id')
     prod = LocalProducer()
     res = prod.send(msg)
-    return res
+    return res, rld.stream_id
 
 
 # todo: переделать event на immediate, т.к. передаются данные
@@ -62,13 +62,13 @@ def api_request_remote():
 def api_send_event_remote():
     data = request.get_json()
     rld = RequestLocalData(data)
-    msg = Message(rld.body)
+    msg = Message(rld.body, rld.stream_id)
     msg.to_remote_service()
     msg.set_send_event_type()
     msg.get_header().meta.update(rld.get_msg_meta())
     prod = LocalProducer()
     res = prod.send(msg)
-    return res
+    return res, rld.stream_id
 
 
 @module.route('/api/client/local_id/', methods=["GET"])
@@ -77,13 +77,14 @@ def api_client_local_id():
     data = request.get_json()
     rld = RequestLocalData(data)
     implement = Implementation()
-    reformer = implement.get_reformer(rld.data.get('remote_system_code'))
+    reformer = implement.get_reformer(rld.data.get('remote_system_code'),
+                                      rld.stream_id)
     local_id = reformer.get_local_id_by_remote(
         RisarEntityCode.CLIENT,
         rld.data.get('remote_entity_code'),
         rld.data.get('remote_main_id'),
     )
-    return local_id
+    return local_id, rld.stream_id
 
 
 @module.route('/api/card/register/', methods=["POST"])
@@ -92,14 +93,15 @@ def api_card_register():
     data = request.get_json()
     rld = RequestLocalData(data)
     implement = Implementation()
-    reformer = implement.get_reformer(rld.data.get('remote_system_code'))
+    reformer = implement.get_reformer(rld.data.get('remote_system_code'),
+                                      rld.stream_id)
     res = reformer.register_entity_match(
         RisarEntityCode.CARD,
         rld.data.get('local_main_id'),
         rld.data.get('remote_entity_code'),
         rld.data.get('remote_main_id'),
     )
-    return res
+    return res, rld.stream_id
 
 
 @module.route('/api/events/binded/', methods=["GET"])
@@ -123,4 +125,4 @@ def api_events_binded():
         ],
     }
     res = bind_map[region_code]
-    return res
+    return res, None
