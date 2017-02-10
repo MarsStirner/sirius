@@ -6,6 +6,8 @@
 @date: 23.09.2016
 
 """
+from copy import deepcopy
+
 from sirius.blueprints.api.local_service.risar.entities import RisarEntityCode
 from sirius.blueprints.reformer.api import Builder, RequestEntities
 from sirius.models.system import SystemCode
@@ -29,7 +31,9 @@ class ClientTulaBuilder(Builder):
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
-            main_item['body'] = data
+            main_item['body'] = deepcopy(data)
             main_item['body']['client_id'] = ''  # заполняется в set_current_id_common_func
+            if 'document' in data:
+                main_item['body']['documents'] = [main_item['body'].pop('document')]
 
         return entities
