@@ -20,7 +20,9 @@ class LocalConsumer(object):
         hdr = msg.get_header()
         # сценарий обработки сообщения
         if msg.is_request:
-            parser, answer = request_by_url(hdr.method, hdr.url, msg.get_data())
+            parser, answer = request_by_url(
+                hdr.method, hdr.url, msg.get_data(), msg.get_stream_id()
+            )
             local_data = parser.get_data(answer)
 
             next_msg = Message(local_data, msg.stream_id)
@@ -34,7 +36,9 @@ class LocalConsumer(object):
                 prod = LocalProducer()
                 prod.send(next_msg)
         elif msg.is_result:
-            parser, answer = request_by_url(hdr.method, hdr.url, msg.get_data())
+            parser, answer = request_by_url(
+                hdr.method, hdr.url, msg.get_data(), msg.get_stream_id()
+            )
             req_res = parser.get_data(answer)
         elif msg.is_send_data:
             implement = Implementation()

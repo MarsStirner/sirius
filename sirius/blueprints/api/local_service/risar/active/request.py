@@ -15,8 +15,10 @@ from .connect import make_api_request, make_login
 
 
 @connect_entry(login=make_login)
-def request_by_url(method, url, data, session=None):
+def request_by_url(method, url, data, stream_id, session=None):
     parser = LocalAnswerParser()
+    # подмешиваем stream_id для отображения в логах
+    data['stream_id'] = stream_id
     response = make_api_request(method, url, session, data)
     parser.check(response)
     return parser, response
@@ -36,7 +38,9 @@ def request_by_url(method, url, data, session=None):
 
 
 def request_by_req(req):
-    parser, response = request_by_url(req.method, req.url, None)
+    parser, response = request_by_url(
+        req.method, req.url, None, req.get_stream_id()
+    )
     return parser.get_data(response)
 
 

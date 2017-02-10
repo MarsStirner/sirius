@@ -79,12 +79,13 @@ class RawApiResult(object):
             self.indent = indent
 
 
-def jsonify_ok(obj, custom_meta_code=None, custom_meta_name=None):
+def jsonify_ok(obj, custom_meta_code=None, custom_meta_name=None, stream_id=None):
     return (
         json_dumps({
             'meta': {
                 'code': custom_meta_code or 200,
                 'name': custom_meta_name or 'OK',
+                'stream_id': stream_id,
             },
             'result': obj
         }),
@@ -93,11 +94,12 @@ def jsonify_ok(obj, custom_meta_code=None, custom_meta_name=None):
     )
 
 
-def jsonify_api_exception(exc, tb):
+def jsonify_api_exception(exc, tb, stream_id=None):
     meta = dict(
         exc.extra,
         code=exc.code,
         name=exc.message,
+        stream_id=stream_id,
     )
     if app.debug:
         meta['traceback'] = map(encode_tb, tb)
@@ -108,10 +110,11 @@ def jsonify_api_exception(exc, tb):
     )
 
 
-def jsonify_exception(exc, tb):
+def jsonify_exception(exc, tb, stream_id=None):
     meta = dict(
         code=500,
         name=repr(exc).decode('utf-8'),  # далее дампу нужен уникод
+        stream_id=stream_id,
     )
     if app.debug:
         meta['traceback'] = map(encode_tb, tb)

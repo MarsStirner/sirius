@@ -261,6 +261,7 @@ class Reformer(object):
                 if meta['src_operation_code'] == OperationCode.ADD:
                     if matching_id_data['dst_id']:
                         # ситуация переотправки сообщений
+                        # todo: быть может raise лучше для ответа в МИС?
                         meta['skip_resend'] = True
                     meta['dst_id'] = matching_id_data['dst_id']
                     # meta['dst_id_url_param_name'] = matching_id_data['dst_id_url_param_name']
@@ -374,7 +375,7 @@ class Reformer(object):
             method = rec_meta['dst_method']
             body = simplify(record.get('body'))
             self.pre_conformity_local(record)
-            parser, answer = request_by_url(method, url, body)
+            parser, answer = request_by_url(method, url, body, self.stream_id)
             self.conformity_local(record, parser, answer)
             after_send_func = rec_meta.get('after_send_func')
             if after_send_func:

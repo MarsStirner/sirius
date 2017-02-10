@@ -476,26 +476,29 @@ def remote_api_method(func=None, hook=None, authentication=True):
                 result = func(*args, **kwargs)
             except ApiException, e:
                 traceback.print_exc()
-                j, code, headers = jsonify_api_exception(e, traceback.extract_tb(sys.exc_info()[2]))
+                j, code, headers = jsonify_api_exception(e, traceback.extract_tb(sys.exc_info()[2]), stream_id=stream_id)
                 if hook:
                     hook(code, j, e, stream_id=stream_id)
                 # logg_to_MonitorDB(params)
             except LoggedException, e:
-                j, code, headers = jsonify_exception(e, traceback.extract_tb(sys.exc_info()[2]))
+                j, code, headers = jsonify_exception(e, traceback.extract_tb(sys.exc_info()[2]), stream_id=stream_id)
             except Exception, e:
                 traceback.print_exc()
                 exc = InternalError(str(e))
-                j, code, headers = jsonify_exception(exc, traceback.extract_tb(sys.exc_info()[2]))
+                j, code, headers = jsonify_exception(exc, traceback.extract_tb(sys.exc_info()[2]), stream_id=stream_id)
                 if hook:
                     hook(code, j, e, stream_id=stream_id)
                 # logg_to_MonitorDB(params)
             else:
                 if isinstance(result, RawApiResult):
-                    j, code, headers = jsonify_ok(result.obj, result.result_code, result.result_name)
+                    j, code, headers = jsonify_ok(
+                        result.obj, result.result_code, result.result_name,
+                        stream_id=stream_id
+                    )
                     if result.extra_headers:
                         headers.update(result.extra_headers)
                 else:
-                    j, code, headers = jsonify_ok(result)
+                    j, code, headers = jsonify_ok(result, stream_id=stream_id)
                 if hook:
                     hook(code, j, stream_id=stream_id)
                 # logg_to_MonitorDB(params)
