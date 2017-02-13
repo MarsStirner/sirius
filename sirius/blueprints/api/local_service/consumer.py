@@ -25,7 +25,7 @@ class LocalConsumer(object):
             )
             local_data = parser.get_data(answer)
 
-            next_msg = Message(local_data, msg.stream_id)
+            next_msg = Message(local_data, msg.get_stream_id())
             next_msg.to_remote_service()
             next_msg.set_send_data_type()
             next_msg.get_header().meta.update(hdr.meta)

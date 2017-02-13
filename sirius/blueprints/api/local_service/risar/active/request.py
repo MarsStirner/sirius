@@ -17,6 +17,7 @@ from .connect import make_api_request, make_login
 @connect_entry(login=make_login)
 def request_by_url(method, url, data, stream_id, session=None):
     parser = LocalAnswerParser()
+    data = data or {}
     # подмешиваем stream_id для отображения в логах
     data['stream_id'] = stream_id
     response = make_api_request(method, url, session, data)

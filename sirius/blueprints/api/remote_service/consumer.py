@@ -30,7 +30,7 @@ class RemoteConsumer(object):
                     reformed_data = reformer.reform_msg(msg)
                     reformer.send_to_remote_data(reformed_data)
                     hdr = msg.get_header()
-                    op_res = OperationResult(msg.stream_id)
+                    op_res = OperationResult(msg.get_stream_id())
                     result_msg = op_res.check(hdr.method, hdr.url)
                     if result_msg:
                         self.producer_send_msgs([result_msg])
