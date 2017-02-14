@@ -104,14 +104,15 @@ def module_entry(function=None, stream_pos=2, self_pos=1):
                 # logg_to_MonitorDB(params)
                 reraise(Exception, LoggedException(message), sys.exc_info()[2])
             else:
-                params = {
-                    'stream_id': stream_id,
-                    'stream': get_stream_data(module, func, obj, meta),
-                    'message': 'OK',
-                    'enter_time': enter_datetime,
-                    'work_time': exit_time - enter_time,
-                }
-                logger.info(params_to_str(params))
+                if meta is not None:
+                    params = {
+                        'stream_id': stream_id,
+                        'stream': get_stream_data(module, func, obj, meta),
+                        'message': 'OK',
+                        'enter_time': enter_datetime,
+                        'work_time': exit_time - enter_time,
+                    }
+                    logger.info(params_to_str(params))
                 # logg_to_MonitorDB(params)
             return res
         return wrapper
@@ -263,15 +264,16 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                     # logg_to_MonitorDB(params)
                     reraise(Exception, LoggedException(message), sys.exc_info()[2])
                 else:
-                    params = {
-                        'stream_id': stream_id,
-                        'stream': get_stream_data(module, func, obj, meta),
-                        'message': 'OK',
-                        'enter_time': enter_datetime,
-                        'work_time': exit_time - enter_time,
-                    }
-                    logger.info(params_to_str(params))
+                    # params = {
+                    #     'stream_id': stream_id,
+                    #     'stream': get_stream_data(module, func, obj, meta),
+                    #     'message': 'OK',
+                    #     'enter_time': enter_datetime,
+                    #     'work_time': exit_time - enter_time,
+                    # }
+                    # logger.info(params_to_str(params))
                     # logg_to_MonitorDB(params)
+                    pass
             return res
         return wrapper
     if callable(function):

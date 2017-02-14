@@ -1161,7 +1161,8 @@ class RequestEntities(IStreamMeta):
         return self.req_entities
 
     def get_stream_meta(self):
-        res = {'list len': len(self.req_entities)}
+        # res = {'list len': len(self.req_entities)}
+        res = None
         return res
 
     def get_stream_body(self):
