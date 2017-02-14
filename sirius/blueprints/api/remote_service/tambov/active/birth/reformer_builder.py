@@ -191,7 +191,7 @@ class BirthTambovBuilder(Builder):
                     # 'obstetrical_forceps': part5['Forceps'] or Undefined,  # rbRisarObstetrical_Forceps
                     # 'vacuum_extraction': safe_bool_none(part5['Vacuum']),  # boolean
                     # 'indication': part5['Indicator'] or Undefined,  # rbRisarIndication
-                    # 'specialities': part5['Speciality'] or Undefined,  # rbRisarSpecialities
+                    'specialities': stk(part5, 'Speciality') or Undefined,
                     # 'anesthetization': part5['Anestesia'] or Undefined,  # rbRisarAnesthetization
                     # 'hysterectomy': part5['Hysterectomy'] or Undefined,  # rbRisarHysterectomy
                     # 'complications': part5['Complication'] or Undefined,  # MKB
