@@ -45,9 +45,10 @@ class TulaAnswer(RemoteAnswer):
                     reject=1,
                 )
             if dst_operation_code != OperationCode.DELETE:
-                schedid = req_result.findtext(find_prefix + 'RSCHEDID')
+                rschedid = req_result.findtext(find_prefix + 'RSCHEDID')
+                streatid = req_result.findtext(find_prefix + 'STREATID')
                 res = {
-                    'main_id': schedid,
+                    'main_id': rschedid or streatid,
                     'param_name': param_name,
                 }
             else:
