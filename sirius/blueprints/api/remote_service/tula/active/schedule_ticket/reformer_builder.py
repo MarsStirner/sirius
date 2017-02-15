@@ -39,7 +39,6 @@ class ScheduleTicketTulaBuilder(Builder):
 
         # дополнение параметров сущностью, если не указана
         params_meta = {
-            # 'hospital': RisarEntityCode.ORGANIZATION,
             'doctor': RisarEntityCode.DOCTOR,
             'patient': RisarEntityCode.CLIENT,
         }
@@ -80,9 +79,6 @@ class ScheduleTicketTulaBuilder(Builder):
 
         # сопоставление параметров родительских сущностей
         params_map = {
-            # RisarEntityCode.ORGANIZATION: {
-            #     'entity': TulaEntityCode.ORGANIZATION, 'param': 'hospital'
-            # },
             RisarEntityCode.DOCTOR: {
                 'entity': TulaEntityCode.DOCTOR, 'param': 'doctor'
             },
@@ -110,62 +106,62 @@ class ScheduleTicketTulaBuilder(Builder):
             schedule_ticket_data['date'],
         )
         if src_operation_code != OperationCode.DELETE:
-            schedule_id = self.reformer.get_remote_id_by_local(
-                TulaEntityCode.SCHEDULE,
-                RisarEntityCode.SCHEDULE,
-                schedule_ticket_data['schedule_id'],
-            )
-            sched_reserve_req_data = self.get_sch_reserve_req_data(
-                filial_code,
-                remote_pp['patient']['id'],
-                remote_pp['doctor']['id'],
-                schedule_ticket_data['date'],
-                schedule_id,
-                schedule_ticket_data['schedule_ticket_id'],
-                schedule_ticket_data['time_begin'],
-                schedule_ticket_data['time_end'],
-            )
-            main_item['body'] = sched_reserve_req_data
+            if schedule_ticket_data['schedule_ticket_type'] == '1':
+                today_time = datetime.today().time()
+                sch_treat_add_req_data = self.get_sch_treat_add_req_data(
+                    filial_code,
+                    remote_pp['patient']['id'],
+                    remote_pp['doctor']['id'],
+                    schedule_ticket_data['date'],
+                    schedule_ticket_data['schedule_ticket_id'],
+                    today_time.isoformat()[:5],
+                )
+                main_item['body'] = sch_treat_add_req_data
+            else:
+                schedule_id = self.reformer.get_remote_id_by_local(
+                    TulaEntityCode.SCHEDULE,
+                    RisarEntityCode.SCHEDULE,
+                    schedule_ticket_data['schedule_id'],
+                )
+                sched_reserve_req_data = self.get_sch_reserve_req_data(
+                    filial_code,
+                    remote_pp['patient']['id'],
+                    remote_pp['doctor']['id'],
+                    schedule_ticket_data['date'],
+                    schedule_id,
+                    schedule_ticket_data['schedule_ticket_id'],
+                    schedule_ticket_data['time_begin'],
+                    schedule_ticket_data['time_end'],
+                )
+                main_item['body'] = sched_reserve_req_data
         else:
-            schedule_ticket_id = self.reformer.get_remote_id_by_local(
-                TulaEntityCode.SCHEDULE_TICKET,
-                RisarEntityCode.SCHEDULE_TICKET,
-                schedule_ticket_data['schedule_ticket_id'],
-            )
-            sched_remove_req_data = self.get_sch_remove_req_data(
-                filial_code,
-                remote_pp['patient']['id'],
-                schedule_ticket_id,
-            )
-            main_item['body'] = sched_remove_req_data
-
-        # sched_reserve_req = DataRequest(self.reformer.stream_id)
-        # sched_reserve_req.set_meta(
-        #     dst_system_code=self.remote_sys_code,
-        #     dst_entity_code=TulaEntityCode.SCHEDULE_TICKET,
-        #     dst_operation_code=OperationCode.ADD,
-        #     dst_id=None,
-        #     dst_parents_params={},
-        # )
-        # sched_reserve_req.set_req_mode(RequestModeCode.XML_DATA)
-        # self.reformer.set_request_service(sched_reserve_req)
-        # sched_reserve_req.req_data['body'] = sched_req_data
-        # req_result = self.transfer__send_request(sched_reserve_req)
-        # find_prefix = './/{http://sdsys.ru/}'
-        # res = req_result.findtext(find_prefix + 'SPRESULT')
-        # if res != '1':
-        #     res_comment = req_result.findtext(find_prefix + 'SPCOMMENT') or ''
-        #     if src_operation_code != OperationCode.DELETE:
-        #         op_name = 'reserve'
-        #     else:
-        #         op_name = 'remove'
-        #     raise ApiException(
-        #         200, 'Reject %s ticket %s. Result code = %s comment: %s' % (
-        #             op_name, schedule_ticket_data['schedule_ticket_id'],
-        #             res, res_comment
-        #         ),
-        #         reject=1,
-        #     )
+            if schedule_ticket_data['schedule_ticket_type'] == '1':
+                today = datetime.today()
+                today_date = today.date()
+                today_time = today.time()
+                sched_remove_req_data = self.get_sch_treat_remove_req_data(
+                    filial_code,
+                    remote_pp['patient']['id'],
+                    remote_pp['doctor']['id'],
+                    schedule_ticket_data['date'],
+                    schedule_ticket_data['schedule_ticket_id'],
+                    today_time.isoformat()[:5],
+                    today_date.isoformat(),
+                    schedule_ticket_data['current_person'],
+                )
+                main_item['body'] = sched_remove_req_data
+            else:
+                schedule_ticket_id = self.reformer.get_remote_id_by_local(
+                    TulaEntityCode.SCHEDULE_TICKET,
+                    RisarEntityCode.SCHEDULE_TICKET,
+                    schedule_ticket_data['schedule_ticket_id'],
+                )
+                sched_remove_req_data = self.get_sch_remove_req_data(
+                    filial_code,
+                    remote_pp['patient']['id'],
+                    schedule_ticket_id,
+                )
+                main_item['body'] = sched_remove_req_data
 
         return entities
 
@@ -303,4 +299,88 @@ class ScheduleTicketTulaBuilder(Builder):
         else:
             raise InternalError('Not found filial for doctor with code = (%s); workdate = (%s)' %
                                 (doc_code, workdate))
+        return res
+
+    def get_sch_treat_add_req_data(
+        self, filial_code, p_code, d_code, workdate,
+        ext_schedident, beg_time
+    ):
+        # todo: переделать на сборку на xsd
+        b_hour, b_min = beg_time.split(':')
+        res = """
+<WEB_SCHEDTREATS_ADD xmlns="http://sdsys.ru/">
+    <MSH>
+        <MSH.7>
+            <TS.1>20110302184008</TS.1>
+        </MSH.7>
+        <MSH.9>
+            <MSG.1>WEB</MSG.1>
+            <MSG.2>SCHEDULE_REC_RESERVE</MSG.2>
+        </MSH.9>
+        <MSH.10>74C0ACA47AFE4CED2B838996B0DF5821</MSH.10>
+        <MSH.18>UTF-8</MSH.18>
+        <MSH.99>{FILIAL_CODE}</MSH.99>
+    </MSH>
+    <SCHEDTREAT_ADD_IN>
+        <DCODE>{DCODE}</DCODE>
+        <WORKDATE>{WORKDATE}</WORKDATE>
+        <BHOUR>{BHOUR}</BHOUR>
+        <BMIN>{BMIN}</BMIN>
+        <PCODE>{PCODE}</PCODE>
+        <EXTSTREATID>{EXTSTREATID}</EXTSTREATID>
+    </SCHEDTREAT_ADD_IN>
+</WEB_SCHEDTREATS_ADD>
+        """.format(
+            FILIAL_CODE=filial_code,
+            DCODE=d_code,
+            WORKDATE=workdate.replace('-', ''),
+            BHOUR=int(b_hour),
+            BMIN=int(b_min),
+            PCODE=p_code,
+            EXTSTREATID=ext_schedident,
+        )
+        return res
+
+    def get_sch_treat_remove_req_data(
+        self, filial_code, p_code, d_code, workdate,
+        ext_schedident, beg_time, remdate, rd_code
+    ):
+        # todo: переделать на сборку на xsd
+        b_hour, b_min = beg_time.split(':')
+        res = """
+<WEB_SCHEDTREATS_ADD xmlns="http://sdsys.ru/">
+    <MSH>
+        <MSH.7>
+            <TS.1>20110302184008</TS.1>
+        </MSH.7>
+        <MSH.9>
+            <MSG.1>WEB</MSG.1>
+            <MSG.2>SCHEDULE_REC_RESERVE</MSG.2>
+        </MSH.9>
+        <MSH.10>74C0ACA47AFE4CED2B838996B0DF5821</MSH.10>
+        <MSH.18>UTF-8</MSH.18>
+        <MSH.99>{FILIAL_CODE}</MSH.99>
+    </MSH>
+    <SCHEDTREAT_ADD_IN>
+        <DCODE>{DCODE}</DCODE>
+        <WORKDATE>{WORKDATE}</WORKDATE>
+        <BHOUR>{BHOUR}</BHOUR>
+        <BMIN>{BMIN}</BMIN>
+        <PCODE>{PCODE}</PCODE>
+        <REMDATE>{REMDATE}</REMDATE>
+        <REMUID>{REMUID}</REMUID>
+        <EXTSTREATID>{EXTSTREATID}</EXTSTREATID>
+    </SCHEDTREAT_ADD_IN>
+</WEB_SCHEDTREATS_ADD>
+        """.format(
+            FILIAL_CODE=filial_code,
+            DCODE=d_code,
+            WORKDATE=workdate.replace('-', ''),
+            BHOUR=int(b_hour),
+            BMIN=int(b_min),
+            PCODE=p_code,
+            REMDATE=remdate.replace('-', ''),
+            REMUID=rd_code,
+            EXTSTREATID=ext_schedident,
+        )
         return res
