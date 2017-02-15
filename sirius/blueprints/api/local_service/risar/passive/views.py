@@ -109,20 +109,26 @@ def api_card_register():
 def api_events_binded():
     region_code = app.config.get('REGION_CODE')
     # todo: возможно вынести в БД
+    # todo: разрешенные сущности определять из реформатора
     bind_map = {
-        RegionCode.TULA: [
-            RisarEvents.CREATE_CARD,
-            RisarEvents.MAKE_APPOINTMENT,
-            RisarEvents.SAVE_CHECKUP,  # todo: для тестов
-            RisarEvents.CLOSE_CHECKUP,
-            RisarEvents.CLOSE_CARD,
-            RisarEvents.CREATE_REFERRAL,
-        ],
-        RegionCode.TAMBOV: [
-            RisarEvents.SAVE_CHECKUP,
-            RisarEvents.ENTER_MIS_EMPLOYEE,
-            RisarEvents.CREATE_REFERRAL,
-        ],
+        RegionCode.TULA: {
+            RisarEvents.CREATE_CARD: None,
+            RisarEvents.MAKE_APPOINTMENT: None,
+            RisarEvents.SAVE_CHECKUP: None,  # todo: для тестов
+            RisarEvents.CLOSE_CHECKUP: None,
+            RisarEvents.CLOSE_CARD: None,
+            RisarEvents.CREATE_REFERRAL: None,
+        },
+        RegionCode.TAMBOV: {
+            RisarEvents.SAVE_CHECKUP: [
+                RisarEntityCode.CHECKUP_OBS_FIRST_TICKET,
+                RisarEntityCode.CHECKUP_OBS_SECOND_TICKET,
+                RisarEntityCode.CHECKUP_PC_TICKET,
+                RisarEntityCode.MEASURE,
+            ],
+            RisarEvents.ENTER_MIS_EMPLOYEE: None,
+            RisarEvents.CREATE_REFERRAL: None,
+        },
     }
     res = bind_map[region_code]
     return res, None
