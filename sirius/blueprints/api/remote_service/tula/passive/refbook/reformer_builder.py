@@ -28,6 +28,7 @@ class RefbookTulaBuilder(Builder):
         'rbAcheResult',
         'rbSpeciality',
         'rbPost',
+        'rbReserveType',
     }
     vesta_refbooks = {
         'rbRisarPregnancy_Final',
