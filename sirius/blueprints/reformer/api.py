@@ -170,6 +170,7 @@ class Reformer(object):
                         rec_meta['src_entity_code'],
                         rec_meta['dst_entity_code'],
                         rec_meta['dst_id'],
+                        rec_meta['dst_id_prefix'],
                     )
                     matching_id.update(local_id=answer_res['main_id'])
                     rec_meta['dst_id'] = answer_res['main_id']
@@ -190,9 +191,11 @@ class Reformer(object):
             rec_meta['dst_id'] = trans_res['main_id']
             MatchingId.add(
                 local_entity_id=rec_meta['src_entity_id'],
+                local_id_prefix=rec_meta['src_id_prefix'],
                 local_id=rec_meta['src_id'],
                 local_param_name=rec_meta['src_id_url_param_name'],
                 remote_entity_id=rec_meta['dst_entity_id'],
+                remote_id_prefix=rec_meta['dst_id_prefix'],
                 remote_id=rec_meta['dst_id'],
                 remote_param_name=rec_meta['dst_id_url_param_name'],
             )
@@ -200,10 +203,23 @@ class Reformer(object):
             MatchingId.remove(
                 remote_sys_code=self.remote_sys_code,
                 remote_entity_code=rec_meta['dst_entity_code'],
+                remote_id_prefix=rec_meta['dst_id_prefix'],
                 remote_id=rec_meta['dst_id'],
                 local_entity_code=rec_meta['src_entity_code'],
+                local_id_prefix=rec_meta['src_id_prefix'],
                 local_id=rec_meta['src_id'],
             )
+        elif rec_meta['dst_operation_code'] == OperationCode.CHANGE:
+            if rec_meta['dst_id'] != trans_res['main_id']:
+                # изменился ID
+                matching_id = self.get_by_remote_id(
+                    rec_meta['src_entity_code'],
+                    rec_meta['dst_entity_code'],
+                    rec_meta['dst_id'],
+                    rec_meta['dst_id_prefix'],
+                )
+                matching_id.update(remote_id=trans_res['main_id'])
+                rec_meta['dst_id'] = trans_res['main_id']
 
     @abstractmethod
     def get_remote_entities(self, header_meta, data):
@@ -630,12 +646,13 @@ class Reformer(object):
         )
         return res
 
-    def find_local_id_by_remote(self, local_entity_code, remote_entity_code, remote_id):
+    def find_local_id_by_remote(self, local_entity_code, remote_entity_code, remote_id, remote_id_prefix=None):
         res = MatchingId.find_local_id(
             local_entity_code,
             remote_entity_code,
             remote_id,
             self.remote_sys_code,
+            remote_id_prefix,
         )
         return res
 
@@ -724,6 +741,23 @@ class Reformer(object):
             )
         return m
 
+    def update_local_match_parent(
+        self, remote_entity_code, local_entity_code, local_id, parent_id,
+        local_id_prefix=None,
+    ):
+        m = MatchingId.first_match_by_local_id(
+            local_entity_code=local_entity_code,
+            local_id=local_id,
+            remote_entity_code=remote_entity_code,
+            remote_sys_code=self.remote_sys_code,
+            local_id_prefix=local_id_prefix,
+        )
+        if m:
+            m.update(
+                parent_id=parent_id,
+            )
+        return m
+
     def get_prefix_by_remote_id(self, local_entity_code, remote_entity_code, remote_id):
         res = MatchingId.get_remote_prefix_id(
             local_entity_code,
@@ -742,12 +776,23 @@ class Reformer(object):
         )
         return res
 
-    def get_by_local_id(self, remote_entity_code, local_entity_code, local_id):
+    def get_by_local_id(self, remote_entity_code, local_entity_code, local_id, local_id_prefix=None):
         res = MatchingId.get_by_local_id(
             local_entity_code,
             local_id,
             remote_entity_code,
             self.remote_sys_code,
+            local_id_prefix,
+        )
+        return res
+
+    def get_by_remote_id(self, local_entity_code, remote_entity_code, remote_id, remote_id_prefix=None):
+        res = MatchingId.get_by_remote_id(
+            local_entity_code,
+            remote_entity_code,
+            remote_id,
+            self.remote_sys_code,
+            remote_id_prefix,
         )
         return res
 
@@ -1270,7 +1315,8 @@ class RequestEntities(IStreamMeta):
             if src_operation_code != OperationCode.DELETE:
                 entity_body = record['body']
             if callable(after_send_func):
-                after_send_func(entity_meta, entity_body, parser, answer)
+                answer_body = parser.get_data(answer)
+                after_send_func(entity_meta, entity_body, answer_body)
 
         item = ReqEntity(
             self.stream_id,

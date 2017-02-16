@@ -21,52 +21,53 @@ class ScheduleTulaBuilder(Builder):
     def build_local_entities(self, header_meta, data):
         src_operation_code = self.get_operation_code_by_method(header_meta['remote_method'])
         entities = RequestEntities(self.reformer.stream_id)
+
         if src_operation_code != OperationCode.DELETE:
+
             def after_send_func(entity_meta, entity_body, answer_body):
-                if src_operation_code != OperationCode.DELETE:
-                    # пишем сопоставления по всем тикетам с записью,
-                    # чтобы по ним можно было работать в потоке schedule_ticket
-                    matching_parent = self.reformer.get_by_local_id(
-                        remote_entity_code=TulaEntityCode.SCHEDULE,
-                        local_entity_code=RisarEntityCode.SCHEDULE,
-                        local_id=entity_meta['dst_id'],
-                    )
-                    answ_tickets = {}
-                    extra_answ_tickets = []
-                    for answ_st in answer_body.get('schedule_tickets') or ():
-                        if answ_st.get('schedule_ticket_id') and answ_st.get('patient'):
-                            if answ_st.get('schedule_ticket_type') == '1':
-                                extra_answ_tickets.append(answ_st['schedule_ticket_id'])
-                            else:
-                                answ_tickets[(
-                                    answ_st['time_begin'],
-                                    answ_st['time_end']
-                                )] = answ_st['schedule_ticket_id']
-                    for req_st in data.get('schedule_tickets') or ():
-                        if req_st.get('schedule_ticket_id') and req_st.get('patient'):
-                            if req_st.get('schedule_ticket_type') == '1':
-                                answ_st_id = extra_answ_tickets.pop()
-                            else:
-                                answ_st_id = answ_tickets[(
-                                    req_st['time_begin'],
-                                    req_st['time_end']
-                                )]
-                            upd_res = self.reformer.update_remote_match_parent(
+                # пишем сопоставления по всем тикетам с записью,
+                # чтобы по ним можно было работать в потоке schedule_ticket
+                matching_parent = self.reformer.get_by_local_id(
+                    remote_entity_code=TulaEntityCode.SCHEDULE,
+                    local_entity_code=RisarEntityCode.SCHEDULE,
+                    local_id=entity_meta['dst_id'],
+                )
+                answ_tickets = {}
+                extra_answ_tickets = []
+                for answ_st in answer_body.get('schedule_tickets') or ():
+                    if answ_st.get('schedule_ticket_id') and answ_st.get('patient'):
+                        if answ_st.get('schedule_ticket_type') == '1':
+                            extra_answ_tickets.append(answ_st['schedule_ticket_id'])
+                        else:
+                            answ_tickets[(
+                                answ_st['time_begin'],
+                                answ_st['time_end']
+                            )] = answ_st['schedule_ticket_id']
+                for req_st in data.get('schedule_tickets') or ():
+                    if req_st.get('schedule_ticket_id') and req_st.get('patient'):
+                        if req_st.get('schedule_ticket_type') == '1':
+                            answ_st_id = extra_answ_tickets.pop()
+                        else:
+                            answ_st_id = answ_tickets[(
+                                req_st['time_begin'],
+                                req_st['time_end']
+                            )]
+                        upd_res = self.reformer.update_remote_match_parent(
+                            RisarEntityCode.SCHEDULE_TICKET,
+                            TulaEntityCode.SCHEDULE_TICKET,
+                            req_st['schedule_ticket_id'],
+                            matching_parent.id,
+                        )
+                        if not upd_res:
+                            self.reformer.register_entity_match(
                                 RisarEntityCode.SCHEDULE_TICKET,
+                                answ_st_id,
                                 TulaEntityCode.SCHEDULE_TICKET,
                                 req_st['schedule_ticket_id'],
-                                matching_parent.id,
+                                local_param_name='schedule_ticket_id',
+                                remote_param_name='schedule_ticket_id',
+                                matching_parent_id=matching_parent.id,
                             )
-                            if not upd_res:
-                                self.reformer.register_entity_match(
-                                    RisarEntityCode.SCHEDULE_TICKET,
-                                    answ_st_id,
-                                    TulaEntityCode.SCHEDULE_TICKET,
-                                    req_st['schedule_ticket_id'],
-                                    local_param_name='schedule_ticket_id',
-                                    remote_param_name='schedule_ticket_id',
-                                    matching_parent_id=matching_parent.id,
-                                )
             main_item = entities.set_main_entity(
                 dst_entity_code=RisarEntityCode.SCHEDULE,
                 dst_parents_params=header_meta['local_parents_params'],

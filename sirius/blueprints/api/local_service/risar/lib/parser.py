@@ -121,6 +121,7 @@ class LocalAnswerParser(object):
         if response.status_code != 200:
 
             # для Тулы первичная посадка пациентов, которые есть в МР, но нет в шине
+            # todo: а если реальный дубль, то падение на запись в шину сопоставления
             if response.status_code == 409 and app.config.get('REGION_CODE') == 'tula':
                 return
 

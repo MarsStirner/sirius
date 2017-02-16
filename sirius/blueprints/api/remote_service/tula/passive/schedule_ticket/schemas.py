@@ -12,6 +12,10 @@ class ScheduleTicketSchema(Schema):
         "description": "Запись на прием",
         "type": "object",
         "properties": {
+            "schedule_id": {
+                "description": "id рабочего промежутка",
+                "type": "string"
+            },
             "schedule_ticket_id": {
                 "description": "id записи на прием",
                 "type": "string"
