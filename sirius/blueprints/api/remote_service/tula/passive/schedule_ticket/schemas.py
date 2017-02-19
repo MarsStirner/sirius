@@ -16,6 +16,11 @@ class ScheduleTicketSchema(Schema):
                 "description": "id рабочего промежутка",
                 "type": "string"
             },
+            "schedule_time_begin": {
+                "description": "Время начала промежутка",
+                "type": "string",
+                "pattern": "^([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$"
+            },
             "schedule_ticket_id": {
                 "description": "id записи на прием",
                 "type": "string"

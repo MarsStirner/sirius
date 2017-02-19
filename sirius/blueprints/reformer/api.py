@@ -679,14 +679,17 @@ class Reformer(object):
         local_entity_code, local_main_id,
         remote_entity_code, remote_main_id,
         local_param_name=None, remote_param_name=None,
+        local_id_prefix=None, remote_id_prefix=None,
         matching_parent_id=None,
     ):
         local_entity_id = Entity.get_id(SystemCode.LOCAL, local_entity_code)
         remote_entity_id = Entity.get_id(self.remote_sys_code, remote_entity_code)
         res = MatchingId.add(
             local_entity_id=local_entity_id,
+            local_id_prefix=local_id_prefix,
             local_id=local_main_id,
             remote_entity_id=remote_entity_id,
+            remote_id_prefix=remote_id_prefix,
             remote_id=remote_main_id,
             matching_parent_id=matching_parent_id,
             local_param_name=local_param_name,

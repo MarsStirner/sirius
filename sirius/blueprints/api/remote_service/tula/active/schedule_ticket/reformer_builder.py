@@ -90,6 +90,13 @@ class ScheduleTicketTulaBuilder(Builder):
 
         entities = RequestEntities(self.reformer.stream_id)
 
+        remote_id_prefix = None
+        if src_operation_code != OperationCode.DELETE:
+            if schedule_ticket_data['schedule_ticket_type'] == '1':
+                remote_id_prefix = 'outplan'
+            else:
+                remote_id_prefix = 'plan'
+
         def after_send_func(entity_meta, entity_body, answer_body):
             if src_operation_code != OperationCode.DELETE:
                 self.reformer.update_local_match_parent(
@@ -102,6 +109,7 @@ class ScheduleTicketTulaBuilder(Builder):
             dst_entity_code=TulaEntityCode.SCHEDULE_TICKET,
             dst_parents_params=header_meta['remote_parents_params'],
             dst_main_id_name='schedule_ticket_id',
+            dst_id_prefix=remote_id_prefix,
             src_operation_code=src_operation_code,
             src_entity_code=src_entity_code,
             src_main_id_name=header_meta['local_main_param_name'],
@@ -115,6 +123,13 @@ class ScheduleTicketTulaBuilder(Builder):
             remote_pp['doctor']['id'],
             schedule_ticket_data['date'],
         )
+        remote_sch_ticket_id = None
+        if src_operation_code != OperationCode.ADD:
+            remote_sch_ticket_id = self.reformer.get_remote_id_by_local(
+                TulaEntityCode.SCHEDULE_TICKET,
+                RisarEntityCode.SCHEDULE_TICKET,
+                schedule_ticket_data['schedule_ticket_id'],
+            )
         if src_operation_code != OperationCode.DELETE:
             matching_parent = self.reformer.get_by_local_id(
                 TulaEntityCode.SCHEDULE,
@@ -123,44 +138,31 @@ class ScheduleTicketTulaBuilder(Builder):
             )
             matching_parent_id = matching_parent.id
             if schedule_ticket_data['schedule_ticket_type'] == '1':
-                schedule_ticket_id = None
-                if src_operation_code == OperationCode.CHANGE:
-                    # не понятно когда может быть изменение. но на всякий
-                    schedule_ticket_id = self.reformer.get_remote_id_by_local(
-                        TulaEntityCode.SCHEDULE_TICKET,
-                        RisarEntityCode.SCHEDULE_TICKET,
-                        schedule_ticket_data['schedule_ticket_id'],
-                    )
                 today_time = datetime.today().time()
                 sch_treat_add_req_data = self.get_sch_treat_add_req_data(
                     filial_code,
                     remote_pp['patient']['id'],
                     remote_pp['doctor']['id'],
                     schedule_ticket_data['date'],
-                    schedule_ticket_id,
+                    remote_sch_ticket_id,
                     schedule_ticket_data['schedule_ticket_id'],
                     today_time.isoformat()[:5],
                 )
                 main_item['body'] = sch_treat_add_req_data
             else:
-                schedule_id = matching_parent.remote_id
+                remote_schedule_id = matching_parent.remote_id
                 sched_reserve_req_data = self.get_sch_reserve_req_data(
                     filial_code,
                     remote_pp['patient']['id'],
                     remote_pp['doctor']['id'],
                     schedule_ticket_data['date'],
-                    schedule_id,
+                    remote_schedule_id,
                     schedule_ticket_data['schedule_ticket_id'],
                     schedule_ticket_data['time_begin'],
                     schedule_ticket_data['time_end'],
                 )
                 main_item['body'] = sched_reserve_req_data
         else:
-            schedule_ticket_id = self.reformer.get_remote_id_by_local(
-                TulaEntityCode.SCHEDULE_TICKET,
-                RisarEntityCode.SCHEDULE_TICKET,
-                schedule_ticket_data['schedule_ticket_id'],
-            )
             if schedule_ticket_data['schedule_ticket_type'] == '1':
                 today = datetime.today()
                 today_date = today.date()
@@ -170,7 +172,7 @@ class ScheduleTicketTulaBuilder(Builder):
                     remote_pp['patient']['id'],
                     remote_pp['doctor']['id'],
                     schedule_ticket_data['date'],
-                    schedule_ticket_id,
+                    remote_sch_ticket_id,
                     schedule_ticket_data['schedule_ticket_id'],
                     today_time.isoformat()[:5],
                     today_date.isoformat(),
@@ -181,7 +183,7 @@ class ScheduleTicketTulaBuilder(Builder):
                 sched_remove_req_data = self.get_sch_remove_req_data(
                     filial_code,
                     remote_pp['patient']['id'],
-                    schedule_ticket_id,
+                    remote_sch_ticket_id,
                 )
                 main_item['body'] = sched_remove_req_data
 
