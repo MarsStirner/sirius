@@ -527,7 +527,7 @@ class MatchingId(Model):
         LocalSystem = aliased(System, name='LocalSystem')
         RemoteEntity = aliased(Entity, name='RemoteEntity')
         RemoteSystem = aliased(System, name='RemoteSystem')
-        rec = cls.query.join(
+        req = cls.query.join(
             LocalEntity, LocalEntity.id == cls.local_entity_id
         ).join(
             LocalSystem, LocalSystem.id == LocalEntity.system_id
@@ -538,13 +538,20 @@ class MatchingId(Model):
         ).filter(
             RemoteSystem.code == remote_sys_code,
             RemoteEntity.code == remote_entity_code,
-            cls.remote_id_prefix == (remote_id_prefix or ''),
             cls.remote_id == str(remote_id),
             LocalSystem.code == SystemCode.LOCAL,
             LocalEntity.code == local_entity_code,
-            cls.local_id_prefix == (local_id_prefix or ''),
             cls.local_id == str(local_id),
-        ).first()
+        )
+        if remote_id_prefix is not None:
+            req = req.filter(
+                cls.remote_id_prefix == (remote_id_prefix or ''),
+            )
+        if local_id_prefix is not None:
+            req = req.filter(
+                cls.local_id_prefix == (local_id_prefix or ''),
+            )
+        rec = req.one()
         rec.delete()
 
 

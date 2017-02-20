@@ -38,7 +38,7 @@ class ScheduleTulaBuilder(Builder):
                     if answ_st.get('schedule_ticket_id') and answ_st.get('patient'):
                         if answ_st.get('schedule_ticket_type') == '1':
                             extra_answ_tickets.setdefault(
-                                answ_st.get('patient'), []
+                                answ_st['patient'], []
                             ).append(answ_st['schedule_ticket_id'])
                         else:
                             answ_tickets[(
@@ -48,8 +48,13 @@ class ScheduleTulaBuilder(Builder):
                 for req_st in data.get('schedule_tickets') or ():
                     if req_st.get('schedule_ticket_id') and req_st.get('patient'):
                         if req_st.get('schedule_ticket_type') == '1':
+                            local_patient_id = self.reformer.find_local_id_by_remote(
+                                RisarEntityCode.CLIENT,
+                                TulaEntityCode.CLIENT,
+                                req_st['patient'],
+                            )
                             answ_st_id = extra_answ_tickets[
-                                req_st.get('patient')
+                                local_patient_id
                             ].pop()
                         else:
                             answ_st_id = answ_tickets[(
