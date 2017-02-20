@@ -138,7 +138,7 @@ class ScheduleTicketTulaBuilder(Builder):
             )
             matching_parent_id = matching_parent.id
             if schedule_ticket_data['schedule_ticket_type'] == '1':
-                today_time = datetime.today().time()
+                time_begin = schedule_ticket_data['time_begin'] or datetime.today().time().isoformat()[:5]
                 sch_treat_add_req_data = self.get_sch_treat_add_req_data(
                     filial_code,
                     remote_pp['patient']['id'],
@@ -146,7 +146,7 @@ class ScheduleTicketTulaBuilder(Builder):
                     schedule_ticket_data['date'],
                     remote_sch_ticket_id,
                     schedule_ticket_data['schedule_ticket_id'],
-                    today_time.isoformat()[:5],
+                    time_begin,
                 )
                 main_item['body'] = sch_treat_add_req_data
             else:
