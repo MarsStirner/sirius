@@ -234,7 +234,17 @@ def task_entry(function=None, stream_pos=1, self_pos=2):
                     db.session.rollback()
                     raise
                 except SAOperationalError as exc:
-                    logger.error('stream_id: %s' % stream_id + unicode(exc))
+                    try:
+                        err_txt = str(exc).decode('utf-8')
+                    except UnicodeError:
+                        try:
+                            err_txt = str(exc).decode('windows-1251')
+                        except UnicodeError:
+                            try:
+                                err_txt = unicode(exc)
+                            except UnicodeError:
+                                err_txt = str(exc)
+                    logger.error('stream_id: %s' % stream_id + err_txt)
                     # logg_to_MonitorDB(params)
                     if retry_count >= max_retry:
                         # todo: stop celery workers (back rabbit msg)

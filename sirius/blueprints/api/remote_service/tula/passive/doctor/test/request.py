@@ -19,6 +19,6 @@ def edit_doctor(testapp, session, parent_id, main_id, data):
 
 def delete_doctor(testapp, session, parent_id, main_id):
     url = u'/tula/api/integration/0/doctor/%s/%s' % (parent_id, main_id)
-    result = make_test_api_request(testapp, 'delete', url, session)
-    # result = make_api_request('delete', url, session)
+    # result = make_test_api_request(testapp, 'delete', url, session)
+    result = make_api_request('delete', url, session)
     return result

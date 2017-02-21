@@ -28,6 +28,7 @@ cp install/usagi.yaml usagi.local.yaml
 mkdir code
 mkdir configs
 mkdir logs
+mkdir uwsgi
 
 # 2. Создать Virtualenv и активировать его
 virtualenv venv

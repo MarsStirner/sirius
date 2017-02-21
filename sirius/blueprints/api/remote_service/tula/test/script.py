@@ -30,7 +30,7 @@ from sirius.blueprints.api.remote_service.tula.passive.client.test.request impor
 from sirius.blueprints.api.remote_service.tula.passive.client.test.test_data import \
     get_client_data_required, get_client_data_more
 from sirius.blueprints.api.remote_service.tula.passive.doctor.test.request import \
-    create_doctor, edit_doctor
+    create_doctor, edit_doctor, delete_doctor
 from sirius.blueprints.api.remote_service.tula.passive.doctor.test.test_data import \
     get_doctor_data_required, get_doctor_data_more
 from sirius.blueprints.api.remote_service.tula.passive.hospitalization.test.request import \
@@ -38,7 +38,7 @@ from sirius.blueprints.api.remote_service.tula.passive.hospitalization.test.requ
 from sirius.blueprints.api.remote_service.tula.passive.hospitalization.test.test_data import \
     get_meas_hosp_data_required, get_meas_hosp_data_more
 from sirius.blueprints.api.remote_service.tula.passive.organization.test.request import \
-    create_organization, edit_organization
+    create_organization, edit_organization, delete_organization
 from sirius.blueprints.api.remote_service.tula.passive.organization.test.test_data import \
     get_organization_data_required, get_organization_data_more
 from sirius.blueprints.api.remote_service.tula.passive.research.test.request import \
@@ -76,16 +76,17 @@ class _TestTula:
         client_id = 110
 
         sch_ticket_id = 3928  # 09:00 23.11.16 Тестовый Пользователь (акушер-гинеколог)
-        # создать запись на прием в вебе
+        # создать запись на прием в вебе (http://10.1.2.13:6600/patients/search/)
         # mr_to_mis_sch_ticket(testapp, org_id, doctor_id, client_id, sch_ticket_id)
         # card_id = !mr_create_card(testapp, client_id)
-        card_id = 163  # создать карту в вебе  # 690
+        card_id = 468  # создать карту в вебе  # 690
         ext_card_id = 222
         # mr_to_mis_card(testapp, client_id, card_id)
         # !mr_create_first_checkup(testapp, card_id)
-        first_checkup_id = 2407  # создать первичный осмотр в вебе
+        first_checkup_id = 4345  # создать первичный осмотр в вебе
         second_checkup_id = 0  # создать вторичный осмотр в вебе
         pc_checkup_id = 0  # создать осмотр ПЦ в вебе
+        # mr_to_mis_first_checkup(testapp, card_id, first_checkup_id)
         # mr_to_mis_first_ticket25(testapp, card_id, first_checkup_id)
         ext_first_checkup_id = 222
         # mr_to_mis_second_ticket25(testapp, card_id, second_checkup_id)
@@ -118,11 +119,13 @@ class _TestTula:
 
 def mis_to_mr_organisation(testapp, org_id):
     # create_organization(testapp, risar_session, get_organization_data_required(org_id))
+    # delete_organization(testapp, risar_session, org_id)
     edit_organization(testapp, risar_session, org_id, get_organization_data_more(org_id))
 
 
 def mis_to_mr_doctor(testapp, org_id, doctor_id):
     # create_doctor(testapp, risar_session, get_doctor_data_required(org_id, doctor_id))
+    # delete_doctor(testapp, risar_session, org_id, doctor_id)
     edit_doctor(testapp, risar_session, org_id, doctor_id, get_doctor_data_more(org_id, doctor_id))
 
 
@@ -222,8 +225,8 @@ def mis_to_mr_first_ticket25(testapp, card_id, org_id, doctor_id, checkup_id):
 
 
 def mis_to_mr_childbirth(testapp, card_id, org_id, doctor_id):
-    create_childbirth(testapp, risar_session, card_id, get_childbirth_data_required(org_id, doctor_id))
-    # edit_childbirth(testapp, risar_session, card_id, get_childbirth_data_more(org_id, doctor_id))
+    # create_childbirth(testapp, risar_session, card_id, get_childbirth_data_required(org_id, doctor_id))
+    edit_childbirth(testapp, risar_session, card_id, get_childbirth_data_more(org_id, doctor_id))
 
 
 def mr_to_mis_epicrisis(testapp, card_id):

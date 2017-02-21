@@ -18,7 +18,7 @@ from sirius.blueprints.monitor.exception import module_entry
 from sirius.models.entity import Entity
 from sirius.models.operation import OperationCode
 from sirius.database import db
-from suds.sudsobject import asdict
+# from suds.sudsobject import asdict
 from zeep.xsd.valueobjects import CompoundValue
 
 

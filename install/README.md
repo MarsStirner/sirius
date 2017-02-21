@@ -10,6 +10,7 @@ hitsl.configurations
 
   * `$ sudo apt-get install build-essential libssl-dev libffi-dev python-dev libxml2-dev libxslt-dev libmysqlclient-dev`
   * `$ sudo yum install gcc libffi-devel python-devel openssl-devel libxml2-devel libxslt-devel libmysqlclient-devel`
+  * `$ sudo apt-get install libpq-dev`
 
 Установка использует запросы к git репозиториям. Рекомендуется настроить временное сохранение данных пользователя для
 доступа к репозиториям, например, через git credential helper
@@ -20,8 +21,10 @@ hitsl.configurations
     # Set the cache to timeout after 1 hour (setting is in seconds)
     $ git config --global credential.helper 'cache --timeout=600'
 
+1. Создать <директория для проекта>. Например "sir_tula_test"
 1. Скопировать в <директория для проекта> директорию install из локального репозитория.
 1. `cd <директория для проекта>`
+1. Расширить права на `bigstrap.sh` до 755.
 1. `./install/bigstrap.sh` - скрипт установки проекта. Ветки устанавливаемых приложений можно передать аргументами к скрипту, подробнее в `--help`
 1. По окончании в директории code будут находиться следующие приложения:
     * `sirius` - пользовательское приложение Интеграционной Шины
