@@ -355,6 +355,9 @@ class Reformer(object):
             self.pre_conformity_remote(record)
             trans_res = self.transfer.execute(record)
             self.conformity_remote(record, trans_res)
+            after_send_func = rec_meta.get('after_send_func')
+            if after_send_func:
+                after_send_func(record, None, trans_res)
 
         soo = sorted(entities.operation_order.items(), key=lambda x: x[0])
         for order, entity_codes in soo:
@@ -1244,7 +1247,10 @@ class RequestEntities(IStreamMeta):
             if src_operation_code != OperationCode.DELETE:
                 entity_body = record['body']
             if callable(after_send_func):
-                answer_body = parser.get_data(answer)
+                if parser:
+                    answer_body = parser.get_data(answer)
+                else:
+                    answer_body = answer
                 after_send_func(entity_meta, entity_body, answer_body)
 
         item = ReqEntity(
@@ -1318,7 +1324,10 @@ class RequestEntities(IStreamMeta):
             if src_operation_code != OperationCode.DELETE:
                 entity_body = record['body']
             if callable(after_send_func):
-                answer_body = parser.get_data(answer)
+                if parser:
+                    answer_body = parser.get_data(answer)
+                else:
+                    answer_body = answer
                 after_send_func(entity_meta, entity_body, answer_body)
 
         item = ReqEntity(

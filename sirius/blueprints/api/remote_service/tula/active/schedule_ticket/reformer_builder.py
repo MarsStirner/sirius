@@ -99,12 +99,18 @@ class ScheduleTicketTulaBuilder(Builder):
 
         def after_send_func(entity_meta, entity_body, answer_body):
             if src_operation_code != OperationCode.DELETE:
-                self.reformer.update_local_match_parent(
+                res = self.reformer.update_local_match_parent(
                     RisarEntityCode.SCHEDULE_TICKET,
                     TulaEntityCode.SCHEDULE_TICKET,
                     schedule_ticket_data['schedule_ticket_id'],
                     matching_parent_id,
                 )
+                if not res:
+                    raise InternalError(
+                        u'Не удалось привязать тикет (%s) к родителю (%s)' %
+                        (schedule_ticket_data['schedule_ticket_id'],
+                         matching_parent_id)
+                    )
         main_item = entities.set_main_entity(
             dst_entity_code=TulaEntityCode.SCHEDULE_TICKET,
             dst_parents_params=header_meta['remote_parents_params'],
