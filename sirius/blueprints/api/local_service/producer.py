@@ -18,6 +18,7 @@ from sirius.models.operation import OperationCode
 
 main_queues = app.config['main_queues']
 main_queue_name = main_queues['risar_main']
+back_queue_name = main_queues['risar_back']
 error_1_queue_name = main_queues['risar_error_1']
 error_2_queue_name = main_queues['risar_error_2']
 
@@ -29,6 +30,8 @@ class LocalProducer(object):
         res = True
         if msg.is_to_local:
             local_task.apply_async(args=(msg,), queue=main_queue_name)
+            # todo: основная очередь может быть забита входящим потоком
+            # local_task.apply_async(args=(msg,), queue=back_queue_name)
         elif msg.is_to_remote:
             if msg.is_send_data:
                 implement = Implementation()
