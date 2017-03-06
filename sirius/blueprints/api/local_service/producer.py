@@ -43,7 +43,7 @@ class LocalProducer(object):
                 reformer = implement.get_reformer(rmt_sys_code, msg.get_stream_id())
                 entity_package = reformer.get_entity_package_by_msg(msg)
                 msgs = reformer.create_to_remote_messages(entity_package)
-                res = all(self.send_msgs(msgs, rmt_sys_code))
+                res = all(self.send_msgs(msgs, rmt_sys_code, async=False))
             elif msg.is_request:
                 rmt_sys_code = msg.get_header().meta['remote_system_code']
                 sync_remote_task(msg, rmt_sys_code)
@@ -67,7 +67,7 @@ class LocalProducer(object):
         self.send_msgs(msgs, rmt_sys_code, queue_name, skip_err=skip_err)
         # diff.commit_all_changes()
 
-    def send_msgs(self, msgs, rmt_sys_code, queue_name=None, async=False, skip_err=False, callback=None):
+    def send_msgs(self, msgs, rmt_sys_code, queue_name=None, async=True, skip_err=False, callback=None):
         # чтобы skip_err работал
         callback = callback or True
         if callback:
