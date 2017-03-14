@@ -207,8 +207,6 @@ class EmployeePositionTambovBuilder(Builder):
         }
         self.reform_remote_parents_params(header_meta, src_entity_code, params_map)
 
-        empl_pos_addition = pack_entity['addition']  # в эмплой позишн клали индивид, т.к. первый не нужен в диффах
-
         entities = RequestEntities(self.reformer.stream_id)
         doctor_item = entities.set_main_entity(
             dst_entity_code=RisarEntityCode.DOCTOR,
@@ -221,6 +219,7 @@ class EmployeePositionTambovBuilder(Builder):
             level_count=1,
         )
         if src_operation_code != OperationCode.DELETE:
+            empl_pos_addition = pack_entity['addition']  # в эмплой позишн клали индивид, т.к. первый не нужен в диффах
             self.build_local_doctor_body(doctor_item, pack_entity,
                                          empl_pos_addition, header_meta, pack_entity['main_id'])
 
