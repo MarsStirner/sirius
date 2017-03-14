@@ -212,13 +212,16 @@ class Difference(object):
         pass
 
     def _dump_content(self, data):
-        if type(data).__base__.__name__ == 'CompoundValue':
+        item = data
+        if isinstance(data, list) and data:
+            item = data[0]
+        if type(item).__base__.__name__ == 'CompoundValue':
             res = dumps(self.serialize_object(data), cls=WebMisJsonEncoder)  # zeep
-        elif type(data) == 'instance':
+        elif type(item) == 'instance':
             res = dumps(self.recursive_asdict(data), cls=WebMisJsonEncoder)  # suds
-        elif isinstance(data, dict):
+        elif isinstance(item, dict):
             res = dumps(data, cls=WebMisJsonEncoder)  # json
-        elif isinstance(data, basestring):  # если убрать сериализаторы в transfer, то неоднозначности не будет
+        elif isinstance(item, basestring):  # если убрать сериализаторы в transfer, то неоднозначности не будет
             res = dumps(xmltodict.parse(ET.tostring(data, encoding='utf-8', method='xml')), encoding=WebMisJsonEncoder)  # ET
         else:
             res = unicode(data)

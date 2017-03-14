@@ -1467,7 +1467,7 @@ class DataRequest(IStreamMeta):
         self.req_data['body'].update(data)
 
     def copy(self):
-        new_self = self.__class__()
+        new_self = self.__class__(self.stream_id)
         new_self.req_data = self.req_data.copy()
         return new_self
 

@@ -105,7 +105,7 @@ class ClinicTambovBuilder(Builder):
         return entities
 
     def build_local_org_body(self, org_item, clinic_data, AddressAllInfos, header_meta):
-        town_kladr = None
+        town_kladr = ''
         if AddressAllInfos:
             town_kladr = self.get_town_kladr(AddressAllInfos[0])
         org_item['body'] = {

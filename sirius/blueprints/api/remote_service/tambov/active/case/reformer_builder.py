@@ -106,7 +106,7 @@ class CaseTambovBuilder(Builder):
             safe_traverse(ticket_data, 'disease_outcome'),
             safe_traverse(ticket_data, 'treatment_result'),
             safe_traverse(ticket_data, 'medical_care'),
-            safe_traverse(ticket_data, 'medical_care_emergency'),
+            # safe_traverse(ticket_data, 'medical_care_emergency'),
             safe_traverse(ticket_data, 'medical_care_profile'),
             any(map(
                 self.validate_service,
