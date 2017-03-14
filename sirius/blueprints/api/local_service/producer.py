@@ -18,7 +18,7 @@ from sirius.models.operation import OperationCode
 
 main_queues = app.config['main_queues']
 main_queue_name = main_queues['risar_main']
-back_queue_name = main_queues['risar_back']
+# back_queue_name = main_queues['risar_back']
 error_1_queue_name = main_queues['risar_error_1']
 error_2_queue_name = main_queues['risar_error_2']
 
