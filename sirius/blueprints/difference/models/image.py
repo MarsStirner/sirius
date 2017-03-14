@@ -266,6 +266,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
         set_query = '''
         insert into %(store_table_name)s
         (
+          root_entity_id,
           entity_id,
           root_external_id,
           external_id,
@@ -275,6 +276,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
         )
         (
           select
+            tmp.root_entity_id,
             tmp.entity_id,
             tmp.root_external_id,
             tmp.external_id,
@@ -307,6 +309,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
             and tmp.root_external_id = '%(root_external_id)s'
         ) sq
         where
+          store.root_entity_id = sq.root_entity_id and
           store.entity_id = sq.entity_id and
           store.external_id = sq.external_id;
         ''' % ({
@@ -325,6 +328,7 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
         where
           tmp.operation_code = '%(operation_code)s' and
           tmp.root_external_id = '%(root_external_id)s' and
+          store.root_entity_id = tmp.root_entity_id and
           store.entity_id = tmp.entity_id and
           store.external_id = tmp.external_id;
         ''' % ({
