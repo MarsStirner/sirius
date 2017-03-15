@@ -314,6 +314,7 @@ class TimeTambovBuilder(Builder):
                     'time_begin': slot_data['slot_beg'].isoformat()[:5],
                     'time_end': slot_data['slot_end'].isoformat()[:5],
                     'patient': patient or Undefined,
+                    'schedule_ticket_type': '0',
                 })
 
         return entities
