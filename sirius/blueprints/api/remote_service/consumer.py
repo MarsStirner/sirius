@@ -55,7 +55,7 @@ class RemoteConsumer(object):
             elif msg.is_request:
                 reformed_req = reformer.reform_req(msg)
                 entity_package = reformer.get_entity_package_by_req(reformed_req)
-                self.send_diff_data(entity_package, reformer, msg)
+                self.send_diff_data(entity_package, reformer, reformed_req)
             else:
                 raise InternalError('Unexpected message type')
         elif msg.is_to_local:
@@ -81,11 +81,11 @@ class RemoteConsumer(object):
             res = [producer.send(msg, async=async) for msg in msgs]
         return res
 
-    def send_diff_data(self, entity_package, reformer, msg):
+    def send_diff_data(self, entity_package, reformer, reformed_req):
         diff = Difference()
-        diff_entity_packages = diff.mark_diffs(entity_package)
+        diff_entity_packages = diff.mark_diffs(entity_package, reformed_req)
         # diff.save_all_changes()
         msgs = reformer.create_to_local_messages(diff_entity_packages)
-        skip_err = msg.get_header().meta['local_operation_code'] == OperationCode.READ_MANY
+        skip_err = reformed_req.meta['dst_operation_code'] == OperationCode.READ_MANY
         self.producer_send_msgs(msgs, skip_err=skip_err, callback=diff.save_change)
         diff.commit_all_changes()

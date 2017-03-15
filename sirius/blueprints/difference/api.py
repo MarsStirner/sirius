@@ -64,7 +64,7 @@ class Difference(object):
     #     self.json_dumper = json_dumper
 
     @module_entry
-    def mark_diffs(self, entity_package):
+    def mark_diffs(self, entity_package, reformed_req):
         """
         пометить изменения в Хранилище и в пакете
         в пакете проставляются operation_code, is_changed, удаляемые записи
@@ -81,7 +81,7 @@ class Difference(object):
 
         self._build_flat_entities(flat_entities, pack_entities)
         self._set_diffs(system_code, flat_entities)
-        self._mark_entities(entity_package, flat_entities)
+        self._mark_entities(entity_package, flat_entities, reformed_req)
         db.session.commit()
         return entity_package
 
@@ -132,7 +132,7 @@ class Difference(object):
         DiffEntityImage.set_changed_data(self.key_range)
         DiffEntityImage.set_new_data(self.key_range)
 
-    def _mark_entities(self, entity_package, flat_entities):
+    def _mark_entities(self, entity_package, flat_entities, reformed_req):
         diff_records = DiffEntityImage.get_marked_data()
         for diff_rec in diff_records:
             if diff_rec.operation_code != OperationCode.DELETE:
@@ -153,7 +153,7 @@ class Difference(object):
                         method=None,
                         main_param_name=None,
                         main_id=diff_rec.external_id,
-                        parents_params=None,
+                        parents_params=reformed_req.meta['dst_parents_params'],
                         data=None,
                         operation_code=diff_rec.operation_code,
                         is_changed=True,
