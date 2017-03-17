@@ -302,7 +302,11 @@ class DiffEntityImage(object):  # todo: перенести методы в Entit
         update %(store_table_name)s store
         set content = sq.content
         from (
-          select tmp.content, tmp.entity_id, tmp.external_id
+          select
+            tmp.content,
+            tmp.entity_id,
+            tmp.external_id,
+            tmp.root_entity_id
           from %(temp_table_name)s tmp
           where
             tmp.operation_code = '%(operation_code)s'
