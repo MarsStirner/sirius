@@ -194,7 +194,10 @@ def prepare_objects(d):
     if isinstance(d, dict):
         dc = deepcopy(d)
         deep_cleaner(dc)
-        dc = json_dumps(dc)
+        try:
+            dc = json_dumps(dc)
+        except TypeError, exc:
+            dc = u'!!! '.join((str(exc), unicode(dc)))
     else:
         dc = unicode(d)
     return dc
