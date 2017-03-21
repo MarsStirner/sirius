@@ -30,6 +30,8 @@ class Scheduler(object):
                         sch_exec = SchGrReqExecute.begin(req_data)
                         try:
                             self.execute(req_data)
+                        except LoggedException:
+                            pass
                         finally:
                             sch_exec.end()
                 else:
