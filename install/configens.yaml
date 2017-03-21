@@ -45,7 +45,7 @@ uwsgi:
       harakiri = 120
 
       # set mode of created UNIX socket
-      chmod-socket = 660
+      chmod-socket = 666
 
       # place timestamps into log
       log-date = true
