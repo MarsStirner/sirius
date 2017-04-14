@@ -130,6 +130,7 @@ subsystems:
 
       main_queues:
         risar_main: &CELERY_QUEUE_RISAR_MAIN risar_main_queue
+        risar_back: &CELERY_QUEUE_RISAR_BACK risar_back_queue
         risar_error_1: &CELERY_QUEUE_RISAR_ERROR_1 risar_error_1_queue
         risar_error_2: &CELERY_QUEUE_RISAR_ERROR_2 risar_error_2_queue
       mis_queues:
@@ -286,6 +287,11 @@ subsystems:
       supervisor:
         template: "{{ configens.supervisor.templates.worker | recurse }}"
         queue: *CELERY_QUEUE_RISAR_MAIN
+  risar_back_worker:
+    configens:
+      supervisor:
+        template: "{{ configens.supervisor.templates.worker | recurse }}"
+        queue: *CELERY_QUEUE_RISAR_BACK
   risar_error_1_worker:
     configens:
       supervisor:

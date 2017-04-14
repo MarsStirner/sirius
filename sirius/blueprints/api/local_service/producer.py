@@ -12,13 +12,13 @@ from sirius.blueprints.difference.api import Difference
 from sirius.blueprints.monitor.exception import InternalError, LoggedException
 from sirius.lib.implement import Implementation
 from sirius.lib.message import Message
-from sirius.lib.celery_tasks import local_task, remote_task, sync_remote_task
+from sirius.lib.celery_tasks import local_back_task, remote_task, sync_remote_task
 from sirius.lib.remote_system import remote_system
 from sirius.models.operation import OperationCode
 
 main_queues = app.config['main_queues']
 main_queue_name = main_queues['risar_main']
-# back_queue_name = main_queues['risar_back']
+back_queue_name = main_queues['risar_back']
 error_1_queue_name = main_queues['risar_error_1']
 error_2_queue_name = main_queues['risar_error_2']
 
@@ -29,9 +29,8 @@ class LocalProducer(object):
 
         res = True
         if msg.is_to_local:
-            local_task.apply_async(args=(msg,), queue=main_queue_name)
-            # todo: основная очередь может быть забита входящим потоком
-            # local_task.apply_async(args=(msg,), queue=back_queue_name)
+            # доп. очередь, т.к. основная может быть забита входящим потоком
+            local_back_task.apply_async(args=(msg,), queue=back_queue_name)
         elif msg.is_to_remote:
             if msg.is_send_data:
                 implement = Implementation()
